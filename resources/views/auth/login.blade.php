@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title','Login - Behna Bazar')
+@section('content')
+<section class="container py-5"><div class="row justify-content-center"><div class="col-md-6 col-lg-5"><div class="bb-card p-4 p-lg-5"><h1 class="h3 fw-bold mb-2">Welcome back</h1><p class="text-muted mb-4">Login to shop, manage orders, or open your dashboard.</p><form method="post" action="{{ route('login') }}">@csrf<div class="mb-3"><label class="form-label">Email</label><input class="form-control" name="email" type="email" value="{{ old('email') }}" required></div><div class="mb-3"><label class="form-label">Password</label><input class="form-control" name="password" type="password" required></div><div class="text-end mb-3"><a href="{{ route('password.request') }}" class="small text-muted">Forgot password?</a></div><button class="btn btn-bloom w-100 py-2">Login</button></form><p class="text-center mt-3 mb-1">New here? <a class="text-bloom fw-bold" href="{{ route('register') }}">Create account</a></p>
+<p class="text-center text-muted small mb-0">Sell on Behna Bazar? <a class="fw-semibold text-bloom text-decoration-none" href="{{ route('vendor.register.create') }}">Vendor onboarding</a></p></div></div></div></section>
+@endsection
