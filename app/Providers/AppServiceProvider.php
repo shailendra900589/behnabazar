@@ -6,6 +6,7 @@ use App\Models\CartItem;
 use App\Support\SiteMedia;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +25,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        $appUrl = config('app.url');
+        if ($appUrl) {
+            URL::forceRootUrl(rtrim($appUrl, '/'));
+        }
+
         Paginator::useBootstrapFive();
 
         View::composer(['layouts.app', 'layouts.dashboard'], function ($view): void {
