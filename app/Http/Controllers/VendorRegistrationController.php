@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\OtpMail;
 use App\Models\User;
 use App\Support\MergeGuestCart;
+use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class VendorRegistrationController extends Controller
 {
+    use SendsOtpMail;
+
     public function create(): View
     {
         return view('vendor.register');
@@ -60,7 +61,9 @@ class VendorRegistrationController extends Controller
             'otp_expiry' => now()->addMinutes(10),
         ]);
 
-        Mail::to($user->email)->send(new OtpMail($otp, 'vendor'));
+        if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
+            return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);
+        }
 
         $request->session()->put('vendor_register_id', $user->id);
 
@@ -87,7 +90,9 @@ class VendorRegistrationController extends Controller
 
         $otp = (string) random_int(100000, 999999);
         $user->update(['otp_code' => $otp, 'otp_expiry' => now()->addMinutes(10)]);
-        Mail::to($user->email)->send(new OtpMail($otp, 'vendor'));
+        if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
+            return back()->withErrors(['otp' => 'Could not resend email. Try again shortly.']);
+        }
 
         return back()->with('status', 'A new verification code was sent.');
     }

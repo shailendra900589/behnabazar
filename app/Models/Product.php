@@ -33,4 +33,21 @@ class Product extends Model
 
         return 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=900&auto=format&fit=crop';
     }
+
+    /** Only same-domain images in email (external URLs often trigger spam filters). */
+    public function emailSafeImageUrl(): ?string
+    {
+        if (! $this->image) {
+            return null;
+        }
+
+        if (str_starts_with($this->image, 'http')) {
+            $imageHost = parse_url($this->image, PHP_URL_HOST);
+            $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+            return ($imageHost && $appHost && $imageHost === $appHost) ? $this->image : null;
+        }
+
+        return url('storage/'.$this->image);
+    }
 }

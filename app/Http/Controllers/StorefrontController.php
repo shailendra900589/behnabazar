@@ -7,8 +7,10 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -54,13 +56,17 @@ class StorefrontController extends Controller
             default => $query->latest(),
         };
 
-        $priceBounds = Product::query()
-            ->where('qc_status', 'approved')
-            ->selectRaw('COALESCE(MIN(price), 0) as min_p, COALESCE(MAX(price), 0) as max_p')
-            ->first();
+        [$priceCatalogMin, $priceCatalogMax] = Cache::remember('storefront.price_bounds', 600, function () {
+            $priceBounds = Product::query()
+                ->where('qc_status', 'approved')
+                ->selectRaw('COALESCE(MIN(price), 0) as min_p, COALESCE(MAX(price), 0) as max_p')
+                ->first();
 
-        $priceCatalogMin = $priceBounds ? (float) $priceBounds->min_p : 0.0;
-        $priceCatalogMax = $priceBounds ? (float) $priceBounds->max_p : 0.0;
+            return [
+                $priceBounds ? (float) $priceBounds->min_p : 0.0,
+                $priceBounds ? (float) $priceBounds->max_p : 0.0,
+            ];
+        });
 
         $recentIds = session()->get('recently_viewed', []);
         $recentlyViewed = !empty($recentIds) 
@@ -71,9 +77,12 @@ class StorefrontController extends Controller
             'products' => $query->paginate(12)->withQueryString(),
             'newArrivals' => Product::where('qc_status', 'approved')->latest()->take(4)->get(),
             'hotProducts' => Product::withCount('orders')->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
-            'flashDeal' => Product::where('qc_status', 'approved')->inRandomOrder()->first(),
+            'flashDeal' => Cache::remember('storefront.flash_deal', 300, fn () => Product::query()
+                ->where('qc_status', 'approved')
+                ->latest('id')
+                ->first()),
             'recentlyViewed' => $recentlyViewed,
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => Category::forNavigation(),
             'banners' => Banner::where('status', true)->orderBy('sort_order')->get(),
             'ads' => Ad::with(['product', 'vendor'])
                 ->where('status', true)
@@ -300,10 +309,29 @@ class StorefrontController extends Controller
         return back()->with('status', 'Your question has been submitted successfully and is pending an answer.');
     }
 
-    public function subscribeNewsletter(Request $request): RedirectResponse
+    public function unsubscribeNewsletter(Request $request): View|RedirectResponse
+    {
+        if (! $request->hasValidSignature()) {
+            abort(403, 'This unsubscribe link is invalid or expired.');
+        }
+
+        $email = strtolower(trim((string) $request->query('email', '')));
+        abort_unless(filter_var($email, FILTER_VALIDATE_EMAIL), 404);
+
+        \App\Models\Newsletter::where('email', $email)->delete();
+
+        return view('store.newsletter-unsubscribed', ['email' => $email]);
+    }
+
+    public function subscribeNewsletter(Request $request): JsonResponse|RedirectResponse
     {
         $request->validate(['email' => ['required', 'email', 'max:255']]);
         \App\Models\Newsletter::firstOrCreate(['email' => $request->email]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'success', 'message' => 'Thank you for subscribing to our newsletter!']);
+        }
+
         return back()->with('status', 'Thank you for subscribing to our newsletter!');
     }
 }

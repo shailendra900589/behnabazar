@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/api/search', [StorefrontController::class, 'liveSearch'])->name('api.search');
 Route::post('/newsletter/subscribe', [StorefrontController::class, 'subscribeNewsletter'])->name('newsletter.subscribe');
+Route::get('/newsletter/unsubscribe', [StorefrontController::class, 'unsubscribeNewsletter'])->name('newsletter.unsubscribe');
 Route::get('/ads/{ad}/click', [StorefrontController::class, 'adClick'])->name('ads.click');
 Route::get('/product/{product:slug}', [StorefrontController::class, 'product'])->name('product.show');
 Route::post('/product/{product:slug}/review', [StorefrontController::class, 'postReview'])->name('product.review')->middleware('auth');
@@ -43,8 +44,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'update'])->name('password.update');
+    Route::get('/reset-password/verify', [PasswordResetController::class, 'showVerify'])->name('password.verify.show');
+    Route::post('/reset-password/verify', [PasswordResetController::class, 'resetWithOtp'])->name('password.verify.submit');
+    Route::post('/reset-password/resend', [PasswordResetController::class, 'resendOtp'])->name('password.verify.resend');
 
     Route::prefix('sell')->name('vendor.')->group(function () {
         Route::get('/register', [VendorRegistrationController::class, 'create'])->name('register.create');
@@ -77,6 +79,9 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::get('/orders/export', [DashboardController::class, 'exportOrders'])->name('orders.export');
         Route::post('/categories', [DashboardController::class, 'saveCategory'])->name('categories.save');
         Route::delete('/categories/{category}', [DashboardController::class, 'deleteCategory'])->name('categories.delete');
+        Route::post('/promotions/email', [DashboardController::class, 'sendPromotionEmail'])
+            ->middleware('admin')
+            ->name('promotions.email');
         Route::post('/coupons', [DashboardController::class, 'saveCoupon'])->name('coupons.save');
         Route::patch('/coupons/{coupon}/toggle', [DashboardController::class, 'toggleCoupon'])->name('coupons.toggle');
         Route::delete('/coupons/{coupon}', [DashboardController::class, 'deleteCoupon'])->name('coupons.delete');

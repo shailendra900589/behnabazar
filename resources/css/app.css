@@ -27,6 +27,8 @@ body {
 
 a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 
+.opacity-100-hover:hover { opacity: 1 !important; }
+
 .bb-navbar {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);

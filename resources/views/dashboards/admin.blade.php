@@ -579,6 +579,7 @@
         @endif
         @if (($adminSection ?? '') === 'marketing')
         <div class="admin-section" id="tab-marketing">
+        @include('dashboards.partials.promotion-email-form')
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bb-card p-4">

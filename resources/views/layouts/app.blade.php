@@ -6,10 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Behna Bazar')</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('images/brand/bb-mark.jpeg') }}">
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" defer></script>
     <style>
         #nprogress .bar { background: var(--bb-bloom) !important; height: 3px !important; }
         #nprogress .peg { box-shadow: 0 0 10px var(--bb-bloom), 0 0 5px var(--bb-bloom) !important; }
@@ -19,9 +18,13 @@
 </head>
 <body>
 <script>
-    NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
-    NProgress.start();
-    window.onload = function() { NProgress.done(); }
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof NProgress !== 'undefined') {
+            NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
+            NProgress.start();
+            window.addEventListener('load', function () { NProgress.done(); });
+        }
+    });
 </script>
 <div id="bb-toasts" class="toast-container position-fixed top-0 end-0 p-3"></div>
 <nav class="navbar navbar-expand-lg sticky-top bb-navbar py-3 shadow-sm">
@@ -47,6 +50,7 @@
                     const searchInput = document.getElementById('liveSearchInput');
                     const resultsBox = document.getElementById('liveSearchResults');
                     let timeout = null;
+                    let searchAbort = null;
 
                     searchInput.addEventListener('input', function() {
                         clearTimeout(timeout);
@@ -58,7 +62,9 @@
                         }
 
                         timeout = setTimeout(() => {
-                            fetch(`/api/search?q=${encodeURIComponent(query)}`)
+                            if (searchAbort) searchAbort.abort();
+                            searchAbort = new AbortController();
+                            fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: searchAbort.signal })
                                 .then(res => res.json())
                                 .then(data => {
                                     resultsBox.innerHTML = '';
@@ -78,7 +84,8 @@
                                         });
                                     }
                                     resultsBox.style.display = 'block';
-                                });
+                                })
+                                .catch(() => {});
                         }, 300);
                     });
 
@@ -170,7 +177,7 @@
 </nav>
 <main>@yield('content')</main>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 <script>
     const Toast = Swal.mixin({
         toast: true,
@@ -250,7 +257,13 @@
         </div>
     </div>
     <div class="container py-4 text-center text-white-50 small">
-        &copy; {{ date('Y') }} Behna Bazar. All rights reserved.
+        <p class="mb-1">&copy; {{ date('Y') }} Behna Bazar. All rights reserved.</p>
+        <p class="mb-0">
+            Developed by
+            <a href="https://www.nectradigital.com" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none fw-semibold opacity-75 opacity-100-hover">
+                Nectra Digital
+            </a>
+        </p>
     </div>
 </footer>
 

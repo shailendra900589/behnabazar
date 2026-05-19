@@ -38,8 +38,8 @@ class AppServiceProvider extends ServiceProvider
                 $cartCount = (int) $cartQuery->sum('quantity');
             }
 
-            $cartItemsPreview = $cartQuery->with(['product', 'variant'])->latest()->take(3)->get();
-            $categories = \App\Models\Category::all();
+            $cartItemsPreview = (clone $cartQuery)->with(['product', 'variant'])->latest()->take(3)->get();
+            $categories = \App\Models\Category::forNavigation();
 
             $view->with(compact('cartCount', 'wishlistCount', 'categories', 'cartItemsPreview'));
         });

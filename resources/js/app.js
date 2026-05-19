@@ -46,7 +46,10 @@ document.addEventListener('submit', async (event) => {
         const method = form.dataset.method || form.method || 'POST';
         if (['PATCH', 'DELETE'].includes(method.toUpperCase())) payload.append('_method', method.toUpperCase());
         const data = await window.bbRequest(form.action, { method: 'POST', body: payload });
-        window.bbToast(data.message || 'Updated');
+        window.bbToast(data.message || data.status || 'Updated');
+        if (form.matches('[action*="newsletter"]') && form.querySelector('[name="email"]')) {
+            form.reset();
+        }
         if (data.cart_count !== undefined) {
             document.querySelectorAll('[data-cart-count]').forEach(el => el.textContent = data.cart_count);
         }

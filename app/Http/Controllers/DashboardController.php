@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ProductPromotionMail;
 use App\Models\Ad;
+use App\Models\Newsletter;
 use App\Models\AdWalletTransaction;
 use App\Models\Banner;
 use App\Models\Category;
@@ -15,8 +17,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -70,7 +75,71 @@ class DashboardController extends Controller
             'chartData' => collect(range(6, 0))->map(fn($days) => Order::whereDate('created_at', now()->subDays($days))->sum('total_price'))->toArray(),
             'payoutRequests' => \App\Models\Payout::with('vendor')->latest()->get(),
             'returnRequests' => Order::whereNotNull('return_status')->with(['user', 'product'])->latest()->get(),
+            'promotionProducts' => Product::where('qc_status', 'approved')->orderBy('title')->get(['id', 'title', 'price']),
+            'newsletterCount' => Newsletter::count(),
         ]);
+    }
+
+    public function sendPromotionEmail(Request $request): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        $data = $request->validate([
+            'product_id' => ['required', 'exists:products,id'],
+            'audience' => ['required', 'in:newsletter,customers,both'],
+            'message' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $product = Product::where('qc_status', 'approved')->findOrFail($data['product_id']);
+
+        $emails = collect();
+
+        if (in_array($data['audience'], ['newsletter', 'both'], true)) {
+            $emails = $emails->merge(Newsletter::query()->pluck('email'));
+        }
+
+        if (in_array($data['audience'], ['customers', 'both'], true)) {
+            $emails = $emails->merge(
+                User::query()
+                    ->where('role', 'user')
+                    ->where('is_email_verified', true)
+                    ->pluck('email')
+            );
+        }
+
+        $emails = $emails->map(fn ($e) => strtolower(trim((string) $e)))->filter()->unique()->values();
+
+        if ($emails->isEmpty()) {
+            return back()->withErrors(['product_id' => 'No recipients found for the selected audience.']);
+        }
+
+        $sent = 0;
+        $failed = 0;
+
+        foreach ($emails as $index => $email) {
+            try {
+                Mail::to($email)->send(new ProductPromotionMail(
+                    $product,
+                    $email,
+                    $data['message'] ?? null,
+                ));
+                $sent++;
+            } catch (\Throwable $e) {
+                $failed++;
+                Log::warning('Promotion email failed', ['email' => $email, 'error' => $e->getMessage()]);
+            }
+
+            if ($index < $emails->count() - 1) {
+                usleep(300000);
+            }
+        }
+
+        $status = "Promotion email sent to {$sent} recipient(s).";
+        if ($failed > 0) {
+            $status .= " {$failed} could not be delivered.";
+        }
+
+        return back()->with('status', $status);
     }
 
     public function exportOrders(): \Symfony\Component\HttpFoundation\StreamedResponse
@@ -244,6 +313,8 @@ class DashboardController extends Controller
         $this->requireRole('admin');
         $data = $request->validate(['name' => 'required|max:100', 'icon' => 'nullable|max:50']);
         Category::updateOrCreate(['id' => $request->id], ['name' => $data['name'], 'slug' => Str::slug($data['name']), 'icon' => $data['icon'] ?: 'bi-box']);
+        Category::flushNavigationCache();
+
         return back()->with('status', 'Category saved.');
     }
 
@@ -370,6 +441,8 @@ class DashboardController extends Controller
             }
         }
 
+        $this->clearStorefrontCaches();
+
         return back()->with('status', 'Product saved.');
     }
 
@@ -416,6 +489,8 @@ class DashboardController extends Controller
             'qc_verified_at' => now(),
         ]);
 
+        $this->clearStorefrontCaches();
+
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'message' => 'Product reviewed.']);
         }
@@ -430,6 +505,7 @@ class DashboardController extends Controller
             return back()->withErrors(['category' => 'Reassign or delete products in this category first.']);
         }
         $category->delete();
+        Category::flushNavigationCache();
 
         return back()->with('status', 'Category deleted.');
     }
@@ -468,6 +544,8 @@ class DashboardController extends Controller
         } catch (\Throwable) {
             return back()->withErrors(['product' => 'Cannot delete a product that has order history.']);
         }
+
+        $this->clearStorefrontCaches();
 
         return back()->with('status', 'Product deleted.');
     }
@@ -760,6 +838,12 @@ class DashboardController extends Controller
         }
         
         return back()->with('status', 'Return status updated.');
+    }
+
+    private function clearStorefrontCaches(): void
+    {
+        Cache::forget('storefront.price_bounds');
+        Cache::forget('storefront.flash_deal');
     }
 
     private function requireRole(string|array $roles): void

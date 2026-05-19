@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\OtpMail;
 use App\Models\User;
 use App\Support\MergeGuestCart;
+use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class AccountVerificationController extends Controller
 {
+    use SendsOtpMail;
+
     public function show(Request $request): View|RedirectResponse
     {
         if (Auth::check() && Auth::user()->role === 'user' && ! Auth::user()->is_email_verified) {
@@ -75,7 +76,9 @@ class AccountVerificationController extends Controller
         $user = User::where('id', $id)->where('role', 'user')->firstOrFail();
         $otp = (string) random_int(100000, 999999);
         $user->update(['otp_code' => $otp, 'otp_expiry' => now()->addMinutes(10)]);
-        Mail::to($user->email)->send(new OtpMail($otp, 'customer'));
+        if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
+            return back()->withErrors(['otp' => 'Could not resend email. Try again shortly.']);
+        }
 
         return back()->with('status', 'A new code was sent to your email.');
     }

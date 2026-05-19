@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\OtpMail;
 use App\Models\User;
 use App\Support\MergeGuestCart;
+use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
+    use SendsOtpMail;
+
     public function showLogin(): View
     {
         return view('auth.login');
@@ -76,7 +77,10 @@ class AuthController extends Controller
             'otp_expiry' => now()->addMinutes(10),
         ]);
 
-        Mail::to($user->email)->send(new OtpMail($otp, 'customer'));
+        if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
+            return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);
+        }
+
         $request->session()->put('customer_register_id', $user->id);
 
         return redirect()->route('account.verify.show')
