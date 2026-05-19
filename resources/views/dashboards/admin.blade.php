@@ -655,6 +655,9 @@
         </div>
         </div>
         @endif
+        @if (($adminSection ?? '') === 'referrals')
+            @include('dashboards.partials.admin-referrals')
+        @endif
         @if (($adminSection ?? '') === 'team')
         <div class="admin-section" id="tab-team">
         <div class="bb-card p-4">

@@ -42,6 +42,7 @@
         <a href="{{ route('product.show', $product) }}" class="text-decoration-none"><h5 class="fw-bold mb-3 text-dark text-truncate">{{ $product->title }}</h5></a>
         <div class="d-flex align-items-center justify-content-between gap-2">
             <span class="h5 fw-bold mb-0 text-bloom">₹{{ number_format($product->price, 2) }}</span>
+            <a href="{{ route('product.show', $product) }}#bbShareToggle" class="btn btn-soft btn-sm rounded-circle" title="Share product" aria-label="Share product"><i class="bi bi-share"></i></a>
         </div>
     </div>
 </div>

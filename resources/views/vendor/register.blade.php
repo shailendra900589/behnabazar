@@ -95,6 +95,10 @@
                             <label class="form-label">City</label>
                             <input class="form-control" name="city" value="{{ old('city') }}" required maxlength="100" placeholder="Your city or nearest town">
                         </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Referral code <span class="text-muted fw-normal">(optional)</span></label>
+                            <input class="form-control" name="referral_code" value="{{ old('referral_code', session('referral_code')) }}" maxlength="16" placeholder="Invited by a friend?">
+                        </div>
 
                         <div class="col-12 pt-2">
                             <h3 class="vendor-form-heading">Shop and product details</h3>

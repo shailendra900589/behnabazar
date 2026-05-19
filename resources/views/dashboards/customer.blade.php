@@ -40,6 +40,13 @@
     </div>
 </div>
 
+@include('partials.referral-program-card', [
+    'referralCode' => $referralCode ?? '',
+    'referralRewards' => $referralRewards ?? collect(),
+    'referralEnabled' => $referralEnabled ?? true,
+    'referralRole' => 'user',
+])
+
 <div class="d-flex flex-wrap gap-2 mb-4">
     <a href="{{ route('home') }}" class="btn btn-bloom btn-sm rounded-pill"><i class="bi bi-shop me-1"></i>Continue shopping</a>
     <a href="{{ route('wishlist') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-heart me-1"></i>Wishlist ({{ $wishlistCount }})</a>

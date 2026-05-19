@@ -7,6 +7,7 @@ use App\Models\Ad;
 use App\Support\SiteMedia;
 use App\Models\Newsletter;
 use App\Models\AdWalletTransaction;
+use App\Models\ReferralReward;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Coupon;
@@ -14,6 +15,10 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\VendorWalletTransaction;
+use App\Services\ReferralProgramService;
+use App\Services\VendorWalletService;
+use App\Support\ReferralSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,7 +50,7 @@ class DashboardController extends Controller
     {
         $this->requireRole('admin');
 
-        $allowed = ['overview', 'products', 'orders', 'vendors', 'catalog', 'storefront', 'marketing', 'team'];
+        $allowed = ['overview', 'products', 'orders', 'vendors', 'payouts', 'returns', 'catalog', 'storefront', 'marketing', 'referrals', 'team'];
         $section = $request->query('section', 'overview');
         if (! in_array($section, $allowed, true)) {
             $section = 'overview';
@@ -78,6 +83,7 @@ class DashboardController extends Controller
             'returnRequests' => Order::whereNotNull('return_status')->with(['user', 'product'])->latest()->get(),
             'promotionProducts' => Product::where('qc_status', 'approved')->orderBy('title')->get(['id', 'title', 'price']),
             'newsletterCount' => Newsletter::count(),
+            'referralRewards' => ReferralReward::with(['referrer', 'referee', 'order'])->latest()->get(),
         ]);
     }
 
@@ -203,9 +209,9 @@ class DashboardController extends Controller
         $vendorProductIds = $products->pluck('id');
         $orders = Order::whereIn('product_id', $vendorProductIds)->with('product', 'user')->latest()->get();
         
-        $totalEarnings = $orders->where('status', 'delivered')->sum('total_price');
-        $withdrawn = \App\Models\Payout::where('vendor_id', Auth::id())->where('status', '!=', 'rejected')->sum('amount');
-        $availableBalance = max(0, $totalEarnings - $withdrawn);
+        $wallet = app(VendorWalletService::class);
+        $availableBalance = $wallet->availableBalance(Auth::id());
+        $totalEarnings = (float) Auth::user()->sales_wallet_balance + \App\Models\Payout::where('vendor_id', Auth::id())->where('status', 'paid')->sum('amount');
         $viewsTotal = $products->sum('view_count');
         $conversionRate = $viewsTotal > 0 ? round(($orders->count() / $viewsTotal) * 100, 1) : 0;
 
@@ -222,6 +228,9 @@ class DashboardController extends Controller
             'questions' => \App\Models\ProductQuestion::with(['product', 'user'])->whereIn('product_id', $vendorProductIds)->where('status', 'pending')->latest()->get(),
             'promotions' => Ad::with('product')->where('vendor_id', Auth::id())->latest()->get(),
             'walletTransactions' => AdWalletTransaction::where('vendor_id', Auth::id())->latest()->take(10)->get(),
+            'salesWalletTransactions' => VendorWalletTransaction::where('vendor_id', Auth::id())->latest()->take(15)->get(),
+            'referralCode' => app(ReferralProgramService::class)->ensureReferralCode(Auth::user()),
+            'referralRewards' => ReferralReward::where('referrer_id', Auth::id())->latest()->take(10)->get(),
             'adRates' => $this->adRates(),
             'adWalletMinTopup' => (float) Setting::value('ad_wallet_min_topup', 50),
         ]);
@@ -235,23 +244,27 @@ class DashboardController extends Controller
             'bank_details' => ['required', 'string', 'max:1000'],
         ]);
 
-        $vendorProductIds = Product::where('vendor_id', Auth::id())->pluck('id');
-        $totalEarnings = Order::whereIn('product_id', $vendorProductIds)->where('status', 'delivered')->sum('total_price');
-        $withdrawn = \App\Models\Payout::where('vendor_id', Auth::id())->where('status', '!=', 'rejected')->sum('amount');
-        $availableBalance = max(0, $totalEarnings - $withdrawn);
+        $wallet = app(VendorWalletService::class);
+        $availableBalance = $wallet->availableBalance(Auth::id());
 
         if ($data['amount'] > $availableBalance) {
-            return back()->withErrors(['amount' => 'Requested amount exceeds available balance.']);
+            return back()->withErrors(['amount' => 'Requested amount exceeds available sales wallet balance.']);
         }
 
-        \App\Models\Payout::create([
+        $payout = \App\Models\Payout::create([
             'vendor_id' => Auth::id(),
             'amount' => $data['amount'],
             'bank_details' => $data['bank_details'],
             'status' => 'pending',
         ]);
 
-        return back()->with('status', 'Payout request submitted successfully.');
+        if (! $wallet->reservePayout($payout)) {
+            $payout->delete();
+
+            return back()->withErrors(['amount' => 'Could not reserve wallet balance. Please try again.']);
+        }
+
+        return back()->with('status', 'Claim request submitted. Admin will approve and transfer to your bank.');
     }
 
     public function updatePayout(Request $request, \App\Models\Payout $payout): RedirectResponse
@@ -259,6 +272,8 @@ class DashboardController extends Controller
         $this->requireRole('admin');
         $request->validate(['status' => 'required|in:paid,rejected']);
         $payout->update(['status' => $request->status]);
+        app(VendorWalletService::class)->releasePayout($payout->fresh());
+
         return back()->with('status', 'Payout status updated.');
     }
 
@@ -298,7 +313,12 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        $referralService = app(ReferralProgramService::class);
+
         return view('dashboards.customer', [
+            'referralCode' => $referralService->ensureReferralCode($user),
+            'referralRewards' => ReferralReward::where('referrer_id', $user->id)->latest()->take(10)->get(),
+            'referralEnabled' => ReferralSettings::enabled(),
             'orders' => $user->orders()->with('product')->latest()->take(8)->get(),
             'wishlist' => $user->wishlistItems()->with('product')->latest()->take(8)->get(),
             'orderCount' => $user->orders()->count(),
@@ -506,6 +526,15 @@ class DashboardController extends Controller
             'location' => $data['location'] ?? null,
         ]);
 
+        if ($data['status'] === 'delivered') {
+            $order->load('product.vendor', 'user');
+            $referral = app(ReferralProgramService::class);
+            $referral->handleOrderDelivered($order);
+            if ($order->product) {
+                $referral->handleVendorFirstSale($order, $order->product);
+            }
+        }
+
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'message' => 'Order updated.']);
         }
@@ -526,11 +555,64 @@ class DashboardController extends Controller
 
         $this->clearStorefrontCaches();
 
+        if ($data['decision'] === 'approved') {
+            app(ReferralProgramService::class)->handleProductListed($product->fresh());
+        }
+
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'message' => 'Product reviewed.']);
         }
 
         return back()->with('status', 'Product reviewed.');
+    }
+
+    public function saveReferralSettings(Request $request): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        $data = $request->validate([
+            'referral_program_enabled' => ['nullable'],
+            'referral_require_admin_approval' => ['nullable'],
+            'referral_user_reward_coins' => ['required', 'integer', 'min:0'],
+            'referral_vendor_reward_amount' => ['required', 'numeric', 'min:0'],
+            'referral_min_order_amount' => ['required', 'numeric', 'min:0'],
+            'referral_share_validity_days' => ['required', 'integer', 'min:1'],
+            'referral_user_triggers' => ['nullable', 'array'],
+            'referral_vendor_triggers' => ['nullable', 'array'],
+        ]);
+
+        $settings = [
+            'referral_program_enabled' => $request->boolean('referral_program_enabled') ? '1' : '0',
+            'referral_require_admin_approval' => $request->boolean('referral_require_admin_approval') ? '1' : '0',
+            'referral_user_reward_coins' => (string) $data['referral_user_reward_coins'],
+            'referral_vendor_reward_amount' => (string) $data['referral_vendor_reward_amount'],
+            'referral_min_order_amount' => (string) $data['referral_min_order_amount'],
+            'referral_share_validity_days' => (string) $data['referral_share_validity_days'],
+            'referral_user_triggers' => implode(',', $data['referral_user_triggers'] ?? ['share_first_purchase']),
+            'referral_vendor_triggers' => implode(',', $data['referral_vendor_triggers'] ?? ['referee_first_sale']),
+        ];
+
+        foreach ($settings as $key => $value) {
+            Setting::updateOrCreate(['setting_key' => $key], ['setting_value' => $value]);
+        }
+
+        return redirect()->route('dashboard', ['section' => 'referrals'])->with('status', 'Referral program settings saved.');
+    }
+
+    public function approveReferralReward(Request $request, ReferralReward $reward): RedirectResponse
+    {
+        $this->requireRole('admin');
+        app(ReferralProgramService::class)->approveReward($reward, Auth::user(), $request->input('admin_note'));
+
+        return redirect()->route('dashboard', ['section' => 'referrals'])->with('status', 'Referral reward approved and paid.');
+    }
+
+    public function rejectReferralReward(Request $request, ReferralReward $reward): RedirectResponse
+    {
+        $this->requireRole('admin');
+        app(ReferralProgramService::class)->rejectReward($reward, Auth::user(), $request->input('admin_note'));
+
+        return redirect()->route('dashboard', ['section' => 'referrals'])->with('status', 'Referral reward rejected.');
     }
 
     public function deleteCategory(Category $category): RedirectResponse

@@ -140,19 +140,7 @@
                 @auth
                     <button type="button" class="btn btn-soft btn-lg" data-wishlist-toggle="{{ route('wishlist.toggle', $product) }}" title="Add to Wishlist"><i class="bi bi-heart"></i></button>
                 @endauth
-                <div class="dropdown">
-                    <button class="btn btn-soft btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Share Product">
-                        <i class="bi bi-share"></i>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-4">
-                        <li><h6 class="dropdown-header">Share via</h6></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2" href="https://api.whatsapp.com/send?text={{ urlencode('Check out '.$product->title.' on Behna Bazar! '.url()->current()) }}" target="_blank"><i class="bi bi-whatsapp text-success"></i> WhatsApp</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2" href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" target="_blank"><i class="bi bi-facebook text-primary"></i> Facebook</a></li>
-                        <li><a class="dropdown-item d-flex align-items-center gap-2" href="https://twitter.com/intent/tweet?text={{ urlencode('Check out '.$product->title.' on Behna Bazar!') }}&url={{ urlencode(url()->current()) }}" target="_blank"><i class="bi bi-twitter-x text-dark"></i> X (Twitter)</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><button class="dropdown-item d-flex align-items-center gap-2" type="button" onclick="navigator.clipboard.writeText(window.location.href); alert('Product link copied to clipboard!');"><i class="bi bi-link-45deg"></i> Copy Link</button></li>
-                    </ul>
-                </div>
+                @include('partials.product-share', ['product' => $product])
             </div>
 
             <ul class="nav nav-tabs nav-fill product-info-tabs mb-3" id="productTabs" role="tablist">

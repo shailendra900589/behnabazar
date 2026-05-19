@@ -19,7 +19,11 @@
                             <label class="form-label">Email</label>
                             <input class="form-control" type="email" name="email" value="{{ old('email') }}" required>
                         </div>
-                        <div class="col-md-12">
+                        <div class="col-md-6">
+                            <label class="form-label">Referral code <span class="text-muted fw-normal">(optional)</span></label>
+                            <input class="form-control" name="referral_code" value="{{ old('referral_code', session('referral_code')) }}" maxlength="16" placeholder="Friend's code">
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">City <span class="text-muted fw-normal">(optional)</span></label>
                             <input class="form-control" name="city" value="{{ old('city') }}" maxlength="100">
                         </div>

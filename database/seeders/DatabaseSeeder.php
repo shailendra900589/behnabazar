@@ -63,6 +63,14 @@ class DatabaseSeeder extends Seeder
 
         Setting::updateOrCreate(['setting_key' => 'coin_earn_rate'], ['setting_value' => '10']);
         Setting::updateOrCreate(['setting_key' => 'coin_redeem_limit'], ['setting_value' => '5']);
+        Setting::updateOrCreate(['setting_key' => 'referral_program_enabled'], ['setting_value' => '1']);
+        Setting::updateOrCreate(['setting_key' => 'referral_require_admin_approval'], ['setting_value' => '1']);
+        Setting::updateOrCreate(['setting_key' => 'referral_user_reward_coins'], ['setting_value' => '50']);
+        Setting::updateOrCreate(['setting_key' => 'referral_vendor_reward_amount'], ['setting_value' => '100']);
+        Setting::updateOrCreate(['setting_key' => 'referral_min_order_amount'], ['setting_value' => '0']);
+        Setting::updateOrCreate(['setting_key' => 'referral_share_validity_days'], ['setting_value' => '30']);
+        Setting::updateOrCreate(['setting_key' => 'referral_user_triggers'], ['setting_value' => 'share_first_purchase']);
+        Setting::updateOrCreate(['setting_key' => 'referral_vendor_triggers'], ['setting_value' => 'referee_first_sale,referee_first_product']);
         Coupon::create(['code' => 'WELCOME50', 'discount_type' => 'flat', 'discount_value' => 50, 'min_cart_value' => 500, 'status' => true]);
         Ad::create(['location' => 'home_top', 'ad_type' => 'code', 'code' => '<div class="p-4 text-center">Promote your local brand on Behna Bazar</div>', 'status' => true]);
         Banner::create(['image' => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop', 'link' => '/', 'sort_order' => 1, 'status' => true]);

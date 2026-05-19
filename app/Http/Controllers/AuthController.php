@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ReferralProgramService;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
@@ -61,7 +62,12 @@ class AuthController extends Controller
             'email' => ['required', 'email', 'max:150', 'unique:users,email'],
             'password' => ['required', 'confirmed', 'min:8'],
             'city' => ['nullable', 'string', 'max:100'],
+            'referral_code' => ['nullable', 'string', 'max:16'],
         ]);
+
+        if (! empty($data['referral_code'])) {
+            app(ReferralProgramService::class)->captureReferralFromRequest($data['referral_code']);
+        }
 
         $otp = (string) random_int(100000, 999999);
 
@@ -80,6 +86,8 @@ class AuthController extends Controller
         if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
             return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);
         }
+
+        app(ReferralProgramService::class)->applyReferrerOnRegister($user);
 
         $request->session()->put('customer_register_id', $user->id);
 

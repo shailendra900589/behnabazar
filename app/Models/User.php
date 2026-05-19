@@ -31,6 +31,9 @@ class User extends Authenticatable
         'shop_name',
         'product_category',
         'coins',
+        'referral_code',
+        'referred_by_id',
+        'sales_wallet_balance',
         'ad_wallet_balance',
         'account_status',
         'reg_fee_paid',
@@ -64,6 +67,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'ad_wallet_balance' => 'decimal:2',
+            'sales_wallet_balance' => 'decimal:2',
             'reg_fee_paid' => 'boolean',
             'is_email_verified' => 'boolean',
             'otp_expiry' => 'datetime',
@@ -94,6 +98,26 @@ class User extends Authenticatable
     public function addresses(): HasMany
     {
         return $this->hasMany(UserAddress::class);
+    }
+
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by_id');
+    }
+
+    public function referrals()
+    {
+        return $this->hasMany(User::class, 'referred_by_id');
+    }
+
+    public function referralRewardsEarned()
+    {
+        return $this->hasMany(ReferralReward::class, 'referrer_id');
+    }
+
+    public function vendorWalletTransactions()
+    {
+        return $this->hasMany(VendorWalletTransaction::class, 'vendor_id');
     }
 
     public function isRole(string|array $roles): bool

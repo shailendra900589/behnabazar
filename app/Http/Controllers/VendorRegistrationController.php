@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\ReferralProgramService;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
@@ -35,7 +36,12 @@ class VendorRegistrationController extends Controller
             'product_category' => ['nullable', 'string', 'max:100'],
             'document_type' => ['nullable', 'string', 'max:100'],
             'document_file' => ['nullable', 'file', 'max:2048', 'mimes:jpg,jpeg,png,pdf'],
+            'referral_code' => ['nullable', 'string', 'max:16'],
         ]);
+
+        if (! empty($data['referral_code'] ?? null)) {
+            app(ReferralProgramService::class)->captureReferralFromRequest($data['referral_code']);
+        }
 
         $otp = (string) random_int(100000, 999999);
 
@@ -60,6 +66,8 @@ class VendorRegistrationController extends Controller
             'otp_code' => $otp,
             'otp_expiry' => now()->addMinutes(10),
         ]);
+
+        app(ReferralProgramService::class)->applyReferrerOnRegister($user);
 
         if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
             return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);

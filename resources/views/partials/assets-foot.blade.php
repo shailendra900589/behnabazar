@@ -4,9 +4,11 @@
     $bbSwal = \App\Support\BbAsset::url('vendor/sweetalert2/sweetalert2.all.min.js');
     $bbBootstrapJs = \App\Support\BbAsset::url('vendor/bootstrap/js/bootstrap.bundle.min.js');
     $bbThemeJs = \App\Support\BbAsset::url('js/app.js');
+    $bbShareJs = \App\Support\BbAsset::url('js/share.js');
 @endphp
 <script src="{{ $bbJquery }}"></script>
 <script src="{{ $bbNprogress }}"></script>
 <script src="{{ $bbSwal }}"></script>
 <script src="{{ $bbBootstrapJs }}"></script>
 <script src="{{ $bbThemeJs }}"></script>
+<script src="{{ $bbShareJs }}"></script>

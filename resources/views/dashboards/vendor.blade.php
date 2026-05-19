@@ -115,14 +115,19 @@
     </script>
 </div>
 
-</div>
+@include('partials.referral-program-card', [
+    'referralCode' => $referralCode ?? '',
+    'referralRewards' => $referralRewards ?? collect(),
+    'referralEnabled' => \App\Support\ReferralSettings::enabled(),
+    'referralRole' => 'vendor',
+])
 
 @if ($active)
 <div class="bb-card mb-4 p-4">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
         <div>
-            <h3 class="h6 fw-bold mb-1">Earnings & Payouts</h3>
-            <p class="text-muted small mb-0">Request a payout to your bank account when you have available earnings from delivered orders.</p>
+            <h3 class="h6 fw-bold mb-1">Sales wallet &amp; payouts</h3>
+            <p class="text-muted small mb-0">Delivered orders and approved referral bonuses credit your sales wallet. Claim to bank when balance is ₹500+.</p>
         </div>
         <div class="text-end">
             <span class="text-muted small d-block">Available for Payout</span>
@@ -171,6 +176,34 @@
                                 @elseif($p->status === 'paid') <span class="badge bg-success">Paid</span>
                                 @else <span class="badge bg-danger">Rejected</span> @endif
                             </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    @if(isset($salesWalletTransactions) && $salesWalletTransactions->count())
+        <h4 class="h6 fw-bold mt-4 mb-2">Wallet activity</h4>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Note</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($salesWalletTransactions as $tx)
+                        <tr>
+                            <td class="small">{{ $tx->created_at->format('M d, Y') }}</td>
+                            <td class="small text-muted">{{ str_replace('_', ' ', $tx->type) }}</td>
+                            <td class="fw-semibold @if($tx->amount < 0) text-danger @else text-success @endif">
+                                {{ $tx->amount < 0 ? '−' : '+' }}₹{{ number_format(abs($tx->amount), 2) }}
+                            </td>
+                            <td class="small text-muted">{{ $tx->description }}</td>
                         </tr>
                     @endforeach
                 </tbody>
