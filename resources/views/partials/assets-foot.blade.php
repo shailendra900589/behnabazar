@@ -1,6 +1,10 @@
-{{-- Self-hosted JS (no Vite/npm, no CDN) --}}
-<script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
-<script src="{{ asset('vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('vendor/nprogress/nprogress.min.js') }}"></script>
-<script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
-<script src="{{ asset('js/app.js') }}?v=2"></script>
+@php
+    $bbJs = \App\Support\BbAsset::url('js/behnabazar.min.js');
+    $bbJquery = \App\Support\BbAsset::url('vendor/jquery/jquery.min.js');
+    $bbSwal = \App\Support\BbAsset::url('vendor/sweetalert2/sweetalert2.all.min.js');
+    $bbExtras = \App\Support\BbAsset::url('js/site-extras.js');
+@endphp
+<script src="{{ $bbJquery }}"></script>
+<script src="{{ $bbSwal }}"></script>
+<script src="{{ $bbJs }}?v=3"></script>
+<script src="{{ $bbExtras }}?v=3"></script>

@@ -25,13 +25,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if ($this->app->environment('production')) {
-            URL::forceScheme('https');
-        }
-
-        $appUrl = config('app.url');
-        if ($appUrl) {
-            URL::forceRootUrl(rtrim($appUrl, '/'));
+        if (! $this->app->runningInConsole()) {
+            $request = $this->app->make('request');
+            if ($request) {
+                $root = rtrim($request->getSchemeAndHttpHost().$request->getBasePath(), '/');
+                if ($root !== '') {
+                    URL::forceRootUrl($root);
+                }
+                if ($request->secure() || $request->header('X-Forwarded-Proto') === 'https') {
+                    URL::forceScheme('https');
+                }
+            }
         }
 
         Paginator::useBootstrapFive();
