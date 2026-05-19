@@ -6,26 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Behna Bazar')</title>
     <link rel="icon" type="image/jpeg" href="{{ asset('images/brand/bb-mark.jpeg') }}">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
-    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" defer></script>
-    <style>
-        #nprogress .bar { background: var(--bb-bloom) !important; height: 3px !important; }
-        #nprogress .peg { box-shadow: 0 0 10px var(--bb-bloom), 0 0 5px var(--bb-bloom) !important; }
-        #nprogress .spinner-icon { border-top-color: var(--bb-bloom) !important; border-left-color: var(--bb-bloom) !important; }
-    </style>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @include('partials.assets-head')
 </head>
 <body>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof NProgress !== 'undefined') {
-            NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
-            NProgress.start();
-            window.addEventListener('load', function () { NProgress.done(); });
-        }
-    });
-</script>
 <div id="bb-toasts" class="toast-container position-fixed top-0 end-0 p-3"></div>
 @include('partials.header-marquee')
 <nav class="navbar navbar-expand-lg sticky-top bb-navbar bb-navbar-compact shadow-sm">
@@ -179,7 +162,7 @@
 @include('partials.site-video')
 <main class="bb-main">@yield('content')</main>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+@include('partials.assets-foot')
 <script>
     const Toast = Swal.mixin({
         toast: true,
