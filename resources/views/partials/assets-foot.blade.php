@@ -1,10 +1,12 @@
 @php
-    $bbJs = \App\Support\BbAsset::url('js/behnabazar.min.js');
     $bbJquery = \App\Support\BbAsset::url('vendor/jquery/jquery.min.js');
+    $bbNprogress = \App\Support\BbAsset::url('vendor/nprogress/nprogress.min.js');
     $bbSwal = \App\Support\BbAsset::url('vendor/sweetalert2/sweetalert2.all.min.js');
-    $bbExtras = \App\Support\BbAsset::url('js/site-extras.js');
+    $bbBootstrapJs = \App\Support\BbAsset::url('vendor/bootstrap/js/bootstrap.bundle.min.js');
+    $bbThemeJs = \App\Support\BbAsset::url('js/app.js');
 @endphp
 <script src="{{ $bbJquery }}"></script>
+<script src="{{ $bbNprogress }}"></script>
 <script src="{{ $bbSwal }}"></script>
-<script src="{{ $bbJs }}?v=3"></script>
-<script src="{{ $bbExtras }}?v=3"></script>
+<script src="{{ $bbBootstrapJs }}"></script>
+<script src="{{ $bbThemeJs }}"></script>

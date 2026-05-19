@@ -1,4 +1,4 @@
-/* Bootstrap & icons load via CDN in layouts/partials/assets-head.blade.php */
+/* Bootstrap + icons load via partials/assets-head.blade.php */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
@@ -1351,4 +1351,27 @@ h5, .h5 { font-size: 0.95rem; }
         margin-right: 0;
         max-width: 100%;
     }
+}
+
+/* Bootstrap Icons — reliable glyphs on buttons, nav, cards, trust badges */
+.bi::before,
+[class*=" bi-"]::before,
+[class^="bi-"]::before {
+    font-family: bootstrap-icons !important;
+    font-style: normal;
+    font-weight: 400 !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -0.125em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.marketplace-category-grid i.bi,
+.bb-category-chip i.bi,
+.btn i.bi,
+.nav-link i.bi {
+    display: inline-block;
+    font-size: 1.15rem;
 }

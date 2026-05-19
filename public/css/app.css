@@ -1,4 +1,4 @@
-﻿/* Bootstrap & icons load via CDN in layouts/partials/assets-head.blade.php */
+/* Bootstrap + icons load via partials/assets-head.blade.php */
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
@@ -313,7 +313,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     }
 }
 
-/* â”€â”€ Back-to-Top Button â”€â”€ */
+/* ── Back-to-Top Button ── */
 .back-to-top {
     position: fixed;
     bottom: 2rem;
@@ -346,7 +346,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     box-shadow: 0 15px 35px rgba(79, 70, 229, 0.5);
 }
 
-/* â”€â”€ Scroll Reveal Animation â”€â”€ */
+/* ── Scroll Reveal Animation ── */
 .reveal {
     opacity: 0;
     transform: translateY(40px);
@@ -357,7 +357,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     transform: translateY(0);
 }
 
-/* â”€â”€ Sticky Product Add-to-Cart Bar â”€â”€ */
+/* ── Sticky Product Add-to-Cart Bar ── */
 .sticky-product-bar {
     position: fixed;
     bottom: 0;
@@ -375,7 +375,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 }
 .sticky-product-bar.visible { transform: translateY(0); }
 
-/* â”€â”€ Utility: border-bloom â”€â”€ */
+/* ── Utility: border-bloom ── */
 .border-bloom { border-color: var(--bb-primary-dark) !important; }
 
 /* Multipurpose marketplace home */
@@ -541,7 +541,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     }
 }
 
-/* Category filter chips â€” horizontal scroll on mobile */
+/* Category filter chips — horizontal scroll on mobile */
 .bb-category-rail {
     max-width: 100%;
     overflow: hidden;
@@ -942,7 +942,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     }
 }
 
-/* â”€â”€ Recently Viewed Horizontal Scroller â”€â”€ */
+/* ── Recently Viewed Horizontal Scroller ── */
 .horizontal-scroller {
     display: flex;
     overflow-x: auto;
@@ -957,7 +957,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 .horizontal-scroller::-webkit-scrollbar-track { background: transparent; }
 .horizontal-scroller::-webkit-scrollbar-thumb { background: var(--bb-primary); border-radius: 10px; }
 
-/* â”€â”€ Trust badges row â”€â”€ */
+/* ── Trust badges row ── */
 .trust-badge {
     display: flex;
     align-items: center;
@@ -989,7 +989,7 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     @page { margin: 0.5cm; }
 }
 
-/* â€”â€” Compact professional typography (site-wide) â€”â€” */
+/* —— Compact professional typography (site-wide) —— */
 html { font-size: 14px; }
 @media (min-width: 992px) { html { font-size: 14.5px; } }
 
@@ -1007,7 +1007,7 @@ h5, .h5 { font-size: 0.95rem; }
 .btn { font-size: 0.875rem; }
 .btn-lg { font-size: 0.9375rem; padding: 0.5rem 1rem; }
 
-/* â€”â€” Slim header â€”â€” */
+/* —— Slim header —— */
 .bb-navbar-compact { padding-top: 0.35rem; padding-bottom: 0.35rem; }
 .bb-navbar-compact .container { --bs-navbar-padding-y: 0; }
 .bb-logo-nav { width: 118px; height: 38px; }
@@ -1023,7 +1023,7 @@ h5, .h5 { font-size: 0.95rem; }
 .bb-nav-links .dropdown-menu { font-size: 0.8125rem; }
 .bb-navbar-compact .navbar-brand { margin-right: 0.75rem !important; }
 
-/* â€”â€” Fixed news-style marquee â€”â€” */
+/* —— Fixed news-style marquee —— */
 .bb-marquee-bar {
     position: sticky;
     top: 0;
@@ -1063,7 +1063,7 @@ h5, .h5 { font-size: 0.95rem; }
 /* Navbar below marquee */
 .bb-marquee-bar + .bb-navbar-compact { top: 0; z-index: 1030; }
 
-/* â€”â€” Fixed autoplay video widget â€”â€” */
+/* —— Fixed autoplay video widget —— */
 .bb-site-video {
     position: fixed;
     right: max(12px, env(safe-area-inset-right, 0px));
@@ -1115,7 +1115,7 @@ h5, .h5 { font-size: 0.95rem; }
     overflow-x: clip;
 }
 
-/* â€”â€” Site footer â€”â€” */
+/* —— Site footer —— */
 .bb-footer {
     background: linear-gradient(180deg, #0f172a 0%, #0b1220 100%);
     color: #e2e8f0;
@@ -1351,4 +1351,27 @@ h5, .h5 { font-size: 0.95rem; }
         margin-right: 0;
         max-width: 100%;
     }
+}
+
+/* Bootstrap Icons — reliable glyphs on buttons, nav, cards, trust badges */
+.bi::before,
+[class*=" bi-"]::before,
+[class^="bi-"]::before {
+    font-family: bootstrap-icons !important;
+    font-style: normal;
+    font-weight: 400 !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: -0.125em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.marketplace-category-grid i.bi,
+.bb-category-chip i.bi,
+.btn i.bi,
+.nav-link i.bi {
+    display: inline-block;
+    font-size: 1.15rem;
 }

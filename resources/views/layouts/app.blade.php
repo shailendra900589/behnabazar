@@ -4,8 +4,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Behna Bazar')</title>
-    <link rel="icon" type="image/jpeg" href="{{ asset('images/brand/bb-mark.jpeg') }}">
+    <meta name="description" content="@yield('meta_description', 'Behna Bazar — grocery, fashion, electronics, home, beauty, and verified local sellers in one trusted marketplace.')">
+    <meta name="application-name" content="{{ config('app.name', 'Behna Bazar') }}">
+    <meta name="theme-color" content="#4f46e5">
+    <title>@yield('title', config('app.name', 'Behna Bazar'))</title>
+    <link rel="icon" type="image/jpeg" href="{{ \App\Support\BbAsset::url('images/brand/bb-mark.jpeg') }}">
     @include('partials.assets-head')
 </head>
 <body>

@@ -19,7 +19,13 @@ class BbAsset
 
         $request = Request::instance();
         $root = rtrim($request->getSchemeAndHttpHost().$request->getBasePath(), '/');
+        $url = $root.'/'.$path;
 
-        return $root.'/'.$path;
+        $fullPath = public_path($path);
+        if (is_file($fullPath)) {
+            $url .= '?v='.filemtime($fullPath);
+        }
+
+        return $url;
     }
 }
