@@ -257,11 +257,13 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="tab-ship" role="tabpanel">
-                    <ul class="mb-0 ps-3 text-muted">
+                    <ul class="mb-3 ps-3 text-muted">
                         <li class="mb-2">Local delivery partners update status at every milestone.</li>
                         <li class="mb-2">Typical dispatch within 1–2 business days after payment confirmation.</li>
                         <li>Report issues within 48 hours of delivery for the fastest resolution.</li>
                     </ul>
+                    <a href="{{ route('local-delivery') }}" class="small fw-semibold text-bloom text-decoration-none me-3">Local delivery details <i class="bi bi-arrow-right"></i></a>
+                    <a href="{{ route('returns-policy') }}" class="small fw-semibold text-bloom text-decoration-none">Returns policy <i class="bi bi-arrow-right"></i></a>
                 </div>
                 <div class="tab-pane fade" id="tab-qa" role="tabpanel">
                     @auth

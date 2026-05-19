@@ -128,15 +128,7 @@
     </div>
 
     @if ($categories->isNotEmpty())
-        <div class="d-flex gap-2 overflow-auto mb-4 pb-2">
-            <a class="btn btn-soft rounded-pill {{ ! request('cat') ? 'active' : '' }}" href="{{ route('home', $filterQs) }}">All</a>
-            @foreach ($categories as $cat)
-                <a class="btn btn-light border rounded-pill {{ request('cat') === $cat->slug ? 'active' : '' }}" href="{{ route('home', array_merge($filterQs, ['cat' => $cat->slug])) }}">
-                    <i class="bi {{ $cat->icon }} me-1"></i>{{ $cat->name }}
-                </a>
-            @endforeach
-        </div>
-        </div>
+        @include('partials.category-chips', ['categories' => $categories, 'filterQs' => $filterQs])
     @endif
 
     @if (isset($flashDeal) && $flashDeal)

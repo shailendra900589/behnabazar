@@ -21,6 +21,17 @@ class ExampleTest extends TestCase
         $response->assertSee('Behna Bazar');
     }
 
+    public function test_support_info_pages_are_accessible(): void
+    {
+        $this->get(route('local-delivery'))
+            ->assertOk()
+            ->assertSee('Local Delivery');
+
+        $this->get(route('returns-policy'))
+            ->assertOk()
+            ->assertSee('Returns & Refunds');
+    }
+
     public function test_a_customer_can_add_a_product_to_the_cart(): void
     {
         $this->seed();

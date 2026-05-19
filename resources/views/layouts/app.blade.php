@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -27,19 +27,20 @@
     });
 </script>
 <div id="bb-toasts" class="toast-container position-fixed top-0 end-0 p-3"></div>
-<nav class="navbar navbar-expand-lg sticky-top bb-navbar py-3 shadow-sm">
+@include('partials.header-marquee')
+<nav class="navbar navbar-expand-lg sticky-top bb-navbar bb-navbar-compact shadow-sm">
     <div class="container">
         <a class="navbar-brand bb-logo-link me-4" href="{{ route('home') }}" aria-label="Behna Bazar home">
             <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="Behna Bazar" class="bb-logo bb-logo-nav">
         </a>
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-            <i class="bi bi-list fs-1 text-dark"></i>
+            <i class="bi bi-list fs-4 text-dark"></i>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
             <form class="d-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 position-relative" style="max-width: 500px" action="{{ route('home') }}">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-4"><i class="bi bi-search text-muted"></i></span>
-                    <input class="form-control bg-light border-start-0 rounded-end-pill py-2" id="liveSearchInput" name="search" autocomplete="off" value="{{ request('search') }}" placeholder="Search local products, brands...">
+                    <input class="form-control bg-light border-start-0 rounded-end-pill bb-search-input" id="liveSearchInput" name="search" autocomplete="off" value="{{ request('search') }}" placeholder="Search products, brands...">
                 </div>
                 <div id="liveSearchResults" class="dropdown-menu w-100 shadow-lg border-0 rounded-4 mt-2 p-2 position-absolute" style="top: 100%; display: none;">
                     <!-- Results injected here -->
@@ -96,27 +97,27 @@
                     });
                 });
             </script>
-            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-3 fw-semibold">
-                <li class="nav-item"><a class="nav-link px-3" href="{{ route('home') }}">Shop</a></li>
+            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 bb-nav-links">
+                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Shop</a></li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">Categories</a>
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Categories</a>
                     <ul class="dropdown-menu shadow-sm border-0 rounded-4 mt-2">
                         @foreach($categories as $cat)
                             <li><a class="dropdown-item py-2" href="{{ route('home', ['cat' => $cat->slug]) }}"><i class="bi {{ $cat->icon }} me-2 text-muted"></i>{{ $cat->name }}</a></li>
                         @endforeach
                     </ul>
                 </li>
-                <li class="nav-item"><a class="nav-link px-3" href="{{ route('vendor.register.create') }}">Sell with us</a></li>
-                <li class="nav-item"><a class="nav-link px-3" href="{{ route('contact') }}">Contact</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('vendor.register.create') }}">Sell</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
                 @auth
-                    <li class="nav-item"><a class="nav-link px-3 position-relative" href="{{ route('wishlist') }}">
-                        <i class="bi bi-heart fs-5"></i>
+                    <li class="nav-item"><a class="nav-link position-relative" href="{{ route('wishlist') }}">
+                        <i class="bi bi-heart"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-danger border border-white" data-wishlist-count>{{ $wishlistCount ?? 0 }}</span>
                     </a></li>
                 @endauth
                 <li class="nav-item dropdown dropdown-cart">
-                    <a class="nav-link px-3 position-relative dropdown-toggle" href="{{ route('cart') }}" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-                        <i class="bi bi-bag fs-5"></i>
+                    <a class="nav-link position-relative dropdown-toggle" href="{{ route('cart') }}" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="bi bi-bag"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-dark border border-white" data-cart-count>{{ $cartCount ?? 0 }}</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-3" style="width: 320px;">
@@ -128,7 +129,7 @@
                                         <img src="{{ $item->product->imageUrl() }}" class="rounded-3 object-fit-cover" width="50" height="50">
                                         <div class="min-w-0 flex-grow-1">
                                             <div class="fw-semibold text-truncate small">{{ $item->product->title }}</div>
-                                            <div class="small text-muted">{{ $item->quantity }} x ₹{{ number_format($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price, 2) }}</div>
+                                            <div class="small text-muted">{{ $item->quantity }} x â‚¹{{ number_format($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price, 2) }}</div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -168,14 +169,15 @@
                         </ul>
                     </li>
                 @else
-                    <li class="nav-item ms-lg-2"><a class="btn btn-soft rounded-pill px-4" href="{{ route('login') }}">Sign In</a></li>
-                    <li class="nav-item"><a class="btn btn-bloom rounded-pill px-4" href="{{ route('register') }}">Join Now</a></li>
+                    <li class="nav-item ms-lg-1"><a class="btn btn-soft btn-sm rounded-pill px-3" href="{{ route('login') }}">Sign In</a></li>
+                    <li class="nav-item"><a class="btn btn-bloom btn-sm rounded-pill px-3" href="{{ route('register') }}">Join</a></li>
                 @endauth
             </ul>
         </div>
     </div>
 </nav>
-<main>@yield('content')</main>
+@include('partials.site-video')
+<main class="bb-main">@yield('content')</main>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 <script>
@@ -204,68 +206,7 @@
         Toast.fire({ icon: 'error', title: "{{ $errors->first() }}" });
     @endif
 </script>
-<footer class="mt-5" style="background: var(--bb-ink); color: #fff; padding-top: 5rem;">
-    <div class="container pb-5 border-bottom border-secondary border-opacity-25">
-        <div class="row g-5">
-            <div class="col-lg-5">
-                <a class="bb-logo-link d-inline-flex mb-3" href="{{ route('home') }}" aria-label="Behna Bazar home">
-                    <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="Behna Bazar" class="bb-logo bb-logo-footer">
-                </a>
-                <p class="text-white-50 lead mb-4" style="max-width: 400px;">A multipurpose marketplace for grocery, fashion, electronics, home goods, beauty, local sellers, customers, and teams.</p>
-                <div class="d-flex gap-3">
-                    <a href="https://x.com/behnabazar" target="_blank" rel="noopener" class="icon-btn text-white bg-white bg-opacity-10 border-0"><i class="bi bi-twitter-x"></i></a>
-                    <a href="https://www.instagram.com/behnabazar/" target="_blank" rel="noopener" class="icon-btn text-white bg-white bg-opacity-10 border-0"><i class="bi bi-instagram"></i></a>
-                    <a href="https://www.facebook.com/behnaBazar/" target="_blank" rel="noopener" class="icon-btn text-white bg-white bg-opacity-10 border-0"><i class="bi bi-facebook"></i></a>
-                    <a href="https://www.youtube.com/@behnaBazar" target="_blank" rel="noopener" class="icon-btn text-white bg-white bg-opacity-10 border-0"><i class="bi bi-youtube"></i></a>
-                </div>
-            </div>
-            <div class="col-md-4 col-lg-2 offset-lg-1">
-                <h6 class="text-uppercase fw-bold text-white-50 mb-4 tracking-wider">Shop</h6>
-                <div class="d-flex flex-column gap-3">
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('home') }}">All Products</a>
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('cart') }}">Cart</a>
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('wishlist') }}">Wishlist</a>
-                </div>
-            </div>
-            <div class="col-md-4 col-lg-2">
-                <h6 class="text-uppercase fw-bold text-white-50 mb-4 tracking-wider">Account</h6>
-                <div class="d-flex flex-column gap-3">
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('dashboard') }}">Dashboard</a>
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('orders') }}">Orders</a>
-                    <a class="text-white text-decoration-none opacity-75 opacity-100-hover" href="{{ route('profile') }}">Profile</a>
-                </div>
-            </div>
-            <div class="col-md-4 col-lg-2">
-                <h6 class="text-uppercase fw-bold text-white-50 mb-4 tracking-wider">Support</h6>
-                <div class="d-flex flex-column gap-3">
-                    <span class="text-white opacity-75">support@behnabazar.in</span>
-                    <span class="text-white opacity-75">Local delivery</span>
-                    <span class="text-white opacity-75">Returns policy</span>
-                </div>
-            </div>
-            <div class="col-lg-3 mt-4 mt-lg-0">
-                <h6 class="text-uppercase fw-bold text-white-50 mb-4 tracking-wider">Newsletter</h6>
-                <p class="text-white opacity-75 small mb-3">Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.</p>
-                <form data-ajax-form action="{{ route('newsletter.subscribe') }}" method="post" class="d-flex gap-2">
-                    @csrf
-                    <div class="input-group">
-                        <input type="email" name="email" class="form-control bg-dark border-secondary text-white" placeholder="Enter your email" required>
-                        <button type="submit" class="btn btn-bloom"><i class="bi bi-envelope"></i></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="container py-4 text-center text-white-50 small">
-        <p class="mb-1">&copy; {{ date('Y') }} Behna Bazar. All rights reserved.</p>
-        <p class="mb-0">
-            Developed by
-            <a href="https://www.nectradigital.com" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none fw-semibold opacity-75 opacity-100-hover">
-                Nectra Digital
-            </a>
-        </p>
-    </div>
-</footer>
+@include('partials.footer')
 
 <!-- Back to Top Button -->
 <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">

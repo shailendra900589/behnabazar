@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\ProductPromotionMail;
 use App\Models\Ad;
+use App\Support\SiteMedia;
 use App\Models\Newsletter;
 use App\Models\AdWalletTransaction;
 use App\Models\Banner;
@@ -332,7 +333,41 @@ class DashboardController extends Controller
         foreach ($request->input('settings', []) as $key => $value) {
             Setting::updateOrCreate(['setting_key' => $key], ['setting_value' => $value]);
         }
+
+        SiteMedia::flushCache();
+
         return back()->with('status', 'Settings updated.');
+    }
+
+    public function saveSiteDisplay(Request $request): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        $data = $request->validate([
+            'header_marquee_text' => ['nullable', 'string', 'max:500'],
+            'header_marquee_link' => ['nullable', 'string', 'max:500'],
+            'site_video_type' => ['required', 'in:youtube,iframe'],
+            'site_video_url' => ['nullable', 'string', 'max:500'],
+            'site_video_embed' => ['nullable', 'string', 'max:8000'],
+        ]);
+
+        $settings = [
+            'header_marquee_enabled' => $request->boolean('header_marquee_enabled') ? '1' : '0',
+            'header_marquee_text' => $data['header_marquee_text'] ?? '',
+            'header_marquee_link' => $data['header_marquee_link'] ?? '',
+            'site_video_enabled' => $request->boolean('site_video_enabled') ? '1' : '0',
+            'site_video_type' => $data['site_video_type'],
+            'site_video_url' => $data['site_video_url'] ?? '',
+            'site_video_embed' => $data['site_video_embed'] ?? '',
+        ];
+
+        foreach ($settings as $key => $value) {
+            Setting::updateOrCreate(['setting_key' => $key], ['setting_value' => $value]);
+        }
+
+        SiteMedia::flushCache();
+
+        return back()->with('status', 'Header marquee and site video updated.');
     }
 
     public function approveVendor(User $user): RedirectResponse

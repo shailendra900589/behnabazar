@@ -59,6 +59,17 @@ document.addEventListener('submit', async (event) => {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const videoWrap = document.getElementById('bbSiteVideo');
+    const videoToggle = document.getElementById('bbSiteVideoToggle');
+    videoToggle?.addEventListener('click', () => {
+        videoWrap?.classList.toggle('is-minimized');
+        const minimized = videoWrap?.classList.contains('is-minimized');
+        videoToggle.setAttribute('aria-label', minimized ? 'Expand video' : 'Minimize video');
+        videoToggle.innerHTML = minimized ? '<i class="bi bi-chevron-up"></i>' : '<i class="bi bi-dash-lg"></i>';
+    });
+});
+
 document.addEventListener('click', async (event) => {
     const btn = event.target.closest('[data-wishlist-toggle]');
     if (!btn) return;

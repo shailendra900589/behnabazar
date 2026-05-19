@@ -448,6 +448,7 @@
         @endif
         @if (($adminSection ?? '') === 'storefront')
         <div class="admin-section" id="tab-storefront">
+        @include('dashboards.partials.site-display-admin')
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bb-card p-4">

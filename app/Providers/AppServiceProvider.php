@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\CartItem;
+use App\Support\SiteMedia;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
@@ -41,7 +42,9 @@ class AppServiceProvider extends ServiceProvider
             $cartItemsPreview = (clone $cartQuery)->with(['product', 'variant'])->latest()->take(3)->get();
             $categories = \App\Models\Category::forNavigation();
 
-            $view->with(compact('cartCount', 'wishlistCount', 'categories', 'cartItemsPreview'));
+            $siteDisplay = SiteMedia::config();
+
+            $view->with(compact('cartCount', 'wishlistCount', 'categories', 'cartItemsPreview', 'siteDisplay'));
         });
     }
 }

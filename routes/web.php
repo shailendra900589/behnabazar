@@ -20,6 +20,8 @@ Route::get('/product/{product:slug}', [StorefrontController::class, 'product'])-
 Route::post('/product/{product:slug}/review', [StorefrontController::class, 'postReview'])->name('product.review')->middleware('auth');
 Route::post('/product/{product:slug}/question', [StorefrontController::class, 'postQuestion'])->name('product.question')->middleware('auth');
 Route::view('/contact', 'store.contact')->name('contact');
+Route::view('/local-delivery', 'store.local-delivery')->name('local-delivery');
+Route::view('/returns-policy', 'store.returns-policy')->name('returns-policy');
 Route::redirect('/shops', '/');
 Route::get('/shop/{vendor}', [StorefrontController::class, 'vendorShop'])->name('vendor.shop');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
@@ -86,6 +88,9 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::patch('/coupons/{coupon}/toggle', [DashboardController::class, 'toggleCoupon'])->name('coupons.toggle');
         Route::delete('/coupons/{coupon}', [DashboardController::class, 'deleteCoupon'])->name('coupons.delete');
         Route::post('/settings', [DashboardController::class, 'saveSettings'])->name('settings.save');
+        Route::post('/site-display', [DashboardController::class, 'saveSiteDisplay'])
+            ->middleware('admin')
+            ->name('site-display.save');
         Route::post('/vendors/{user}/approve', [DashboardController::class, 'approveVendor'])->name('vendors.approve');
         Route::post('/vendors/{user}/reject', [DashboardController::class, 'rejectVendor'])->name('vendors.reject');
         Route::delete('/vendors/{user}', [DashboardController::class, 'deleteVendor'])->name('vendors.delete');
