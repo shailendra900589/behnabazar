@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="app-base-url" content="{{ url('/') }}">
     <meta name="description" content="@yield('meta_description', 'Behna Bazar — grocery, fashion, electronics, home, beauty, and verified local sellers in one trusted marketplace.')">
     <meta name="application-name" content="{{ config('app.name', 'Behna Bazar') }}">
     <meta name="theme-color" content="#4f46e5">

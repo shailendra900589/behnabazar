@@ -72,6 +72,9 @@
                                 <i class="bi bi-shop me-2"></i>Storefront
                             </a>
                             <a class="nav-link rounded-3" href="{{ route('orders') }}"><i class="bi bi-receipt me-2"></i>Orders</a>
+                            @if ($u->role === 'vendor' && $u->account_status === 'active')
+                                <a class="nav-link rounded-3" href="{{ route('manage.resell.catalog') }}"><i class="bi bi-arrow-left-right me-2"></i>Resell catalog</a>
+                            @endif
                             <a class="nav-link rounded-3" href="{{ route('profile') }}"><i class="bi bi-person me-2"></i>Profile</a>
                         @endif
                     @endauth

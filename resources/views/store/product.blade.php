@@ -47,13 +47,12 @@
                 });
             </script>
             
+            @if(isset($ads))
+                @include('partials.ad-slot', ['slot' => 'product_top', 'ads' => $ads, 'class' => 'mb-3'])
+            @endif
+
             <div class="d-flex gap-2 overflow-auto pb-2">
-                @php
-                    $images = [$product->imageUrl()];
-                    if ($product->image2) $images[] = str_starts_with($product->image2, 'http') ? $product->image2 : asset('storage/'.$product->image2);
-                    if ($product->image3) $images[] = str_starts_with($product->image3, 'http') ? $product->image3 : asset('storage/'.$product->image3);
-                    if ($product->image4) $images[] = str_starts_with($product->image4, 'http') ? $product->image4 : asset('storage/'.$product->image4);
-                @endphp
+                @php($images = $product->galleryUrls())
                 @if (count($images) > 1)
                     @foreach ($images as $idx => $imgUrl)
                         <img src="{{ $imgUrl }}" class="rounded-3 border cursor-pointer product-thumb {{ $idx === 0 ? 'border-bloom border-2' : '' }}" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('mainProductImage').src=this.src; document.querySelectorAll('.product-thumb').forEach(t => { t.classList.remove('border-bloom','border-2'); t.style.opacity='0.7'; }); this.classList.add('border-bloom','border-2'); this.style.opacity='1';" onmouseover="this.style.opacity='1'" onmouseout="if(!this.classList.contains('border-bloom')) this.style.opacity='0.7'" alt="View {{ $idx + 1 }}">
@@ -78,6 +77,12 @@
                 <span class="display-6 fw-bold text-bloom" id="productPriceDisplay">₹{{ number_format($product->price, 2) }}</span>
                 <span class="small text-muted">Inclusive of handling</span>
             </div>
+            @if($product->isResellListing())
+                <p class="small text-info mb-2"><i class="bi bi-truck me-1"></i>Fulfilled by source vendor — safe checkout via Behna Bazar.</p>
+            @endif
+            @if(isset($ads))
+                @include('partials.ad-slot', ['slot' => 'product_mid', 'ads' => $ads, 'class' => 'mb-3'])
+            @endif
             
             <div class="mb-4 d-flex align-items-center gap-2 text-muted small">
                 <i class="bi bi-eye text-primary"></i> 

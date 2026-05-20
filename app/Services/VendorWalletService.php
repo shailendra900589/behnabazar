@@ -24,27 +24,87 @@ class VendorWalletService
 
     public function creditSale(Order $order): void
     {
-        $product = Product::find($order->product_id);
-        if (! $product?->vendor_id) {
+        $product = Product::with('sourceProduct')->find($order->product_id);
+        if (! $product) {
             return;
         }
 
-        if (VendorWalletTransaction::where('order_id', $order->id)->where('type', 'credit_sale')->exists()) {
+        if (VendorWalletTransaction::where('order_id', $order->id)->exists()) {
+            return;
+        }
+
+        if ($product->isResellListing() && $product->sourceProduct) {
+            $this->creditResellSale($order, $product);
+
+            return;
+        }
+
+        if (! $product->vendor_id) {
             return;
         }
 
         DB::transaction(function () use ($order, $product) {
-            VendorWalletTransaction::create([
-                'vendor_id' => $product->vendor_id,
-                'amount' => $order->total_price,
-                'type' => 'credit_sale',
-                'status' => 'completed',
-                'order_id' => $order->id,
-                'description' => 'Sale delivered — order #'.$order->id,
-            ]);
-
-            User::whereKey($product->vendor_id)->increment('sales_wallet_balance', $order->total_price);
+            $this->addWalletCredit(
+                $product->vendor_id,
+                (float) $order->total_price,
+                'credit_sale',
+                $order->id,
+                'Sale delivered — order #'.$order->id,
+            );
         });
+    }
+
+    protected function creditResellSale(Order $order, Product $product): void
+    {
+        $sourceVendorId = $product->sourceProduct->vendor_id;
+        $listingVendorId = $product->vendor_id;
+
+        if (! $sourceVendorId) {
+            return;
+        }
+
+        $sourceAmount = (float) ($order->source_vendor_amount ?? $product->source_base_price ?? $product->sourceProduct->price);
+        $listingAmount = (float) ($order->listing_vendor_amount ?? max(0, $order->total_price - $sourceAmount));
+
+        DB::transaction(function () use ($order, $sourceVendorId, $listingVendorId, $sourceAmount, $listingAmount) {
+            if ($sourceAmount > 0) {
+                $this->addWalletCredit(
+                    $sourceVendorId,
+                    $sourceAmount,
+                    'credit_sale',
+                    $order->id,
+                    'Resell source payout — order #'.$order->id,
+                );
+            }
+
+            if ($listingVendorId && $listingAmount > 0) {
+                $this->addWalletCredit(
+                    $listingVendorId,
+                    $listingAmount,
+                    'credit_resell_margin',
+                    $order->id,
+                    'Resell margin — order #'.$order->id,
+                );
+            }
+        });
+    }
+
+    protected function addWalletCredit(int $vendorId, float $amount, string $type, int $orderId, string $description): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        VendorWalletTransaction::create([
+            'vendor_id' => $vendorId,
+            'amount' => $amount,
+            'type' => $type,
+            'status' => 'completed',
+            'order_id' => $orderId,
+            'description' => $description,
+        ]);
+
+        User::whereKey($vendorId)->increment('sales_wallet_balance', $amount);
     }
 
     public function creditReferral(ReferralReward $reward): void

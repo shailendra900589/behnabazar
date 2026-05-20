@@ -5,10 +5,53 @@
     'use strict';
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
-    let shareCache = null;
 
-    async function fetchPayload(slug) {
-        const res = await fetch('/product/' + encodeURIComponent(slug) + '/share', {
+    function baseUrl() {
+        const meta = document.querySelector('meta[name="app-base-url"]');
+        if (meta?.content) {
+            return meta.content.replace(/\/$/, '');
+        }
+        if (window.BB_BASE) {
+            return String(window.BB_BASE).replace(/\/$/, '');
+        }
+        return '';
+    }
+
+    function apiUrl(path) {
+        return baseUrl() + path;
+    }
+
+    function toast(msg, type) {
+        if (typeof window.bbToast === 'function') {
+            window.bbToast(msg, type || 'success');
+        } else {
+            alert(msg);
+        }
+    }
+
+    function dropdownRoot(el) {
+        return el?.closest('.bb-share-dropdown');
+    }
+
+    function slugFromDropdown(root) {
+        return root?.dataset?.productSlug
+            || root?.querySelector('[data-product-slug]')?.dataset?.productSlug;
+    }
+
+    function payloadUrl(root) {
+        return root?.dataset?.sharePayloadUrl || null;
+    }
+
+    function recordUrl(root) {
+        return root?.dataset?.shareRecordUrl || null;
+    }
+
+    async function fetchPayload(root) {
+        const url = payloadUrl(root);
+        if (!url) {
+            throw new Error('Missing share payload URL');
+        }
+        const res = await fetch(url, {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         });
         if (!res.ok) {
@@ -17,11 +60,12 @@
         return res.json();
     }
 
-    async function recordShare(slug, channel) {
-        if (!csrf) {
+    async function recordShare(root, channel) {
+        const url = recordUrl(root);
+        if (!url || !csrf) {
             return null;
         }
-        const res = await fetch('/product/' + encodeURIComponent(slug) + '/share', {
+        const res = await fetch(url, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': csrf,
@@ -37,41 +81,48 @@
         return res.json();
     }
 
-    function toast(msg, type) {
-        if (typeof window.bbToast === 'function') {
-            window.bbToast(msg, type || 'success');
-        } else {
-            alert(msg);
+    function bindLinks(root, payload) {
+        if (!payload?.links) {
+            return;
         }
-    }
-
-    function bindLinks(payload) {
-        document.querySelectorAll('.bb-share-link').forEach(function (link) {
+        root.querySelectorAll('.bb-share-link').forEach(function (link) {
             const channel = link.dataset.channel;
-            if (payload.links && payload.links[channel]) {
+            if (payload.links[channel]) {
                 link.href = payload.links[channel];
+                link.setAttribute('target', channel === 'email' || channel === 'sms' ? '_self' : '_blank');
+                link.setAttribute('rel', 'noopener noreferrer');
             }
         });
     }
 
-    async function getPayload(slug) {
-        if (shareCache && shareCache.slug === slug) {
-            return shareCache.data;
+    async function ensurePayload(root) {
+        if (root._bbSharePayload) {
+            return root._bbSharePayload;
         }
-        const data = await fetchPayload(slug);
-        shareCache = { slug: slug, data: data };
-        bindLinks(data);
+        const data = await fetchPayload(root);
+        root._bbSharePayload = data;
+        bindLinks(root, data);
         return data;
     }
+
+    document.addEventListener('show.bs.dropdown', function (e) {
+        const root = e.target.closest?.('.bb-share-dropdown') || (e.target.classList?.contains('bb-share-dropdown') ? e.target : null);
+        if (!root) {
+            return;
+        }
+        ensurePayload(root).catch(function () {
+            toast('Could not load share links. Check your connection.', 'warning');
+        });
+    });
 
     document.addEventListener('click', async function (e) {
         const nativeBtn = e.target.closest('.bb-share-native');
         if (nativeBtn) {
             e.preventDefault();
-            const slug = nativeBtn.dataset.productSlug;
+            const root = dropdownRoot(nativeBtn);
             try {
-                const recorded = await recordShare(slug, 'native');
-                const payload = recorded || await getPayload(slug);
+                const recorded = await recordShare(root, 'native');
+                const payload = recorded || await ensurePayload(root);
                 const url = payload.share_url || payload.url;
                 const shareData = {
                     title: payload.title || 'Behna Bazar',
@@ -96,10 +147,11 @@
         const copyBtn = e.target.closest('.bb-share-copy');
         if (copyBtn) {
             e.preventDefault();
-            const slug = copyBtn.dataset.productSlug;
+            const root = dropdownRoot(copyBtn);
             try {
-                const recorded = await recordShare(slug, 'copy');
-                const url = recorded?.share_url || (await getPayload(slug)).url;
+                const recorded = await recordShare(root, 'copy');
+                const payload = recorded || await ensurePayload(root);
+                const url = payload.share_url || payload.url;
                 await navigator.clipboard.writeText(url);
                 toast('Product link copied!');
             } catch (err) {
@@ -110,22 +162,27 @@
 
         const social = e.target.closest('.bb-share-link');
         if (social) {
-            const slug = social.closest('.bb-share-dropdown')?.querySelector('[data-product-slug]')?.dataset.productSlug;
-            if (slug) {
-                recordShare(slug, social.dataset.channel || 'social');
-                try {
-                    await getPayload(slug);
-                } catch (err) {
-                    /* links may still work from cache */
-                }
+            const root = dropdownRoot(social);
+            if (!root) {
+                return;
             }
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const first = document.querySelector('.bb-share-native[data-product-slug]');
-        if (first) {
-            getPayload(first.dataset.productSlug).catch(function () {});
+            const href = social.getAttribute('href');
+            if (!href || href === '#') {
+                e.preventDefault();
+                try {
+                    const payload = await ensurePayload(root);
+                    const channel = social.dataset.channel;
+                    if (payload.links?.[channel]) {
+                        social.href = payload.links[channel];
+                        window.open(payload.links[channel], '_blank', 'noopener,noreferrer');
+                    }
+                } catch (err) {
+                    toast('Could not open share link.', 'warning');
+                }
+                recordShare(root, social.dataset.channel || 'social');
+                return;
+            }
+            recordShare(root, social.dataset.channel || 'social');
         }
     });
 })();

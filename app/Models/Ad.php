@@ -17,6 +17,8 @@ class Ad extends Model
         'ad_type',
         'image_path',
         'link_url',
+        'video_url',
+        'autoplay',
         'code',
         'clicks',
         'sort_order',
@@ -28,6 +30,7 @@ class Ad extends Model
 
     protected $casts = [
         'status' => 'boolean',
+        'autoplay' => 'boolean',
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
     ];

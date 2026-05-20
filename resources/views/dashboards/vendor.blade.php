@@ -554,9 +554,9 @@
                         <input type="file" name="image" class="form-control" accept="image/*">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Additional Images (max 3)</label>
+                        <label class="form-label">Additional images (up to 9)</label>
                         <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
-                        <small class="text-muted">Left, right, up, down views</small>
+                        <small class="text-muted">Upload multiple angles — QC will review all photos before approval.</small>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>

@@ -251,8 +251,15 @@
         </div>
     </div>
     <div class="row g-4">
-        @forelse ($products as $product)
+        @forelse ($products as $index => $product)
             <div class="col-sm-6 col-lg-4 col-xl-3">@include('partials.product-card', ['product' => $product])</div>
+            @if ($index === 3)
+                <div class="col-12">@include('partials.ad-slot', ['slot' => 'home_grid_1', 'ads' => $ads, 'card' => true, 'class' => 'mb-2'])</div>
+            @elseif ($index === 7)
+                <div class="col-12">@include('partials.ad-slot', ['slot' => 'home_grid_2', 'ads' => $ads, 'card' => true])</div>
+            @elseif ($index === 11)
+                <div class="col-sm-6 col-lg-4 col-xl-3">@include('partials.ad-slot', ['slot' => 'home_grid_3', 'ads' => $ads, 'card' => true])</div>
+            @endif
         @empty
             <div class="col-12"><div class="bb-card p-5 text-center text-muted">No products found.</div></div>
         @endforelse

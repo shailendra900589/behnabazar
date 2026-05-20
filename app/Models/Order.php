@@ -11,12 +11,21 @@ class Order extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'product_id', 'product_name', 'quantity', 'variant_id', 'unit_price', 'total_price',
+        'user_id', 'product_id', 'fulfillment_vendor_id', 'listing_vendor_id',
+        'product_name', 'quantity', 'variant_id', 'unit_price', 'total_price',
+        'source_vendor_amount', 'listing_vendor_amount',
         'customer_name', 'phone', 'address', 'coupon_code', 'discount_amount', 'coin_discount', 'coins_earned',
-        'payment_method', 'status', 'tracking_msg', 'return_status', 'return_reason'
+        'payment_method', 'status', 'tracking_msg', 'return_status', 'return_reason',
     ];
 
-    protected $casts = ['unit_price' => 'decimal:2', 'total_price' => 'decimal:2', 'discount_amount' => 'decimal:2', 'coin_discount' => 'decimal:2'];
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'total_price' => 'decimal:2',
+        'source_vendor_amount' => 'decimal:2',
+        'listing_vendor_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'coin_discount' => 'decimal:2',
+    ];
 
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function product(): BelongsTo { return $this->belongsTo(Product::class); }

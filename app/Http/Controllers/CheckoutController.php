@@ -115,10 +115,25 @@ class CheckoutController extends Controller
                 $allocatedDisc += $lineDiscount;
                 $allocatedCoin += $lineCoin;
 
+                $product = $item->product->loadMissing('sourceProduct');
+                $sourceAmount = null;
+                $listingAmount = null;
+                $fulfillmentVendorId = $product->fulfillmentVendorId();
+                $listingVendorId = $product->vendor_id;
+
+                if ($product->isResellListing()) {
+                    $sourceAmount = (float) ($product->source_base_price ?? $product->sourceProduct?->price ?? 0);
+                    $listingAmount = max(0, $lineTotal - $sourceAmount);
+                }
+
                 Order::create([
                     'user_id' => Auth::id(),
                     'product_id' => $item->product_id,
                     'variant_id' => $item->variant_id,
+                    'fulfillment_vendor_id' => $fulfillmentVendorId,
+                    'listing_vendor_id' => $product->isResellListing() ? $listingVendorId : null,
+                    'source_vendor_amount' => $sourceAmount,
+                    'listing_vendor_amount' => $listingAmount,
                     'product_name' => $item->product->title . ($item->variant ? ' (' . trim($item->variant->color . ' ' . $item->variant->size) . ')' : ''),
                     'quantity' => $item->quantity,
                     'unit_price' => $unitPrice,

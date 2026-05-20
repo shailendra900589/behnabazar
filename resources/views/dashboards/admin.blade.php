@@ -496,16 +496,20 @@
                         <div class="col-md-6">
                             <label class="form-label">Placement</label>
                             <select class="form-select" name="location" required>
-                                <option value="home_top">Home top</option>
-                                <option value="home_mid">Home middle</option>
-                                <option value="home_bottom">Home bottom</option>
+                                @foreach (\App\Support\AdPlacements::all() as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Type</label>
                             <select name="ad_type" class="form-select">
-                                <option value="image">Image</option>
+                                <option value="image">Image banner</option>
+                                <option value="product_card">Product-style card</option>
+                                <option value="youtube">YouTube video</option>
+                                <option value="iframe">Iframe / embed URL</option>
                                 <option value="code">HTML code</option>
+                                <option value="html">Raw HTML block</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -523,6 +527,16 @@
                         <div class="col-12">
                             <label class="form-label">Link URL (image ads)</label>
                             <input class="form-control" name="link_url" placeholder="https://">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">YouTube / iframe URL</label>
+                            <input class="form-control" name="video_url" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="autoplay" value="1" id="adAutoplay">
+                                <label class="form-check-label" for="adAutoplay">Autoplay video (muted)</label>
+                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Image file</label>

@@ -1,5 +1,8 @@
 @php($shareProductSlug = $product->slug)
-<div class="dropdown bb-share-dropdown">
+<div class="dropdown bb-share-dropdown"
+     data-product-slug="{{ $shareProductSlug }}"
+     data-share-payload-url="{{ route('product.share.payload', $product) }}"
+     data-share-record-url="{{ auth()->check() ? route('product.share.record', $product) : '' }}">
     <button class="btn btn-soft btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Share product" id="bbShareToggle">
         <i class="bi bi-share"></i>
     </button>

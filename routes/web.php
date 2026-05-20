@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\VendorRegistrationController;
 use App\Http\Controllers\ReferralController;
+use App\Http\Controllers\ResellController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,7 @@ Route::get('/newsletter/unsubscribe', [StorefrontController::class, 'unsubscribe
 Route::get('/ads/{ad}/click', [StorefrontController::class, 'adClick'])->name('ads.click');
 Route::get('/product/{product:slug}', [StorefrontController::class, 'product'])->name('product.show');
 Route::get('/product/{product:slug}/share', [ReferralController::class, 'sharePayload'])->name('product.share.payload');
+Route::middleware('auth')->post('/product/{product:slug}/share', [ReferralController::class, 'recordShare'])->name('product.share.record');
 Route::post('/product/{product:slug}/review', [StorefrontController::class, 'postReview'])->name('product.review')->middleware('auth');
 Route::post('/product/{product:slug}/question', [StorefrontController::class, 'postQuestion'])->name('product.question')->middleware('auth');
 Route::view('/contact', 'store.contact')->name('contact');
@@ -71,7 +73,6 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
     Route::patch('/profile', [StorefrontController::class, 'updateProfile'])->name('profile.update');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
-    Route::post('/product/{product:slug}/share', [ReferralController::class, 'recordShare'])->name('product.share.record');
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
     Route::post('/checkout/payment-order', [CheckoutController::class, 'createPaymentOrder'])->name('checkout.payment-order');
     Route::post('/checkout', [CheckoutController::class, 'place'])->name('checkout.place');
@@ -104,6 +105,8 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::get('/leave-impersonation', [DashboardController::class, 'leaveImpersonation'])->name('vendors.leave_impersonation');
         Route::post('/qc-users', [DashboardController::class, 'createQcUser'])->name('qc-users.create');
         Route::post('/products', [DashboardController::class, 'saveProduct'])->name('products.save');
+        Route::get('/resell-catalog', [ResellController::class, 'catalog'])->name('resell.catalog');
+        Route::post('/resell', [ResellController::class, 'store'])->name('resell.store');
         Route::delete('/products/{product}', [DashboardController::class, 'deleteProduct'])->name('products.delete');
         Route::post('/banners', [DashboardController::class, 'saveBanner'])->name('banners.save');
         Route::delete('/banners/{banner}', [DashboardController::class, 'deleteBanner'])->name('banners.delete');

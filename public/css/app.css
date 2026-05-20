@@ -1375,3 +1375,36 @@ h5, .h5 { font-size: 0.95rem; }
     display: inline-block;
     font-size: 1.15rem;
 }
+
+/* Ads — product-card style & video embeds */
+.ad-slot-as-card .ad-card-product-style {
+    border-radius: var(--bb-radius, 1rem);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+}
+
+.ad-product-card {
+    display: block;
+    background: #fff;
+    border-radius: var(--bb-radius, 1rem);
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    height: 100%;
+}
+
+.ad-product-card-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
+
+.ad-youtube iframe,
+.ad-iframe-wrap iframe {
+    width: 100%;
+    border: 0;
+    border-radius: 0.75rem;
+}
+
+.bb-share-menu .bb-share-link[href="#"] {
+    opacity: 0.85;
+}

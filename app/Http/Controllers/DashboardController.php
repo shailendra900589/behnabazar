@@ -18,8 +18,10 @@ use App\Models\User;
 use App\Models\VendorWalletTransaction;
 use App\Services\ReferralProgramService;
 use App\Services\VendorWalletService;
+use App\Support\AdPlacements;
 use App\Support\ReferralSettings;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -207,7 +209,11 @@ class DashboardController extends Controller
         $this->requireRole('vendor');
         $products = Product::where('vendor_id', Auth::id())->latest()->get();
         $vendorProductIds = $products->pluck('id');
-        $orders = Order::whereIn('product_id', $vendorProductIds)->with('product', 'user')->latest()->get();
+        $orders = Order::where(function ($q) use ($vendorProductIds) {
+            $q->whereIn('product_id', $vendorProductIds)
+                ->orWhere('fulfillment_vendor_id', Auth::id())
+                ->orWhere('listing_vendor_id', Auth::id());
+        })->with('product', 'user')->latest()->get();
         
         $wallet = app(VendorWalletService::class);
         $availableBalance = $wallet->availableBalance(Auth::id());
@@ -303,7 +309,7 @@ class DashboardController extends Controller
         $this->requireRole(['qc_manager', 'qc_staff']);
 
         return view('dashboards.qc', [
-            'pending' => Product::with(['category', 'vendor'])->where('qc_status', 'pending')->oldest()->get(),
+            'pending' => Product::with(['category', 'vendor', 'images', 'sourceProduct'])->where('qc_status', 'pending')->oldest()->get(),
             'history' => Product::with(['category', 'vendor'])->where('qc_verified_by', Auth::id())->latest('qc_verified_at')->get(),
             'team' => User::whereIn('role', ['qc_manager', 'qc_staff'])->latest()->get(),
         ]);
@@ -462,26 +468,35 @@ class DashboardController extends Controller
             'price' => 'required|numeric|min:1',
             'description' => 'required|max:3000',
             'image' => 'nullable|image|max:4096',
+            'images' => 'nullable|array|max:9',
+            'images.*' => 'image|max:4096',
         ]);
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        if ($request->hasFile('images')) {
-            $extraImages = $request->file('images');
-            $imageColumns = ['image2', 'image3', 'image4'];
-            foreach ($extraImages as $index => $extraImage) {
-                if ($index < 3) {
-                    $data[$imageColumns[$index]] = $extraImage->store('products', 'public');
-                }
-            }
-        }
-
         $data['slug'] = Str::slug($data['title']).'-'.Str::random(5);
         $data['vendor_id'] = $role === 'vendor' ? Auth::id() : null;
         $data['qc_status'] = $role === 'admin' ? 'approved' : 'pending';
         $product = Product::create($data);
+
+        $sort = 0;
+        if (! empty($data['image'])) {
+            \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => $data['image'], 'sort_order' => $sort++]);
+        }
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $extraImage) {
+                if ($sort >= 10) {
+                    break;
+                }
+                $path = $extraImage->store('products', 'public');
+                \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => $path, 'sort_order' => $sort++]);
+                if ($sort === 1 && empty($data['image'])) {
+                    $product->update(['image' => $path]);
+                }
+            }
+        }
 
         if ($request->has('variants') && is_array($request->variants)) {
             foreach ($request->variants as $variant) {
@@ -506,7 +521,9 @@ class DashboardController extends Controller
         abort_unless(Auth::user()->isRole(['admin', 'vendor']), 403);
         if (Auth::user()->role === 'vendor') {
             abort_unless(Auth::user()->account_status === 'active', 403);
-            abort_unless($order->product->vendor_id === Auth::id(), 403);
+            $canManage = (int) $order->fulfillment_vendor_id === (int) Auth::id()
+                || ((int) $order->product?->vendor_id === (int) Auth::id() && ! $order->product?->isResellListing());
+            abort_unless($canManage, 403);
         }
 
         $data = $request->validate([
@@ -699,13 +716,15 @@ class DashboardController extends Controller
     {
         $this->requireRole('admin');
         $data = $request->validate([
-            'location' => ['required', 'string', 'max:100'],
-            'ad_type' => ['required', 'in:image,code'],
+            'location' => ['required', Rule::in(AdPlacements::keys())],
+            'ad_type' => ['required', 'in:image,code,youtube,iframe,product_card,html'],
             'title' => ['nullable', 'string', 'max:160'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'cta_text' => ['nullable', 'string', 'max:80'],
             'link_url' => ['nullable', 'string', 'max:500'],
-            'code' => ['nullable', 'string', 'max:8000'],
+            'video_url' => ['nullable', 'string', 'max:500'],
+            'autoplay' => ['nullable', 'boolean'],
+            'code' => ['nullable', 'string', 'max:12000'],
             'image' => ['nullable', 'image', 'max:4096'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
             'starts_at' => ['nullable', 'date'],
@@ -720,6 +739,8 @@ class DashboardController extends Controller
         $ad->subtitle = $data['subtitle'] ?? null;
         $ad->cta_text = $data['cta_text'] ?? null;
         $ad->link_url = $data['link_url'] ?? null;
+        $ad->video_url = $data['video_url'] ?? null;
+        $ad->autoplay = $request->boolean('autoplay');
         $ad->code = $data['code'] ?? null;
         $ad->sort_order = $data['sort_order'] ?? 0;
         $ad->starts_at = $data['starts_at'] ?? null;

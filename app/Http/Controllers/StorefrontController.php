@@ -136,8 +136,22 @@ class StorefrontController extends Controller
             session()->put('recently_viewed', array_slice($recent, 0, 8)); // Keep last 8
         }
 
+        $ads = Ad::with(['product', 'vendor'])
+            ->where('status', true)
+            ->where(function ($q) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', now());
+            })
+            ->orderBy('sort_order')
+            ->latest()
+            ->get()
+            ->groupBy('location');
+
         return view('store.product', [
-            'product' => $product->load(['category', 'vendor', 'reviews.user']),
+            'product' => $product->load(['category', 'vendor', 'reviews.user', 'images', 'sourceProduct']),
+            'ads' => $ads,
             'related' => Product::query()
                 ->where('qc_status', 'approved')
                 ->where('category_id', $product->category_id)
