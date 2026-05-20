@@ -93,6 +93,7 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::delete('/coupons/{coupon}', [DashboardController::class, 'deleteCoupon'])->name('coupons.delete');
         Route::post('/settings', [DashboardController::class, 'saveSettings'])->name('settings.save');
         Route::post('/referral-settings', [DashboardController::class, 'saveReferralSettings'])->name('referral-settings.save');
+        Route::post('/program-settings', [DashboardController::class, 'saveProgramSettings'])->name('program-settings.save');
         Route::post('/referral-rewards/{reward}/approve', [DashboardController::class, 'approveReferralReward'])->name('referral-rewards.approve');
         Route::post('/referral-rewards/{reward}/reject', [DashboardController::class, 'rejectReferralReward'])->name('referral-rewards.reject');
         Route::post('/site-display', [DashboardController::class, 'saveSiteDisplay'])
@@ -105,6 +106,7 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::get('/leave-impersonation', [DashboardController::class, 'leaveImpersonation'])->name('vendors.leave_impersonation');
         Route::post('/qc-users', [DashboardController::class, 'createQcUser'])->name('qc-users.create');
         Route::post('/products', [DashboardController::class, 'saveProduct'])->name('products.save');
+        Route::patch('/products/{product}', [DashboardController::class, 'updateProduct'])->name('products.update');
         Route::get('/resell-catalog', [ResellController::class, 'catalog'])->name('resell.catalog');
         Route::post('/resell', [ResellController::class, 'store'])->name('resell.store');
         Route::delete('/products/{product}', [DashboardController::class, 'deleteProduct'])->name('products.delete');

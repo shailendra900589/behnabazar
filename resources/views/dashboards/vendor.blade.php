@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 @section('title', 'Vendor Dashboard')
 @section('dashboard')
-@php($active = auth()->user()->account_status === 'active')
+@php($active = auth()->user()->account_status === 'active' || session()->has('impersonated_by'))
 
 @if (auth()->user()->account_status === 'pending_approval')
     <div class="alert alert-info rounded-4 border-0 shadow-sm mb-4">
@@ -127,7 +127,7 @@
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
         <div>
             <h3 class="h6 fw-bold mb-1">Sales wallet &amp; payouts</h3>
-            <p class="text-muted small mb-0">Delivered orders and approved referral bonuses credit your sales wallet. Claim to bank when balance is ₹500+.</p>
+            <p class="text-muted small mb-0">Delivered orders and approved referral bonuses credit your sales wallet. Claim to bank when balance is ₹{{ number_format($payoutMin ?? 500, 0) }}+.</p>
         </div>
         <div class="text-end">
             <span class="text-muted small d-block">Available for Payout</span>
@@ -135,12 +135,12 @@
         </div>
     </div>
     
-    @if ($availableBalance >= 500)
+    @if ($availableBalance >= ($payoutMin ?? 500))
         <form method="post" action="{{ route('manage.payouts.request') }}" class="d-flex flex-wrap gap-2 align-items-end mb-4 bg-light p-3 rounded-3">
             @csrf
             <div>
                 <label class="form-label small">Amount (₹)</label>
-                <input type="number" name="amount" min="500" max="{{ $availableBalance }}" value="{{ $availableBalance }}" class="form-control form-control-sm" required>
+                <input type="number" name="amount" min="{{ $payoutMin ?? 500 }}" max="{{ $availableBalance }}" value="{{ $availableBalance }}" class="form-control form-control-sm" required>
             </div>
             <div class="flex-grow-1">
                 <label class="form-label small">Bank Details (Account No, IFSC, Name)</label>
@@ -151,7 +151,7 @@
             </div>
         </form>
     @else
-        <div class="alert alert-soft small mb-4">You need at least ₹500 in delivered earnings to request a payout.</div>
+        <div class="alert alert-soft small mb-4">You need at least ₹{{ number_format($payoutMin ?? 500, 0) }} in delivered earnings to request a payout.</div>
     @endif
 
     @if($payouts->count() > 0)
@@ -425,11 +425,24 @@
                                 <td><span class="badge badge-soft">{{ $product->qc_status }}</span></td>
                                 @if ($active)
                                     <td class="text-end">
-                                        <form method="post" action="{{ route('manage.products.delete', $product) }}" class="d-inline" onsubmit="return confirm('Delete this draft/listing?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                        </form>
+                                        <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                            <button type="button" class="btn btn-soft btn-sm btn-edit-product"
+                                                data-bs-toggle="modal" data-bs-target="#productEditModal"
+                                                data-id="{{ $product->id }}"
+                                                data-title="{{ $product->title }}"
+                                                data-price="{{ $product->price }}"
+                                                data-category-id="{{ $product->category_id }}"
+                                                data-description="{{ e($product->description) }}"
+                                                data-qc-status="{{ $product->qc_status }}"
+                                                data-images='@json($product->images->map(fn($i) => ["id" => $i->id, "url" => $i->url()])->values())'>
+                                                Edit
+                                            </button>
+                                            <form method="post" action="{{ route('manage.products.delete', $product) }}" class="d-inline" onsubmit="return confirm('Delete this listing?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 @endif
                             </tr>
@@ -623,5 +636,7 @@
             variantCount++;
         }
     </script>
+
+    @include('partials.product-edit-modal', ['categories' => $categories])
 @endif
 @endsection

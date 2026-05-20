@@ -171,11 +171,24 @@
                                 <td>₹{{ number_format($product->price, 2) }}</td>
                                 <td><span class="badge badge-soft">{{ $product->qc_status }}</span></td>
                                 <td class="text-end">
-                                    <form method="post" action="{{ route('manage.products.delete', $product) }}" class="d-inline" onsubmit="return confirm('Delete this product?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
-                                    </form>
+                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        <button type="button" class="btn btn-soft btn-sm btn-edit-product"
+                                            data-bs-toggle="modal" data-bs-target="#productEditModal"
+                                            data-id="{{ $product->id }}"
+                                            data-title="{{ $product->title }}"
+                                            data-price="{{ $product->price }}"
+                                            data-category-id="{{ $product->category_id }}"
+                                            data-description="{{ e($product->description) }}"
+                                            data-qc-status="{{ $product->qc_status }}"
+                                            data-images='@json($product->images->map(fn($i) => ["id" => $i->id, "url" => $i->url()])->values())'>
+                                            Edit
+                                        </button>
+                                        <form method="post" action="{{ route('manage.products.delete', $product) }}" class="d-inline" onsubmit="return confirm('Delete this product?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -183,6 +196,7 @@
                 </table>
             </div>
         </div>
+        @include('partials.product-edit-modal', ['categories' => $categories])
         </div>
         @endif
         @if (($adminSection ?? '') === 'orders')
@@ -671,6 +685,9 @@
         @endif
         @if (($adminSection ?? '') === 'referrals')
             @include('dashboards.partials.admin-referrals')
+        @endif
+        @if (($adminSection ?? '') === 'program')
+            @include('dashboards.partials.admin-program-settings')
         @endif
         @if (($adminSection ?? '') === 'team')
         <div class="admin-section" id="tab-team">

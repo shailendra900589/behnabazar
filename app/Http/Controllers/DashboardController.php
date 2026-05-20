@@ -19,7 +19,9 @@ use App\Models\VendorWalletTransaction;
 use App\Services\ReferralProgramService;
 use App\Services\VendorWalletService;
 use App\Support\AdPlacements;
+use App\Support\MarketplaceSettings;
 use App\Support\ReferralSettings;
+use App\Models\ProductImage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
@@ -52,7 +54,7 @@ class DashboardController extends Controller
     {
         $this->requireRole('admin');
 
-        $allowed = ['overview', 'products', 'orders', 'vendors', 'payouts', 'returns', 'catalog', 'storefront', 'marketing', 'referrals', 'team'];
+        $allowed = ['overview', 'products', 'orders', 'vendors', 'payouts', 'returns', 'catalog', 'storefront', 'marketing', 'referrals', 'program', 'team'];
         $section = $request->query('section', 'overview');
         if (! in_array($section, $allowed, true)) {
             $section = 'overview';
@@ -60,7 +62,7 @@ class DashboardController extends Controller
 
         return view('dashboards.admin', [
             'adminSection' => $section,
-            'products' => Product::with(['category', 'vendor', 'qcOfficer'])->latest()->get(),
+            'products' => Product::with(['category', 'vendor', 'qcOfficer', 'images'])->latest()->get(),
             'orders' => Order::with(['user', 'product'])->latest()->get(),
             'recentOrders' => Order::with(['user', 'product'])->latest()->take(10)->get(),
             'topProducts' => Product::with(['category', 'vendor'])
@@ -207,7 +209,7 @@ class DashboardController extends Controller
     public function vendor(): View
     {
         $this->requireRole('vendor');
-        $products = Product::where('vendor_id', Auth::id())->latest()->get();
+        $products = Product::with(['category', 'images'])->where('vendor_id', Auth::id())->latest()->get();
         $vendorProductIds = $products->pluck('id');
         $orders = Order::where(function ($q) use ($vendorProductIds) {
             $q->whereIn('product_id', $vendorProductIds)
@@ -239,14 +241,17 @@ class DashboardController extends Controller
             'referralRewards' => ReferralReward::where('referrer_id', Auth::id())->latest()->take(10)->get(),
             'adRates' => $this->adRates(),
             'adWalletMinTopup' => (float) Setting::value('ad_wallet_min_topup', 50),
+            'payoutMin' => MarketplaceSettings::payoutMinAmount(),
         ]);
     }
 
     public function requestPayout(Request $request): RedirectResponse
     {
         $this->requireRole('vendor');
+        $minPayout = MarketplaceSettings::payoutMinAmount();
+
         $data = $request->validate([
-            'amount' => ['required', 'numeric', 'min:500'],
+            'amount' => ['required', 'numeric', 'min:'.$minPayout],
             'bank_details' => ['required', 'string', 'max:1000'],
         ]);
 
@@ -458,7 +463,7 @@ class DashboardController extends Controller
         $role = Auth::user()->role;
         abort_unless(in_array($role, ['admin', 'vendor'], true), 403);
 
-        if ($role === 'vendor' && Auth::user()->account_status !== 'active') {
+        if ($role === 'vendor' && ! $this->vendorCanManageShop()) {
             return back()->withErrors(['vendor' => 'Your shop is not active yet. Wait for admin approval.']);
         }
 
@@ -481,22 +486,7 @@ class DashboardController extends Controller
         $data['qc_status'] = $role === 'admin' ? 'approved' : 'pending';
         $product = Product::create($data);
 
-        $sort = 0;
-        if (! empty($data['image'])) {
-            \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => $data['image'], 'sort_order' => $sort++]);
-        }
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $extraImage) {
-                if ($sort >= 10) {
-                    break;
-                }
-                $path = $extraImage->store('products', 'public');
-                \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => $path, 'sort_order' => $sort++]);
-                if ($sort === 1 && empty($data['image'])) {
-                    $product->update(['image' => $path]);
-                }
-            }
-        }
+        $this->attachUploadedImages($product, $request, $data['image'] ?? null);
 
         if ($request->has('variants') && is_array($request->variants)) {
             foreach ($request->variants as $variant) {
@@ -516,11 +506,85 @@ class DashboardController extends Controller
         return back()->with('status', 'Product saved.');
     }
 
+    public function updateProduct(Request $request, Product $product): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless(in_array($user->role, ['admin', 'vendor'], true), 403);
+        $this->authorizeProductAccess($product);
+
+        $wasApproved = $product->qc_status === 'approved';
+
+        $rules = [
+            'title' => 'required|max:255',
+            'category_id' => 'required|exists:categories,id',
+            'price' => 'required|numeric|min:1',
+            'description' => 'required|max:3000',
+            'image' => 'nullable|image|max:4096',
+            'images' => 'nullable|array|max:9',
+            'images.*' => 'image|max:4096',
+            'remove_image_ids' => 'nullable|array',
+            'remove_image_ids.*' => 'integer|exists:product_images,id',
+        ];
+
+        if ($product->isResellListing()) {
+            $rules['price'] = 'required|numeric|min:'.max(1, (float) $product->source_base_price);
+        }
+
+        $data = $request->validate($rules);
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product->update([
+            'title' => $data['title'],
+            'category_id' => $data['category_id'],
+            'price' => $data['price'],
+            'description' => $data['description'],
+            'image' => $data['image'] ?? $product->image,
+        ]);
+
+        if ($request->filled('remove_image_ids')) {
+            $toRemove = ProductImage::where('product_id', $product->id)
+                ->whereIn('id', $request->input('remove_image_ids'))
+                ->get();
+            foreach ($toRemove as $img) {
+                if ($img->path && ! str_starts_with($img->path, 'http')) {
+                    Storage::disk('public')->delete($img->path);
+                }
+                $img->delete();
+            }
+            if ($product->image && $toRemove->pluck('path')->contains($product->image)) {
+                $first = $product->images()->orderBy('sort_order')->first();
+                $product->update(['image' => $first?->path]);
+            }
+        }
+
+        $this->attachUploadedImages($product, $request, $data['image'] ?? null);
+
+        if ($wasApproved && MarketplaceSettings::editRequiresQc()) {
+            $product->update([
+                'qc_status' => 'pending',
+                'qc_verified_by' => null,
+                'qc_verified_at' => null,
+                'reject_reason' => null,
+            ]);
+        }
+
+        $this->clearStorefrontCaches();
+
+        $message = ($wasApproved && MarketplaceSettings::editRequiresQc())
+            ? 'Product updated and sent to QC for re-verification.'
+            : 'Product updated.';
+
+        return back()->with('status', $message);
+    }
+
     public function updateOrder(Request $request, Order $order): JsonResponse|RedirectResponse
     {
         abort_unless(Auth::user()->isRole(['admin', 'vendor']), 403);
         if (Auth::user()->role === 'vendor') {
-            abort_unless(Auth::user()->account_status === 'active', 403);
+            abort_unless($this->vendorCanManageShop(), 403);
             $canManage = (int) $order->fulfillment_vendor_id === (int) Auth::id()
                 || ((int) $order->product?->vendor_id === (int) Auth::id() && ! $order->product?->isResellListing());
             abort_unless($canManage, 403);
@@ -632,6 +696,53 @@ class DashboardController extends Controller
         return redirect()->route('dashboard', ['section' => 'referrals'])->with('status', 'Referral reward rejected.');
     }
 
+    public function saveProgramSettings(Request $request): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        $data = $request->validate([
+            'resell_program_enabled' => ['nullable'],
+            'resell_customize_fee' => ['nullable', 'numeric', 'min:0'],
+            'vendor_registration_amount' => ['nullable', 'numeric', 'min:0'],
+            'payout_min_amount' => ['nullable', 'numeric', 'min:1'],
+            'ad_wallet_min_topup' => ['nullable', 'numeric', 'min:1'],
+            'product_edit_requires_qc' => ['nullable'],
+        ]);
+
+        if ($request->has('resell_program_enabled')) {
+            Setting::updateOrCreate(['setting_key' => 'resell_program_enabled'], [
+                'setting_value' => $request->boolean('resell_program_enabled') ? '1' : '0',
+            ]);
+        }
+        if ($request->has('resell_customize_fee')) {
+            Setting::updateOrCreate(['setting_key' => 'resell_customize_fee'], [
+                'setting_value' => (string) $data['resell_customize_fee'],
+            ]);
+        }
+        if ($request->has('vendor_registration_amount')) {
+            Setting::updateOrCreate(['setting_key' => 'vendor_registration_amount'], [
+                'setting_value' => (string) $data['vendor_registration_amount'],
+            ]);
+        }
+        if ($request->has('payout_min_amount')) {
+            Setting::updateOrCreate(['setting_key' => 'payout_min_amount'], [
+                'setting_value' => (string) $data['payout_min_amount'],
+            ]);
+        }
+        if ($request->has('ad_wallet_min_topup')) {
+            Setting::updateOrCreate(['setting_key' => 'ad_wallet_min_topup'], [
+                'setting_value' => (string) $data['ad_wallet_min_topup'],
+            ]);
+        }
+        if ($request->has('product_edit_requires_qc')) {
+            Setting::updateOrCreate(['setting_key' => 'product_edit_requires_qc'], [
+                'setting_value' => $request->boolean('product_edit_requires_qc') ? '1' : '0',
+            ]);
+        }
+
+        return redirect()->route('dashboard', ['section' => 'program'])->with('status', 'Program settings saved.');
+    }
+
     public function deleteCategory(Category $category): RedirectResponse
     {
         $this->requireRole('admin');
@@ -664,13 +775,17 @@ class DashboardController extends Controller
     {
         $role = Auth::user()->role;
         abort_unless(in_array($role, ['admin', 'vendor'], true), 403);
-        if ($role === 'vendor') {
-            abort_unless($product->vendor_id === Auth::id(), 403);
-            abort_unless(Auth::user()->account_status === 'active', 403);
-        }
+        $this->authorizeProductAccess($product);
 
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        foreach ($product->images as $img) {
+            if ($img->path && ! str_starts_with($img->path, 'http')) {
+                Storage::disk('public')->delete($img->path);
+            }
+        }
+        foreach (['image', 'image2', 'image3', 'image4'] as $col) {
+            if ($product->{$col} && ! str_starts_with($product->{$col}, 'http')) {
+                Storage::disk('public')->delete($product->{$col});
+            }
         }
 
         try {
@@ -896,6 +1011,61 @@ class DashboardController extends Controller
         $ad->delete();
 
         return back()->with('status', 'Ad removed.');
+    }
+
+    private function vendorCanManageShop(): bool
+    {
+        $user = Auth::user();
+
+        return $user->account_status === 'active' || session()->has('impersonated_by');
+    }
+
+    private function authorizeProductAccess(Product $product): void
+    {
+        $user = Auth::user();
+
+        if ($user->role === 'vendor') {
+            abort_unless((int) $product->vendor_id === (int) $user->id, 403);
+            abort_unless($this->vendorCanManageShop(), 403);
+
+            return;
+        }
+
+        abort_unless($user->role === 'admin', 403);
+    }
+
+    private function attachUploadedImages(Product $product, Request $request, ?string $primaryPath = null): void
+    {
+        $sort = (int) $product->images()->max('sort_order') + 1;
+
+        if ($primaryPath) {
+            $exists = $product->images()->where('path', $primaryPath)->exists();
+            if (! $exists) {
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'path' => $primaryPath,
+                    'sort_order' => 0,
+                ]);
+            }
+            $product->update(['image' => $primaryPath]);
+        }
+
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $extraImage) {
+                if ($product->images()->count() >= 10) {
+                    break;
+                }
+                $path = $extraImage->store('products', 'public');
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'path' => $path,
+                    'sort_order' => $sort++,
+                ]);
+                if (! $product->fresh()->image) {
+                    $product->update(['image' => $path]);
+                }
+            }
+        }
     }
 
     private function adRates(): array

@@ -43,6 +43,9 @@
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'referrals' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'referrals']) }}">
                                 <i class="bi bi-share"></i><span>Referrals</span>
                             </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'program' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'program']) }}">
+                                <i class="bi bi-sliders"></i><span>Program settings</span>
+                            </a>
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'team' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'team']) }}">
                                 <i class="bi bi-people"></i><span>QC team</span>
                             </a>

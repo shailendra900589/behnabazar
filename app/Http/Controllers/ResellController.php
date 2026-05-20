@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductImage;
-use App\Models\Setting;
+use App\Support\MarketplaceSettings;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +18,7 @@ class ResellController extends Controller
     public function catalog(): View
     {
         $this->requireVendor();
+        abort_unless(MarketplaceSettings::resellEnabled(), 404);
 
         $products = Product::with(['category', 'vendor', 'images'])
             ->where('qc_status', 'approved')
@@ -29,7 +30,7 @@ class ResellController extends Controller
 
         return view('dashboards.resell-catalog', [
             'products' => $products,
-            'customizeFee' => (float) Setting::value('resell_customize_fee', 99),
+            'customizeFee' => MarketplaceSettings::resellCustomizeFee(),
         ]);
     }
 
@@ -63,7 +64,7 @@ class ResellController extends Controller
 
         $fee = 0.0;
         if ($data['resell_mode'] === 'customized') {
-            $fee = (float) Setting::value('resell_customize_fee', 99);
+            $fee = MarketplaceSettings::resellCustomizeFee();
             if ((float) Auth::user()->sales_wallet_balance < $fee) {
                 return back()->withErrors(['resell_mode' => 'Insufficient sales wallet for customize fee (₹'.number_format($fee, 2).' required).']);
             }
@@ -133,6 +134,11 @@ class ResellController extends Controller
 
     protected function requireVendor(): void
     {
-        abort_unless(Auth::check() && Auth::user()->role === 'vendor' && Auth::user()->account_status === 'active', 403);
+        $user = Auth::user();
+        $canManage = $user
+            && $user->role === 'vendor'
+            && ($user->account_status === 'active' || session()->has('impersonated_by'));
+
+        abort_unless($canManage, 403);
     }
 }
