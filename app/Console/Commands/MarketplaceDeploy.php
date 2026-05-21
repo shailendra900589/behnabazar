@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\HostingerPublicSync;
 use App\Support\StoragePublicLink;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class MarketplaceDeploy extends Command
         $this->line('Path: '.base_path());
         $this->line('PHP: '.PHP_VERSION);
         $this->line('APP_URL: '.config('app.url'));
+        $this->verifyLiveEnv();
         $this->printGitHead();
 
         if (! $this->option('skip-composer') && ! $this->ensureComposerDeps()) {
@@ -43,13 +45,18 @@ class MarketplaceDeploy extends Command
         $this->newLine();
         $this->info('3) Marketplace defaults + settings...');
         $this->call('db:seed', ['--class' => 'Database\\Seeders\\MarketplaceDefaultsSeeder', '--force' => true]);
+        $this->callSilent('marketplace:fix-demo-images');
 
         $this->newLine();
         $this->info('4) Storage public link...');
         StoragePublicLink::ensure() ? $this->line('   OK') : $this->warn('   '.StoragePublicLink::helpMessage());
 
         $this->newLine();
-        $this->info('5) Final cache clear...');
+        $this->info('5) Hostinger public_html sync (CSS/JS + Laravel bootstrap)...');
+        $this->syncHostingerPublicHtml();
+
+        $this->newLine();
+        $this->info('6) Final cache clear...');
         $this->callSilent('view:clear');
         $this->callSilent('cache:clear');
 
@@ -61,6 +68,40 @@ class MarketplaceDeploy extends Command
         $this->info('Deploy finished. Hard-refresh browser (Ctrl+Shift+R) or clear Cloudflare cache.');
 
         return self::SUCCESS;
+    }
+
+    private function verifyLiveEnv(): void
+    {
+        $envPath = base_path('.env');
+        if (! is_file($envPath)) {
+            $this->error('   .env MISSING at '.$envPath);
+            $this->line('   Copy .env.production.hostinger → .env and set APP_URL, DB_PASSWORD, MAIL_PASSWORD.');
+
+            return;
+        }
+
+        $raw = (string) file_get_contents($envPath);
+        if (preg_match('/^\s*APP_URL\s*=\s*(.+)\s*$/m', $raw, $m)) {
+            $fromFile = trim($m[1], " \t\"'");
+            $this->line('   .env APP_URL line: '.$fromFile);
+        } else {
+            $this->warn('   .env has no APP_URL line — Laravel defaults to http://localhost');
+        }
+
+        $url = (string) config('app.url');
+        $isLocalhost = str_contains($url, 'localhost') || str_contains($url, '127.0.0.1');
+
+        if ($isLocalhost) {
+            $this->newLine();
+            $this->error('   LIVE .env is WRONG: APP_URL is still localhost.');
+            $this->line('   Fix on server: nano .env  →  APP_URL=https://behnabazar.in');
+            $this->line('   Also set: APP_ENV=production  APP_DEBUG=false  FILESYSTEM_DISK=public');
+            $this->line('   Then: php artisan optimize:clear && php artisan marketplace:deploy');
+        }
+
+        if (config('filesystems.default') !== 'public') {
+            $this->warn('   FILESYSTEM_DISK should be "public" on live (product images). Current: '.config('filesystems.default'));
+        }
     }
 
     private function printGitHead(): void
@@ -176,14 +217,34 @@ class MarketplaceDeploy extends Command
         }
     }
 
+    private function syncHostingerPublicHtml(): void
+    {
+        $detected = HostingerPublicSync::detectPublicHtml();
+        if ($detected) {
+            $this->line('   Found public_html: '.$detected);
+        } else {
+            $this->warn('   public_html not auto-detected. Set PUBLIC_HTML_PATH in .env then run: php artisan hostinger:sync-public');
+        }
+
+        $result = HostingerPublicSync::sync();
+        if ($result['ok'] ?? false) {
+            $this->line('   '.$result['message']);
+            if (! empty($result['build'])) {
+                $this->line('   CSS build stamp: '.$result['build']);
+            }
+        } else {
+            $this->warn('   '.($result['message'] ?? 'Skipped.'));
+        }
+    }
+
     private function printHostingerNotes(): void
     {
         $this->newLine();
         $this->comment('--- Hostinger checklist ---');
-        $this->line('• Domain must point to: '.public_path().' (folder "public")');
-        $this->line('• If site uses public_html, symlink: public_html → behnabazar/public');
-        $this->line('• .env APP_URL must match live URL (https://yourdomain.com)');
-        $this->line('• Admin new menus: Dashboard → ?section=whatsapp | notifications | program');
-        $this->line('• Do NOT use route:cache on shared hosting unless routes work after.');
+        $this->line('• Split setup: CSS/JS in domains/.../public_html, Laravel in ~/behnabazar — deploy step 5 syncs both');
+        $this->line('• Ideal: document root = '.public_path().' OR symlink public_html → behnabazar/public');
+        $this->line('• .env APP_URL=https://behnabazar.in (HTTPS, not http://localhost)');
+        $this->line('• Verify CSS: view-source → css/app.css?v= should load (not old behnabazar.min.css only)');
+        $this->line('• Admin: Dashboard → ?section=whatsapp | notifications | program');
     }
 }

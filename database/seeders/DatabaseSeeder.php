@@ -36,15 +36,15 @@ class DatabaseSeeder extends Seeder
             ['name' => $row[0], 'icon' => $row[1]]
         ));
 
-        $images = [
-            'https://images.unsplash.com/photo-1612336307429-8a898d10e223?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=900&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900&auto=format&fit=crop',
+        $demoProducts = [
+            ['Daily Grocery Pack', 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=900&auto=format&fit=crop'],
+            ['Organic Millet Mix', 'https://images.unsplash.com/photo-1506086670733-894c6f7d3f7b?q=80&w=900&auto=format&fit=crop'],
+            ['Wireless Earbuds', 'https://images.unsplash.com/photo-1590658268037-6bf3fd8fba49?q=80&w=900&auto=format&fit=crop'],
+            ['Cotton Casual Shirt', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=900&auto=format&fit=crop'],
+            ['Steel Kitchen Set', 'https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=900&auto=format&fit=crop'],
+            ['Hydrating Face Cream', 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=900&auto=format&fit=crop'],
+            ['Classic Sneakers', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900&auto=format&fit=crop'],
+            ['Handmade Table Runner', 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=900&auto=format&fit=crop'],
         ];
 
         $salePrices = [499, 349, 1499, 899, 1199, 299, 1299, 699];
@@ -52,16 +52,16 @@ class DatabaseSeeder extends Seeder
 
         foreach (range(1, 8) as $i) {
             $category = $categories[($i - 1) % $categories->count()];
-            $titles = ['Daily Grocery Pack', 'Organic Millet Mix', 'Wireless Earbuds', 'Cotton Casual Shirt', 'Steel Kitchen Set', 'Hydrating Face Cream', 'Classic Sneakers', 'Handmade Table Runner'];
+            [$title, $image] = $demoProducts[$i - 1];
             Product::create([
                 'vendor_id' => $i % 3 === 0 ? null : $vendor->id,
                 'category_id' => $category->id,
-                'title' => $titles[$i - 1],
-                'slug' => Str::slug($titles[$i - 1]),
+                'title' => $title,
+                'slug' => Str::slug($title),
                 'price' => $salePrices[$i - 1],
                 'compare_at_price' => $mrpPrices[$i - 1],
                 'description' => 'A verified Behna Bazar marketplace product with category review, seller support, and professional fulfillment tracking.',
-                'image' => $images[$i - 1],
+                'image' => $image,
                 'qc_status' => $i === 8 ? 'pending' : 'approved',
             ]);
         }
