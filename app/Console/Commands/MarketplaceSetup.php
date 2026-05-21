@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\StoragePublicLink;
 use Illuminate\Console\Command;
 
 class MarketplaceSetup extends Command
@@ -27,11 +28,17 @@ class MarketplaceSetup extends Command
         $this->call('config:clear');
         $this->call('route:clear');
 
+        $storageOk = StoragePublicLink::ensure();
+
         $this->newLine();
         $this->info('Behna Bazar marketplace setup complete.');
         $this->line('  • COD, free shipping, SEO/GEO defaults saved');
         $this->line('  • Product MRP + SEO fields refreshed');
-        $this->line('  • storage:link executed');
+        if ($storageOk) {
+            $this->line('  • public/storage ready (symlink or copy)');
+        } else {
+            $this->warn('  • '.StoragePublicLink::helpMessage());
+        }
         $this->newLine();
         $this->comment('Set in .env: APP_URL, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET');
         $this->comment('Production: APP_DEBUG=false');

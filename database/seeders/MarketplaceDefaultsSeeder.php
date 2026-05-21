@@ -8,7 +8,7 @@ use App\Support\Seo\ProductSeoGenerator;
 use App\Support\SiteBranding;
 use App\Support\Seo\SiteSeoSettings;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Artisan;
+use App\Support\StoragePublicLink;
 use Illuminate\Support\Facades\Cache;
 
 class MarketplaceDefaultsSeeder extends Seeder
@@ -97,6 +97,6 @@ class MarketplaceDefaultsSeeder extends Seeder
         Cache::forget('storefront.price_bounds');
         Cache::forget('storefront.flash_deal');
 
-        Artisan::call('storage:link');
+        StoragePublicLink::ensure();
     }
 }
