@@ -24,9 +24,15 @@ class MarketplaceSetup extends Command
             $this->call('db:seed', ['--class' => 'Database\\Seeders\\MarketplaceDefaultsSeeder', '--force' => true]);
         }
 
-        $this->call('view:clear');
-        $this->call('config:clear');
-        $this->call('route:clear');
+        $this->call('optimize:clear');
+        foreach (glob(base_path('bootstrap/cache/*.php')) ?: [] as $file) {
+            if (basename($file) !== '.gitignore') {
+                @unlink($file);
+            }
+        }
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
 
         $storageOk = StoragePublicLink::ensure();
 
@@ -41,6 +47,7 @@ class MarketplaceSetup extends Command
         }
         $this->newLine();
         $this->comment('Set in .env: APP_URL, RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET');
+        $this->comment('Live server: run php artisan marketplace:deploy (full cache + verify)');
         $this->comment('Production: APP_DEBUG=false');
 
         return self::SUCCESS;

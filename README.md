@@ -26,9 +26,17 @@ Multipurpose e-commerce marketplace for grocery, fashion, electronics, home, bea
 
 ## Production deploy
 
-1. Point the web root to the `public/` folder.
+See **[DEPLOY-LIVE.md](DEPLOY-LIVE.md)** for Hostinger / shared hosting.
+
+```bash
+git pull origin main
+composer install --no-dev --optimize-autoloader
+php artisan marketplace:deploy
+```
+
+1. Point the web root to the `public/` folder (not project root).
 2. Set `APP_URL` to your live domain (e.g. `https://behnabazar.in`).
-3. Run `composer install --no-dev`, `php artisan migrate --force`, `php artisan config:cache`.
+3. Do **not** skip `composer install` — PDF invoices and other features need `vendor/`.
 4. Ensure these URLs return **200** (no `npm install` on the server):
    - `/vendor/bootstrap/css/bootstrap.min.css`
    - `/css/app.css`
