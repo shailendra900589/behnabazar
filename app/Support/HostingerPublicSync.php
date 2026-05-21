@@ -115,10 +115,11 @@ class HostingerPublicSync
     {
         $laravelPublic = str_replace('\\', '/', $laravelPublic);
         $indexPath = $dest.DIRECTORY_SEPARATOR.'index.php';
+        $marker = self::BOOTSTRAP_MARKER;
         $content = <<<PHP
 <?php
 /**
- * {marker}
+ * {$marker}
  * Document root: public_html — Laravel: {$laravelPublic}
  */
 \$laravelPublic = '{$laravelPublic}';

@@ -46,6 +46,7 @@ class MarketplaceDeploy extends Command
         $this->info('3) Marketplace defaults + settings...');
         $this->call('db:seed', ['--class' => 'Database\\Seeders\\MarketplaceDefaultsSeeder', '--force' => true]);
         $this->callSilent('marketplace:fix-demo-images');
+        $this->callSilent('marketplace:ensure-catalog');
 
         $this->newLine();
         $this->info('4) Storage public link...');

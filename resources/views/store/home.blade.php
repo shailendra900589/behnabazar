@@ -252,11 +252,11 @@
                 @endif
                 <div class="col-sm-6 col-md-3">
                     <label class="form-label small text-muted mb-1">Min price (₹)</label>
-                    <input type="number" name="min_price" class="form-control" min="0" step="1" placeholder="{{ (int) ($priceCatalogMin ?? 0) }}" value="{{ request('min_price') }}">
+                    <input type="number" name="min_price" class="form-control" min="0" step="1" placeholder="{{ (int) ($priceCatalogMax ?? 0) > 0 ? (int) $priceCatalogMin : 'Min' }}" value="{{ request()->has('min_price') && request('min_price') !== '' && (float) request('min_price') > 0 ? request('min_price') : '' }}">
                 </div>
                 <div class="col-sm-6 col-md-3">
                     <label class="form-label small text-muted mb-1">Max price (₹)</label>
-                    <input type="number" name="max_price" class="form-control" min="0" step="1" placeholder="{{ (int) ($priceCatalogMax ?? 0) }}" value="{{ request('max_price') }}">
+                    <input type="number" name="max_price" class="form-control" min="0" step="1" placeholder="{{ (int) ($priceCatalogMax ?? 0) > 0 ? (int) $priceCatalogMax : 'Max' }}" value="{{ request()->has('max_price') && request('max_price') !== '' && (float) request('max_price') > 0 ? request('max_price') : '' }}">
                 </div>
                 <div class="col-sm-6 col-md-3">
                     <button type="submit" class="btn btn-bloom w-100">Apply filters</button>

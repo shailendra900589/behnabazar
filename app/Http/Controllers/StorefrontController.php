@@ -40,12 +40,14 @@ class StorefrontController extends Controller
             $query->whereHas('category', fn ($q) => $q->where('slug', $request->cat));
         }
 
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', max(0, (float) $request->min_price));
+        $minPrice = $request->input('min_price');
+        if ($minPrice !== null && $minPrice !== '' && (float) $minPrice > 0) {
+            $query->where('price', '>=', (float) $minPrice);
         }
 
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', max(0, (float) $request->max_price));
+        $maxPrice = $request->input('max_price');
+        if ($maxPrice !== null && $maxPrice !== '' && (float) $maxPrice > 0) {
+            $query->where('price', '<=', (float) $maxPrice);
         }
 
         $sort = $request->input('sort', 'new');
