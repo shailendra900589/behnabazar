@@ -118,6 +118,28 @@
         });
     }
 
+    function initCopyButtons() {
+        document.addEventListener('click', function (event) {
+            const btn = event.target.closest('[data-copy-target]');
+            if (!btn) {
+                return;
+            }
+            const el = document.getElementById(btn.getAttribute('data-copy-target'));
+            if (!el) {
+                return;
+            }
+            const text = el.value || el.textContent || '';
+            if (!text) {
+                return;
+            }
+            navigator.clipboard.writeText(text.trim()).then(function () {
+                window.bbToast('Copied to clipboard');
+            }).catch(function () {
+                window.bbToast('Could not copy', 'warning');
+            });
+        });
+    }
+
     function initSiteVideo() {
         const videoWrap = document.getElementById('bbSiteVideo');
         const videoToggle = document.getElementById('bbSiteVideoToggle');
@@ -135,6 +157,7 @@
     function onReady() {
         initAjaxForms();
         initWishlistToggles();
+        initCopyButtons();
         initSiteVideo();
     }
 

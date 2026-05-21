@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AccountAddressController;
 use App\Http\Controllers\AccountVerificationController;
+use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\CartController;
@@ -10,12 +12,22 @@ use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\VendorRegistrationController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\ResellController;
+use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\OrderInvoiceController;
+use App\Http\Controllers\StockAlertController;
+use App\Http\Controllers\WhatsAppOutboxController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
+
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/api/search', [StorefrontController::class, 'liveSearch'])->name('api.search');
-Route::post('/newsletter/subscribe', [StorefrontController::class, 'subscribeNewsletter'])->name('newsletter.subscribe');
+Route::get('/api/delivery-check', [DeliveryController::class, 'checkPincode'])->name('api.delivery-check');
+Route::post('/newsletter/subscribe', [StorefrontController::class, 'subscribeNewsletter'])
+    ->middleware('throttle:10,1')
+    ->name('newsletter.subscribe');
 Route::get('/newsletter/unsubscribe', [StorefrontController::class, 'unsubscribeNewsletter'])->name('newsletter.unsubscribe');
 Route::get('/ads/{ad}/click', [StorefrontController::class, 'adClick'])->name('ads.click');
 Route::get('/product/{product:slug}', [StorefrontController::class, 'product'])->name('product.show');
@@ -23,10 +35,11 @@ Route::get('/product/{product:slug}/share', [ReferralController::class, 'sharePa
 Route::middleware('auth')->post('/product/{product:slug}/share', [ReferralController::class, 'recordShare'])->name('product.share.record');
 Route::post('/product/{product:slug}/review', [StorefrontController::class, 'postReview'])->name('product.review')->middleware('auth');
 Route::post('/product/{product:slug}/question', [StorefrontController::class, 'postQuestion'])->name('product.question')->middleware('auth');
+Route::post('/product/{product:slug}/stock-alert', [StockAlertController::class, 'store'])->name('product.stock-alert');
 Route::view('/contact', 'store.contact')->name('contact');
 Route::view('/local-delivery', 'store.local-delivery')->name('local-delivery');
 Route::view('/returns-policy', 'store.returns-policy')->name('returns-policy');
-Route::redirect('/shops', '/');
+Route::get('/shops', [StorefrontController::class, 'shops'])->name('shops');
 Route::get('/shop/{vendor}', [StorefrontController::class, 'vendorShop'])->name('vendor.shop');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
@@ -44,9 +57,9 @@ Route::post('/account/verify/resend', [AccountVerificationController::class, 're
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:8,1');
 
     Route::get('/forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'store'])->name('password.email');
@@ -71,6 +84,10 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [StorefrontController::class, 'profile'])->name('profile');
     Route::patch('/profile', [StorefrontController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/addresses', [AccountAddressController::class, 'index'])->name('addresses');
+    Route::post('/addresses', [AccountAddressController::class, 'store'])->name('addresses.store');
+    Route::delete('/addresses/{address}', [AccountAddressController::class, 'destroy'])->name('addresses.destroy');
+    Route::post('/addresses/{address}/default', [AccountAddressController::class, 'makeDefault'])->name('addresses.default');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');
@@ -78,6 +95,7 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'place'])->name('checkout.place');
     Route::get('/orders', [StorefrontController::class, 'orders'])->name('orders');
     Route::get('/orders/{order}/track', [StorefrontController::class, 'track'])->name('orders.track');
+    Route::get('/orders/{order}/invoice', [OrderInvoiceController::class, 'download'])->name('orders.invoice');
     Route::post('/orders/{order}/cancel', [StorefrontController::class, 'cancelOrder'])->name('orders.cancel');
     Route::post('/orders/{order}/return', [StorefrontController::class, 'returnOrder'])->name('orders.return');
 
@@ -94,6 +112,15 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::post('/settings', [DashboardController::class, 'saveSettings'])->name('settings.save');
         Route::post('/referral-settings', [DashboardController::class, 'saveReferralSettings'])->name('referral-settings.save');
         Route::post('/program-settings', [DashboardController::class, 'saveProgramSettings'])->name('program-settings.save');
+        Route::post('/whatsapp-outbox/{outbox}/sent', [WhatsAppOutboxController::class, 'markSent'])
+            ->middleware('admin')
+            ->name('whatsapp-outbox.sent');
+        Route::post('/whatsapp-outbox/{outbox}/skip', [WhatsAppOutboxController::class, 'skip'])
+            ->middleware('admin')
+            ->name('whatsapp-outbox.skip');
+        Route::post('/whatsapp-outbox/skip-all', [WhatsAppOutboxController::class, 'skipAllPending'])
+            ->middleware('admin')
+            ->name('whatsapp-outbox.skip-all');
         Route::post('/referral-rewards/{reward}/approve', [DashboardController::class, 'approveReferralReward'])->name('referral-rewards.approve');
         Route::post('/referral-rewards/{reward}/reject', [DashboardController::class, 'rejectReferralReward'])->name('referral-rewards.reject');
         Route::post('/site-display', [DashboardController::class, 'saveSiteDisplay'])
@@ -107,8 +134,13 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::post('/qc-users', [DashboardController::class, 'createQcUser'])->name('qc-users.create');
         Route::post('/products', [DashboardController::class, 'saveProduct'])->name('products.save');
         Route::patch('/products/{product}', [DashboardController::class, 'updateProduct'])->name('products.update');
+        Route::post('/reviews/{review}/approve', [DashboardController::class, 'approveReview'])->middleware('admin')->name('reviews.approve');
+        Route::delete('/reviews/{review}', [DashboardController::class, 'deleteReview'])->middleware('admin')->name('reviews.delete');
         Route::get('/resell-catalog', [ResellController::class, 'catalog'])->name('resell.catalog');
         Route::post('/resell', [ResellController::class, 'store'])->name('resell.store');
+        Route::post('/resell/bulk', [ResellController::class, 'bulkPurchase'])->name('resell.bulk');
+        Route::post('/notifications/{notification}/read', [DashboardController::class, 'markNotificationRead'])->name('notifications.read');
+        Route::post('/notifications/read-all', [DashboardController::class, 'markAllNotificationsRead'])->name('notifications.read-all');
         Route::delete('/products/{product}', [DashboardController::class, 'deleteProduct'])->name('products.delete');
         Route::post('/banners', [DashboardController::class, 'saveBanner'])->name('banners.save');
         Route::delete('/banners/{banner}', [DashboardController::class, 'deleteBanner'])->name('banners.delete');

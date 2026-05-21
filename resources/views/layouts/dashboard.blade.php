@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('content')
-@php($u = auth()->user())
+@php
+    $u = auth()->user();
+@endphp
 <div class="dashboard-shell">
     <div class="container-fluid">
         <div class="row">
@@ -11,13 +13,20 @@
                 <nav class="nav flex-column gap-1">
                     @auth
                         @if ($u->role === 'admin')
-                            @php($admSec = request('section', 'overview'))
+                            @php
+                                $admSec = request('section', 'overview');
+                                $whatsappPendingCount = \App\Models\WhatsappOutbox::pendingCount();
+                                $stockAlertCount = \App\Models\StockAlert::pending()->count();
+                            @endphp
                             <p class="sidebar-section-label text-uppercase small fw-semibold mb-2">Navigation</p>
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'overview' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'overview']) }}">
                                 <i class="bi bi-speedometer2"></i><span>Dashboard</span>
                             </a>
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'products' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'products']) }}">
                                 <i class="bi bi-grid-1x2"></i><span>Products</span>
+                            </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'reviews' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'reviews']) }}">
+                                <i class="bi bi-chat-square-text"></i><span>Reviews</span>
                             </a>
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'orders' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'orders']) }}">
                                 <i class="bi bi-bag-check"></i><span>Orders</span>
@@ -46,6 +55,21 @@
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'program' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'program']) }}">
                                 <i class="bi bi-sliders"></i><span>Program settings</span>
                             </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'whatsapp' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'whatsapp']) }}">
+                                <i class="bi bi-whatsapp text-success"></i><span>WhatsApp outbox</span>
+                                @if(($whatsappPendingCount ?? 0) > 0)
+                                    <span class="badge bg-danger rounded-pill ms-auto" id="bbWaPendingBadge">{{ $whatsappPendingCount }}</span>
+                                @endif
+                            </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'notifications' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'notifications']) }}">
+                                <i class="bi bi-bell"></i><span>Message log</span>
+                            </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'alerts' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'alerts']) }}">
+                                <i class="bi bi-box-seam"></i><span>Stock alerts</span>
+                                @if(($stockAlertCount ?? 0) > 0)
+                                    <span class="badge bg-warning text-dark rounded-pill ms-auto">{{ $stockAlertCount }}</span>
+                                @endif
+                            </a>
                             <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $admSec === 'team' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'team']) }}">
                                 <i class="bi bi-people"></i><span>QC team</span>
                             </a>
@@ -66,6 +90,7 @@
                             <a class="nav-link rounded-3" href="{{ route('orders') }}"><i class="bi bi-box-seam me-2"></i>My orders</a>
                             <a class="nav-link rounded-3" href="{{ route('wishlist') }}"><i class="bi bi-heart me-2"></i>Wishlist</a>
                             <a class="nav-link rounded-3" href="{{ route('profile') }}"><i class="bi bi-person me-2"></i>Profile</a>
+                            <a class="nav-link rounded-3" href="{{ route('addresses') }}"><i class="bi bi-geo-alt me-2"></i>Addresses</a>
                             <a class="nav-link rounded-3" href="{{ route('checkout') }}"><i class="bi bi-bag-check me-2"></i>Checkout</a>
                         @elseif (in_array($u->role, ['vendor', 'qc_manager', 'qc_staff'], true))
                             <a class="nav-link rounded-3 {{ request()->routeIs('dashboard') ? 'active fw-semibold' : '' }}" href="{{ route('dashboard') }}">
@@ -75,8 +100,8 @@
                                 <i class="bi bi-shop me-2"></i>Storefront
                             </a>
                             <a class="nav-link rounded-3" href="{{ route('orders') }}"><i class="bi bi-receipt me-2"></i>Orders</a>
-                            @if ($u->role === 'vendor' && $u->account_status === 'active')
-                                <a class="nav-link rounded-3" href="{{ route('manage.resell.catalog') }}"><i class="bi bi-arrow-left-right me-2"></i>Resell catalog</a>
+                            @if ($u->role === 'vendor' && ($u->account_status === 'active' || session()->has('impersonated_by')) && \App\Support\MarketplaceSettings::resellEnabled())
+                                <a class="nav-link rounded-3 {{ request()->routeIs('manage.resell.catalog') ? 'active fw-semibold' : '' }}" href="{{ route('manage.resell.catalog') }}"><i class="bi bi-arrow-left-right me-2"></i>Resell catalog</a>
                             @endif
                             <a class="nav-link rounded-3" href="{{ route('profile') }}"><i class="bi bi-person me-2"></i>Profile</a>
                         @endif
@@ -84,6 +109,11 @@
                 </nav>
             </aside>
             <section class="col-lg-10 p-4 p-lg-5">
+                @if ($u->role === 'vendor')
+                    <div class="d-flex justify-content-end mb-3">
+                        @include('partials.vendor-notifications')
+                    </div>
+                @endif
                 @yield('dashboard')
             </section>
         </div>

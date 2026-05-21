@@ -1,0 +1,16 @@
+{
+  "name": "Behna Bazar",
+  "short_name": "Behna Bazar",
+  "description": "Multipurpose online marketplace",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/images/brand/bb-mark.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ]
+}

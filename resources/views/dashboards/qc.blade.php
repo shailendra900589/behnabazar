@@ -23,7 +23,9 @@
                     </thead>
                     <tbody>
                         @forelse($pending as $product)
-                            @php($gallery = $product->galleryUrls())
+                            @php
+                                $gallery = $product->galleryUrls();
+                            @endphp
                             <tr>
                                 <td style="min-width: 200px;">
                                     <div class="d-flex gap-1 flex-wrap">

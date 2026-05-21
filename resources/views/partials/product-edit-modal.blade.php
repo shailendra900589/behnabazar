@@ -17,9 +17,18 @@
                     <label class="form-label">Title</label>
                     <input name="title" id="editProductTitle" class="form-control" required maxlength="255">
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Price (₹)</label>
+                <div class="col-md-4">
+                    <label class="form-label">Sale price (₹)</label>
                     <input name="price" id="editProductPrice" type="number" step="0.01" min="1" class="form-control" required>
+                    <small class="text-muted d-none" id="editProductResellMin"></small>
+                </div>
+                <div class="col-md-4" id="editCompareAtWrap">
+                    <label class="form-label">MRP / cross price (₹)</label>
+                    <input name="compare_at_price" id="editProductMrp" type="number" step="0.01" min="1" class="form-control" placeholder="Higher than sale">
+                </div>
+                <div class="col-md-4 d-none" id="editResellerDpWrap">
+                    <label class="form-label">Reseller DP (₹)</label>
+                    <input name="reseller_dp_price" id="editProductDp" type="number" step="0.01" min="0" class="form-control" placeholder="For resellers">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Category</label>
@@ -34,13 +43,26 @@
                     <input type="file" name="image" class="form-control" accept="image/*">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Add more images</label>
+                    <label class="form-label">Add gallery images (max {{ config('product.max_gallery_images', 5) }} total)</label>
                     <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
                 </div>
                 <div class="col-12" id="editProductCurrentImages"></div>
                 <div class="col-12">
                     <label class="form-label">Description</label>
                     <textarea name="description" id="editProductDescription" class="form-control" rows="4" required maxlength="3000"></textarea>
+                </div>
+                <div class="col-12 border-top pt-3 mt-2" id="editVariantsWrap">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="replace_variants" value="1" id="editReplaceVariants">
+                        <label class="form-check-label" for="editReplaceVariants">Replace all variants when saving</label>
+                    </div>
+                    @include('partials.variant-builder', ['prefix' => 'variants', 'containerId' => 'editVariantsContainer', 'rowIndex' => 0])
+                </div>
+                <div class="col-12 d-none" id="editResellAllowedWrap">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="resell_allowed" value="1" id="editResellAllowed">
+                        <label class="form-check-label" for="editResellAllowed">Allow other vendors to resell this product</label>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -58,6 +80,13 @@
     const form = document.getElementById('productEditForm');
     const imgBox = document.getElementById('editProductCurrentImages');
     const qcNote = document.getElementById('productEditQcNote');
+    const resellMinNote = document.getElementById('editProductResellMin');
+    const resellAllowedWrap = document.getElementById('editResellAllowedWrap');
+    const resellAllowedInput = document.getElementById('editResellAllowed');
+    const compareAtWrap = document.getElementById('editCompareAtWrap');
+    const resellerDpWrap = document.getElementById('editResellerDpWrap');
+    const editMrp = document.getElementById('editProductMrp');
+    const editDp = document.getElementById('editProductDp');
     const updateUrlBase = @json(rtrim(route('manage.products.update', ['product' => 0]), '0'));
 
     modal.addEventListener('show.bs.modal', function (event) {
@@ -65,11 +94,32 @@
         if (!btn || !btn.classList.contains('btn-edit-product')) return;
 
         const id = btn.dataset.id;
+        const isResell = btn.dataset.resell === '1';
+        const resellMin = btn.dataset.resellMin || '';
         form.action = updateUrlBase + id;
         document.getElementById('editProductTitle').value = btn.dataset.title || '';
-        document.getElementById('editProductPrice').value = btn.dataset.price || '';
+        const priceInput = document.getElementById('editProductPrice');
+        priceInput.value = btn.dataset.price || '';
+        priceInput.min = isResell && resellMin ? resellMin : '1';
         document.getElementById('editProductCategory').value = btn.dataset.categoryId || '';
         document.getElementById('editProductDescription').value = btn.dataset.description || '';
+
+        if (isResell && resellMin) {
+            resellMinNote.textContent = 'Resell listing: minimum ₹' + parseFloat(resellMin).toFixed(2) + ' per unit (source vendor share).';
+            resellMinNote.classList.remove('d-none');
+        } else {
+            resellMinNote.classList.add('d-none');
+        }
+        if (resellAllowedWrap) {
+            resellAllowedWrap.classList.toggle('d-none', isResell);
+            if (!isResell && resellAllowedInput) {
+                resellAllowedInput.checked = btn.dataset.resellAllowed === '1';
+            }
+        }
+        if (compareAtWrap) compareAtWrap.classList.remove('d-none');
+        if (resellerDpWrap) resellerDpWrap.classList.toggle('d-none', isResell);
+        if (editMrp) editMrp.value = btn.dataset.compareAt || '';
+        if (editDp) editDp.value = btn.dataset.resellerDp || '';
 
         const qc = btn.dataset.qcStatus || '';
         qcNote.classList.toggle('d-none', qc !== 'approved');

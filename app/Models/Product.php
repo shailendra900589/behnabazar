@@ -14,10 +14,16 @@ class Product extends Model
         'resell_mode',
         'source_base_price',
         'resell_listing_fee',
+        'resell_allowed',
         'category_id',
         'title',
         'slug',
+        'seo_title',
+        'seo_description',
+        'seo_keywords',
         'price',
+        'compare_at_price',
+        'reseller_dp_price',
         'description',
         'image',
         'image2',
@@ -31,8 +37,11 @@ class Product extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'compare_at_price' => 'decimal:2',
+        'reseller_dp_price' => 'decimal:2',
         'source_base_price' => 'decimal:2',
         'resell_listing_fee' => 'decimal:2',
+        'resell_allowed' => 'boolean',
         'qc_verified_at' => 'datetime',
     ];
 
@@ -110,7 +119,7 @@ class Product extends Model
         $urls = $this->images->map(fn (ProductImage $img) => $img->url())->values()->all();
 
         if ($urls !== []) {
-            return $urls;
+            return array_slice($urls, 0, config('product.max_gallery_images', 5));
         }
 
         $legacy = [];
@@ -122,12 +131,61 @@ class Product extends Model
             }
         }
 
-        return $legacy !== [] ? $legacy : [$this->imageUrl()];
+        $legacy = $legacy !== [] ? $legacy : [$this->imageUrl()];
+
+        return array_slice($legacy, 0, config('product.max_gallery_images', 5));
+    }
+
+    public function maxGallerySlotsRemaining(): int
+    {
+        $count = $this->relationLoaded('images')
+            ? $this->images->count()
+            : $this->images()->count();
+
+        return max(0, (int) config('product.max_gallery_images', 5) - $count);
     }
 
     public function averageRating(): float
     {
         return (float) $this->reviews()->where('is_approved', true)->avg('rating') ?: 0;
+    }
+
+    /**
+     * @return array{sale: float, mrp: ?float, percent_off: ?int}
+     */
+    public function pricing(?float $variantSalePrice = null, ?float $variantMrp = null): array
+    {
+        $sale = $variantSalePrice ?? (float) $this->price;
+        $mrp = $variantMrp ?? ($this->compare_at_price !== null ? (float) $this->compare_at_price : null);
+
+        if ($mrp !== null && $mrp <= $sale) {
+            $mrp = null;
+        }
+
+        $percentOff = null;
+        if ($mrp !== null && $mrp > $sale) {
+            $percentOff = (int) round((($mrp - $sale) / $mrp) * 100);
+        }
+
+        return [
+            'sale' => $sale,
+            'mrp' => $mrp,
+            'percent_off' => $percentOff,
+        ];
+    }
+
+    public function resellerDp(): ?float
+    {
+        if ($this->reseller_dp_price === null || (float) $this->reseller_dp_price <= 0) {
+            return null;
+        }
+
+        return (float) $this->reseller_dp_price;
+    }
+
+    public function effectiveResellerUnitCost(): float
+    {
+        return $this->resellerDp() ?? (float) $this->price;
     }
 
     public function imageUrl(): string

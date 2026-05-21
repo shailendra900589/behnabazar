@@ -15,8 +15,18 @@
     <div class="row g-5 align-items-start">
         <div class="col-lg-6">
             <div class="product-hero-card bb-card p-3 p-lg-4 rounded-4 shadow-sm mb-3">
-                <div class="position-relative overflow-hidden rounded-4 zoom-container" style="cursor: crosshair;">
-                    <img id="mainProductImage" src="{{ $product->imageUrl() }}" class="w-100 product-detail-img zoom-image" alt="{{ $product->title }}" style="transition: transform 0.1s ease; transform-origin: center center;">
+                <div class="bb-product-gallery-stage position-relative overflow-hidden rounded-4 zoom-container" data-product-gallery data-interval="5000" style="cursor: crosshair;">
+                    @foreach ($galleryImages ?? [$product->imageUrl()] as $idx => $imgUrl)
+                        <img src="{{ $imgUrl }}"
+                             @if($idx === 0) id="mainProductImage" @endif
+                             class="w-100 product-detail-img zoom-image bb-gallery-slide {{ $idx === 0 ? 'is-active' : '' }}"
+                             alt="{{ $product->title }} — {{ $idx + 1 }}"
+                             style="transition: transform 0.1s ease, opacity 0.35s ease; transform-origin: center center;">
+                    @endforeach
+                    @if(count($galleryImages ?? []) > 1)
+                        <div class="bb-gallery-dots position-absolute bottom-0 start-50 translate-middle-x mb-3"></div>
+                        <span class="position-absolute top-0 end-0 m-3 badge bg-dark bg-opacity-75 rounded-pill"><i class="bi bi-images me-1"></i>{{ count($galleryImages) }}/{{ config('product.max_gallery_images', 5) }}</span>
+                    @endif
                     <div class="position-absolute top-0 start-0 m-3 d-flex flex-column gap-2" style="pointer-events: none;">
                         <span class="badge rounded-pill bg-dark bg-opacity-75">QC approved</span>
                         @if (($product->orders_count ?? $product->orders()->count()) >= 3)
@@ -29,7 +39,7 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const container = document.querySelector('.zoom-container');
-                    const img = document.querySelector('.zoom-image');
+                    const img = container.querySelector('.bb-gallery-slide.is-active') || container.querySelector('.zoom-image');
                     
                     container.addEventListener('mousemove', (e) => {
                         const rect = container.getBoundingClientRect();
@@ -51,15 +61,16 @@
                 @include('partials.ad-slot', ['slot' => 'product_top', 'ads' => $ads, 'class' => 'mb-3'])
             @endif
 
-            <div class="d-flex gap-2 overflow-auto pb-2">
-                @php($images = $product->galleryUrls())
-                @if (count($images) > 1)
-                    @foreach ($images as $idx => $imgUrl)
-                        <img src="{{ $imgUrl }}" class="rounded-3 border cursor-pointer product-thumb {{ $idx === 0 ? 'border-bloom border-2' : '' }}" style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: all 0.2s ease;" onclick="document.getElementById('mainProductImage').src=this.src; document.querySelectorAll('.product-thumb').forEach(t => { t.classList.remove('border-bloom','border-2'); t.style.opacity='0.7'; }); this.classList.add('border-bloom','border-2'); this.style.opacity='1';" onmouseover="this.style.opacity='1'" onmouseout="if(!this.classList.contains('border-bloom')) this.style.opacity='0.7'" alt="View {{ $idx + 1 }}">
+            @if (count($galleryImages ?? []) > 1)
+                <div class="d-flex gap-2 overflow-auto pb-2 mt-2">
+                    @foreach ($galleryImages as $idx => $imgUrl)
+                        <img src="{{ $imgUrl }}" data-gallery-thumb data-src="{{ $imgUrl }}"
+                             class="rounded-3 border cursor-pointer product-thumb {{ $idx === 0 ? 'border-bloom border-2' : '' }}"
+                             style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: all 0.2s ease; opacity: {{ $idx === 0 ? '1' : '0.75' }};"
+                             alt="View {{ $idx + 1 }}">
                     @endforeach
-                    <span class="badge bg-dark bg-opacity-75 rounded-pill align-self-center ms-1 px-3">{{ count($images) }} photos</span>
-                @endif
-            </div>
+                </div>
+            @endif
         </div>
         <div class="col-lg-6">
             <span class="badge badge-soft rounded-pill mb-3">{{ $product->category->name ?? 'Product' }}</span>
@@ -73,9 +84,9 @@
                 @endif
                 <span class="ms-3"><i class="bi bi-star-fill text-warning me-1"></i>{{ number_format($product->averageRating(), 1) }} / 5 ({{ $product->reviews->count() }} reviews)</span>
             </p>
-            <div class="d-flex align-items-baseline gap-3 mb-3">
-                <span class="display-6 fw-bold text-bloom" id="productPriceDisplay">₹{{ number_format($product->price, 2) }}</span>
-                <span class="small text-muted">Inclusive of handling</span>
+            <div class="mb-3" id="productPriceBlock">
+                @include('partials.product-price', ['product' => $product, 'size' => 'lg'])
+                <span class="small text-muted d-block mt-1">Inclusive of handling</span>
             </div>
             @if($product->isResellListing())
                 <p class="small text-info mb-2"><i class="bi bi-truck me-1"></i>Fulfilled by source vendor — safe checkout via Behna Bazar.</p>
@@ -95,8 +106,11 @@
                     <select name="variant_id" form="addToCartForm" class="form-select w-auto" onchange="updatePrice(this)">
                         <option value="">Default (₹{{ number_format($product->price, 2) }})</option>
                         @foreach($product->variants as $variant)
-                            <option value="{{ $variant->id }}" data-price="{{ $variant->price ?? $product->price }}">
-                                {{ $variant->color }} {{ $variant->size }} - ₹{{ number_format($variant->price ?? $product->price, 2) }}
+                            @php $vp = $variant->pricing($product); @endphp
+                            <option value="{{ $variant->id }}"
+                                data-price="{{ $vp['sale'] }}"
+                                data-mrp="{{ $vp['mrp'] ?? ($product->compare_at_price ?? '') }}">
+                                {{ $variant->displayLabel() }} — ₹{{ number_format($vp['sale'], 2) }}
                             </option>
                         @endforeach
                     </select>
@@ -104,11 +118,26 @@
                 <script>
                     function updatePrice(select) {
                         const option = select.options[select.selectedIndex];
-                        const price = option.getAttribute('data-price');
-                        if (price) {
-                            document.getElementById('productPriceDisplay').innerText = '₹' + parseFloat(price).toFixed(2);
-                        } else {
-                            document.getElementById('productPriceDisplay').innerText = '₹{{ number_format($product->price, 2) }}';
+                        const sale = parseFloat(option.getAttribute('data-price') || {{ $product->price }});
+                        const mrp = parseFloat(option.getAttribute('data-mrp') || {{ $product->compare_at_price ?? 0 }}) || 0;
+                        const block = document.getElementById('productPriceBlock');
+                        if (!block) return;
+                        const saleEl = block.querySelector('.bb-price-sale');
+                        const mrpEl = block.querySelector('.bb-price-mrp');
+                        const offEl = block.querySelector('.bb-price-off');
+                        if (saleEl) saleEl.textContent = '₹' + sale.toFixed(2);
+                        if (mrpEl) {
+                            if (mrp > sale) {
+                                mrpEl.textContent = '₹' + mrp.toFixed(2);
+                                mrpEl.style.display = '';
+                                if (offEl) {
+                                    offEl.textContent = Math.round(((mrp - sale) / mrp) * 100) + '% off';
+                                    offEl.style.display = '';
+                                }
+                            } else {
+                                mrpEl.style.display = 'none';
+                                if (offEl) offEl.style.display = 'none';
+                            }
                         }
                     }
                 </script>
@@ -123,17 +152,24 @@
                 <div id="pincodeResult" class="small mt-2" style="display:none;"></div>
             </div>
             <script>
-                function checkPincode() {
-                    const pin = document.getElementById('pincodeInput').value;
+                async function checkPincode() {
+                    const pin = document.getElementById('pincodeInput').value.replace(/\D/g, '');
                     const res = document.getElementById('pincodeResult');
                     res.style.display = 'block';
-                    if (pin.length === 6 && !isNaN(pin)) {
-                        res.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Delivery available by ' + new Date(Date.now() + 3*24*60*60*1000).toLocaleDateString() + '</span>';
-                    } else {
-                        res.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Please enter a valid 6-digit PIN code.</span>';
+                    res.innerHTML = '<span class="text-muted">Checking…</span>';
+                    try {
+                        const r = await fetch("{{ route('api.delivery-check') }}?pincode=" + encodeURIComponent(pin));
+                        const data = await r.json();
+                        res.innerHTML = data.ok
+                            ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>' + data.message + '</span>'
+                            : '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>' + data.message + '</span>';
+                    } catch (e) {
+                        res.innerHTML = '<span class="text-danger">Could not check delivery. Try again.</span>';
                     }
                 }
             </script>
+
+            @include('partials.stock-notify-form', ['product' => $product])
 
             <div class="d-flex flex-wrap gap-2 mb-4">
                 <form id="addToCartForm" data-ajax-form action="{{ route('cart.add', $product) }}" method="post" class="d-flex gap-2 flex-wrap align-items-center">
@@ -167,14 +203,7 @@
                     <p class="lead text-muted mb-0">{{ $product->description }}</p>
                 </div>
                 <div class="tab-pane fade" id="tab-reviews" role="tabpanel">
-                    @php
-                        $totalReviews = $product->reviews->where('is_approved', true)->count();
-                        $avgRating = $product->averageRating();
-                        $ratingCounts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
-                        foreach($product->reviews->where('is_approved', true) as $r) { $ratingCounts[$r->rating]++; }
-                    @endphp
-
-                    @if($totalReviews > 0)
+                    @if(($totalReviews ?? 0) > 0)
                     <div class="row g-4 mb-5 align-items-center bg-white p-4 rounded-4 border shadow-sm">
                         <div class="col-md-4 text-center border-md-end">
                             <h2 class="display-3 fw-bold text-dark mb-0">{{ number_format($avgRating, 1) }}</h2>
@@ -187,11 +216,10 @@
                         </div>
                         <div class="col-md-8">
                             @foreach([5, 4, 3, 2, 1] as $star)
-                                @php $pct = $totalReviews > 0 ? ($ratingCounts[$star] / $totalReviews) * 100 : 0; @endphp
                                 <div class="d-flex align-items-center mb-2">
                                     <div class="text-muted small w-25 text-end pe-2">{{ $star }} Stars</div>
                                     <div class="progress w-75 rounded-pill" style="height: 8px;">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $pct }}%"></div>
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ ($totalReviews ?? 0) > 0 ? (($ratingCounts[$star] ?? 0) / $totalReviews) * 100 : 0 }}%"></div>
                                     </div>
                                     <div class="text-muted small ms-2" style="width: 30px;">{{ $ratingCounts[$star] }}</div>
                                 </div>
@@ -309,13 +337,7 @@
         </div>
     @endif
 
-    @php
-        $recentIds = session()->get('recently_viewed', []);
-        $recentProducts = !empty($recentIds)
-            ? \App\Models\Product::whereIn('id', $recentIds)->where('qc_status','approved')->whereKeyNot($product->id)->get()->sortBy(fn($p) => array_search($p->id, $recentIds))->take(6)
-            : collect();
-    @endphp
-    @if ($recentProducts->isNotEmpty())
+    @if (isset($recentProducts) && $recentProducts->isNotEmpty())
         <hr class="my-5 opacity-25">
         <div class="d-flex justify-content-between align-items-end mb-4">
             <h2 class="h4 fw-bold mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>Recently Viewed</h2>
@@ -375,7 +397,7 @@
             <img src="{{ $product->imageUrl() }}" alt="" class="rounded-3 d-none d-md-block" style="width:48px;height:48px;object-fit:cover;">
             <div class="min-w-0">
                 <div class="fw-bold text-truncate">{{ $product->title }}</div>
-                <div class="text-bloom fw-bold">₹{{ number_format($product->price, 2) }}</div>
+                @include('partials.product-price', ['product' => $product, 'size' => 'sm'])
             </div>
         </div>
         <div class="d-flex gap-2 flex-shrink-0">

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Behna Bazar - Multipurpose Marketplace')
+@section('title', ($siteBranding['name'] ?? config('app.name')).' — Multipurpose Marketplace')
 @section('content')
 @php
     $filterQs = array_filter([
@@ -15,12 +15,16 @@
     <div class="marketplace-intro mb-5">
         <div class="row g-4 align-items-center">
             <div class="col-lg-6">
-                <span class="marketplace-kicker">Multipurpose marketplace</span>
+                <span class="marketplace-kicker">{{ $siteBranding['name'] ?? 'Behna Bazar' }} · Multipurpose marketplace</span>
                 <h1 class="marketplace-title">Everything for daily life, home, work, style, and celebrations.</h1>
-                <p class="marketplace-copy">Shop organic and non-organic grocery, fresh essentials, fashion, electronics, home products, beauty, accessories, and verified local finds in one trusted Behna Bazar experience.</p>
+                <p class="marketplace-copy">Shop organic and non-organic grocery, fresh essentials, fashion, electronics, home products, beauty, accessories, and verified local finds in one trusted {{ $siteBranding['name'] ?? 'Behna Bazar' }} experience.</p>
                 <div class="d-flex flex-wrap gap-2">
                     <a href="#products" class="btn btn-bloom rounded-pill px-4">Explore products</a>
-                    <a href="{{ route('vendor.register.create') }}" class="btn btn-light border rounded-pill px-4">Sell on Behna Bazar</a>
+                    @if($referralEnabled ?? false)
+                        <a href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}" class="btn btn-light border rounded-pill px-4">
+                            <i class="bi bi-gift me-1"></i> Refer &amp; earn coins
+                        </a>
+                    @endif
                 </div>
             </div>
             <div class="col-lg-6">
@@ -45,10 +49,12 @@
             </div>
             <div class="carousel-inner">
                 @foreach ($banners as $i => $banner)
-                    @php($src = str_starts_with($banner->image, 'http') ? $banner->image : asset('storage/'.$banner->image))
+                    @php
+                        $bannerSrc = str_starts_with($banner->image, 'http') ? $banner->image : asset('storage/'.$banner->image);
+                    @endphp
                     <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
                         <a href="{{ $banner->link ?: '#' }}" class="d-block position-relative">
-                            <img src="{{ $src }}" class="d-block w-100 hero-carousel-img" alt="Banner">
+                            <img src="{{ $bannerSrc }}" class="d-block w-100 hero-carousel-img" alt="Banner">
                             <div class="position-absolute bottom-0 start-0 end-0 p-4 p-lg-5 text-white hero-carousel-overlay d-flex flex-column justify-content-end pb-lg-5">
                                 <div>
                                     <span class="badge bg-white text-dark rounded-pill mb-3 px-3 py-2 fw-bold tracking-wide shadow-sm" style="font-size: 0.8rem">Featured Marketplace Picks</span>
@@ -98,7 +104,7 @@
     @endif
 
     <div class="row g-4 mb-5 text-center">
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
             <div class="feature-card p-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-truck fs-3"></i>
@@ -107,7 +113,7 @@
                 <p class="small text-muted mb-0">Grocery, fashion, electronics, home, and more</p>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
             <div class="feature-card p-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-patch-check fs-3"></i>
@@ -116,13 +122,22 @@
                 <p class="small text-muted mb-0">Products reviewed before going live</p>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-3">
             <div class="feature-card p-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
-                    <i class="bi bi-wallet2 fs-3"></i>
+                    <i class="bi bi-coin fs-3"></i>
                 </div>
-                <h3 class="h5 fw-bold mb-2">Rewards wallet</h3>
-                <p class="small text-muted mb-0">Earn coins across every category</p>
+                <h3 class="h5 fw-bold mb-2">Coin rewards</h3>
+                <p class="small text-muted mb-0">Earn on orders and referrals — see balance in the header</p>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="feature-card p-4 p-lg-5 h-100">
+                <div class="feature-icon-wrapper mx-auto">
+                    <i class="bi bi-gift fs-3"></i>
+                </div>
+                <h3 class="h5 fw-bold mb-2">Refer &amp; earn</h3>
+                <p class="small text-muted mb-0">Share your link from the footer or dashboard</p>
             </div>
         </div>
     </div>
@@ -131,7 +146,7 @@
         @include('partials.category-chips', ['categories' => $categories, 'filterQs' => $filterQs])
     @endif
 
-    @if (isset($flashDeal) && $flashDeal)
+    @if (! empty($flashDeal))
         <div class="bb-card p-4 rounded-4 mb-5 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-left: 4px solid #d9534f;">
             <div class="position-absolute top-0 end-0 p-3 opacity-25">
                 <i class="bi bi-lightning-fill" style="font-size: 8rem; color: #d9534f;"></i>
@@ -143,10 +158,12 @@
                         <span class="text-danger fw-bold small" id="flash-timer">Ends in: 04:59:59</span>
                     </div>
                     <h2 class="fw-bold mb-2 text-dark">{{ $flashDeal->title }}</h2>
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="fs-4 fw-bolder text-dark">₹{{ number_format($flashDeal->price * 0.8, 2) }}</span>
-                        <span class="text-muted text-decoration-line-through">₹{{ number_format($flashDeal->price, 2) }}</span>
-                        <span class="badge bg-dark bg-opacity-10 text-dark border border-dark border-opacity-25 rounded-pill">20% OFF</span>
+                    <div class="mb-3">
+                        @php
+                            $flashSale = $flashDeal->compare_at_price ? (float) $flashDeal->price : (float) $flashDeal->price * 0.8;
+                            $flashMrp = $flashDeal->compare_at_price ? (float) $flashDeal->compare_at_price : (float) $flashDeal->price;
+                        @endphp
+                        @include('partials.product-price', ['product' => $flashDeal, 'variantSale' => $flashSale, 'variantMrp' => $flashMrp, 'size' => 'lg'])
                     </div>
                     <a href="{{ route('product.show', $flashDeal) }}" class="btn btn-dark rounded-pill px-4">Claim Deal <i class="bi bi-arrow-right ms-2"></i></a>
                 </div>
@@ -155,18 +172,21 @@
                 </div>
             </div>
         </div>
+        @verbatim
         <script>
-            // Flash Deal Timer Logic
-            let time = 5 * 3600 + 59 * 60 + 59; // 5 hours, 59 mins, 59 secs
-            setInterval(() => {
-                let h = Math.floor(time / 3600).toString().padStart(2, '0');
-                let m = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
-                let s = (time % 60).toString().padStart(2, '0');
-                const el = document.getElementById('flash-timer');
-                if (el) el.innerText = `Ends in: ${h}:${m}:${s}`;
-                if (time > 0) time--;
-            }, 1000);
+            (function () {
+                var time = 5 * 3600 + 59 * 60 + 59;
+                setInterval(function () {
+                    var h = Math.floor(time / 3600).toString().padStart(2, '0');
+                    var m = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
+                    var s = (time % 60).toString().padStart(2, '0');
+                    var el = document.getElementById('flash-timer');
+                    if (el) { el.innerText = 'Ends in: ' + h + ':' + m + ':' + s; }
+                    if (time > 0) { time--; }
+                }, 1000);
+            })();
         </script>
+        @endverbatim
     @endif
 
     @if ($newArrivals->isNotEmpty())

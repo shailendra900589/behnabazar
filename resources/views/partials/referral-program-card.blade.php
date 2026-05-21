@@ -76,9 +76,8 @@
                                 @endif
                             </td>
                             <td>
-                                @php($st = $reward->status)
-                                <span class="badge @if($st === 'paid') bg-success @elseif($st === 'pending') bg-warning text-dark @elseif($st === 'rejected') bg-danger @else bg-info @endif">
-                                    {{ ucfirst($st) }}
+                                <span class="badge @if($reward->status === 'paid') bg-success @elseif($reward->status === 'pending') bg-warning text-dark @elseif($reward->status === 'rejected') bg-danger @else bg-info @endif">
+                                    {{ ucfirst($reward->status) }}
                                 </span>
                             </td>
                         </tr>

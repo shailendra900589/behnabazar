@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             \App\Http\Middleware\CaptureReferral::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
         $middleware->alias([
             'account.ready' => \App\Http\Middleware\EnsureAccountReady::class,
@@ -20,5 +21,23 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->shouldRenderJsonWhen(fn ($request) => $request->expectsJson());
+
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if (config('app.debug')) {
+                return null;
+            }
+
+            if ($request->expectsJson()) {
+                $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+                    ? $e->getStatusCode()
+                    : 500;
+
+                return response()->json([
+                    'message' => $status === 404 ? 'Not found.' : 'Something went wrong. Please try again.',
+                ], ($status >= 400 && $status < 600) ? $status : 500);
+            }
+
+            return null;
+        });
     })->create();

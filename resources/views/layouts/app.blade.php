@@ -1,15 +1,16 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="app-base-url" content="{{ url('/') }}">
-    <meta name="description" content="@yield('meta_description', 'Behna Bazar — grocery, fashion, electronics, home, beauty, and verified local sellers in one trusted marketplace.')">
-    <meta name="application-name" content="{{ config('app.name', 'Behna Bazar') }}">
+    <meta name="application-name" content="{{ $siteBranding['name'] }}">
     <meta name="theme-color" content="#4f46e5">
-    <title>@yield('title', config('app.name', 'Behna Bazar'))</title>
+    @include('partials.seo-head')
     <link rel="icon" type="image/jpeg" href="{{ \App\Support\BbAsset::url('images/brand/bb-mark.jpeg') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+    <meta name="mobile-web-app-capable" content="yes">
     @include('partials.assets-head')
 </head>
 <body>
@@ -17,8 +18,8 @@
 @include('partials.header-marquee')
 <nav class="navbar navbar-expand-lg sticky-top bb-navbar bb-navbar-compact shadow-sm">
     <div class="container">
-        <a class="navbar-brand bb-logo-link me-4" href="{{ route('home') }}" aria-label="Behna Bazar home">
-            <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="Behna Bazar" class="bb-logo bb-logo-nav">
+        <a class="navbar-brand bb-logo-link me-4" href="{{ route('home') }}" aria-label="{{ $siteBranding['name'] }} home">
+            <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="{{ $siteBranding['name'] }}" class="bb-logo bb-logo-nav">
         </a>
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
             <i class="bi bi-list fs-4 text-dark"></i>
@@ -65,7 +66,11 @@
                                                     <img src="${item.image}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;">
                                                     <div class="min-w-0">
                                                         <div class="fw-semibold text-truncate text-wrap" style="max-width: 250px">${item.title}</div>
-                                                        <div class="small text-bloom fw-bold">${item.formatted_price}</div>
+                                                        <div class="small">
+                                                            ${item.percent_off ? `<span class="badge bg-danger me-1" style="font-size:0.65rem">${item.percent_off}% off</span>` : ''}
+                                                            <span class="text-bloom fw-bold">${item.formatted_price}</span>
+                                                            ${item.formatted_mrp ? `<span class="text-muted text-decoration-line-through ms-1">${item.formatted_mrp}</span>` : ''}
+                                                        </div>
                                                     </div>
                                                 </a>
                                             `;
@@ -85,7 +90,7 @@
                 });
             </script>
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 bb-nav-links">
-                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Shop</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">{{ $siteBranding['nav_home_label'] }}</a></li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Categories</a>
                     <ul class="dropdown-menu shadow-sm border-0 rounded-4 mt-2">
@@ -94,9 +99,22 @@
                         @endforeach
                     </ul>
                 </li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('vendor.register.create') }}">Sell</a></li>
+                @if($referralEnabled)
+                    <li class="nav-item d-none d-xl-block">
+                        <a class="nav-link" href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}">
+                            <i class="bi bi-gift me-1"></i>Refer &amp; earn
+                        </a>
+                    </li>
+                @endif
                 <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
                 @auth
+                    <li class="nav-item">
+                        <a class="nav-link bb-coin-pill" href="{{ route('dashboard') }}" title="Your reward coins">
+                            <i class="bi bi-coin text-warning"></i>
+                            <span class="bb-coin-amount">{{ number_format($userCoins) }}</span>
+                            <span class="d-none d-md-inline small text-muted">coins</span>
+                        </a>
+                    </li>
                     <li class="nav-item"><a class="nav-link position-relative" href="{{ route('wishlist') }}">
                         <i class="bi bi-heart"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-danger border border-white" data-wishlist-count>{{ $wishlistCount ?? 0 }}</span>

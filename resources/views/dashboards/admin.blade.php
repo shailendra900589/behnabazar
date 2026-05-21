@@ -20,7 +20,15 @@
             <span class="badge rounded-pill bg-warning text-dark px-3 py-2">{{ $pendingVendors }} vendor(s) awaiting approval</span>
         @endif
         @if (($pendingQc ?? 0) > 0)
-            <span class="badge rounded-pill bg-info text-dark px-3 py-2">{{ $pendingQc }} product(s) in QC queue</span>
+            <a href="{{ route('dashboard', ['section' => 'products', 'qc' => 'pending']) }}" class="badge rounded-pill bg-info text-dark px-3 py-2 text-decoration-none">{{ $pendingQc }} product(s) in QC queue</a>
+        @endif
+        @if (($whatsappPendingCount ?? 0) > 0)
+            <a href="{{ route('dashboard', ['section' => 'whatsapp']) }}" class="badge rounded-pill bg-success text-white px-3 py-2 text-decoration-none">
+                <i class="bi bi-whatsapp me-1"></i>{{ $whatsappPendingCount }} WhatsApp to send
+            </a>
+        @endif
+        @if (($stockAlertCount ?? 0) > 0)
+            <a href="{{ route('dashboard', ['section' => 'alerts']) }}" class="badge rounded-pill bg-warning text-dark px-3 py-2 text-decoration-none">{{ $stockAlertCount }} stock alert(s)</a>
         @endif
     </div>
 
@@ -149,6 +157,12 @@
         @endif
         @if (($adminSection ?? '') === 'products')
         <div class="admin-section" id="tab-products">
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @foreach(['' => 'All', 'pending' => 'Pending QC', 'approved' => 'Approved', 'rejected' => 'Rejected'] as $qcVal => $qcLabel)
+                <a href="{{ route('dashboard', ['section' => 'products'] + ($qcVal ? ['qc' => $qcVal] : [])) }}"
+                   class="btn btn-sm {{ ($productQcFilter ?? '') === $qcVal ? 'btn-bloom' : 'btn-outline-secondary' }}">{{ $qcLabel }}</a>
+            @endforeach
+        </div>
         <div class="table-card">
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -172,6 +186,21 @@
                                 <td><span class="badge badge-soft">{{ $product->qc_status }}</span></td>
                                 <td class="text-end">
                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        @if($product->qc_status === 'pending')
+                                            <form method="post" action="{{ route('manage.products.review', $product) }}" class="d-inline">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="decision" value="approved">
+                                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                            </form>
+                                            <form method="post" action="{{ route('manage.products.review', $product) }}" class="d-inline" onsubmit="return confirm('Reject this product?');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="decision" value="rejected">
+                                                <input type="hidden" name="reject_reason" value="Does not meet marketplace guidelines">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Reject</button>
+                                            </form>
+                                        @endif
                                         <button type="button" class="btn btn-soft btn-sm btn-edit-product"
                                             data-bs-toggle="modal" data-bs-target="#productEditModal"
                                             data-id="{{ $product->id }}"
@@ -201,9 +230,35 @@
         @endif
         @if (($adminSection ?? '') === 'orders')
         <div class="admin-section" id="tab-orders">
-        <div class="d-flex justify-content-end mb-3">
-            <a href="{{ route('manage.orders.export') }}" class="btn btn-outline-dark"><i class="bi bi-download me-1"></i>Export to CSV</a>
-        </div>
+        <form method="get" action="{{ route('dashboard') }}" class="row g-2 align-items-end mb-3">
+            <input type="hidden" name="section" value="orders">
+            <div class="col-md-2">
+                <label class="form-label small">Status</label>
+                <select name="order_status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    @foreach(['pending','processing','shipped','out_for_delivery','delivered','cancelled'] as $st)
+                        <option value="{{ $st }}" @selected(($orderFilters['status'] ?? '') === $st)>{{ $st }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">From</label>
+                <input type="date" name="order_from" class="form-control form-control-sm" value="{{ $orderFilters['from'] ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">To</label>
+                <input type="date" name="order_to" class="form-control form-control-sm" value="{{ $orderFilters['to'] ?? '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Search</label>
+                <input type="text" name="order_q" class="form-control form-control-sm" placeholder="Name, phone, product, #" value="{{ $orderFilters['q'] ?? '' }}">
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-bloom btn-sm">Filter</button>
+                <a href="{{ route('dashboard', ['section' => 'orders']) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                <a href="{{ route('manage.orders.export') }}" class="btn btn-outline-dark btn-sm ms-auto"><i class="bi bi-download"></i></a>
+            </div>
+        </form>
         <div class="table-card">
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -231,7 +286,8 @@
                                             <option value="delivered" @selected($order->status === 'delivered')>delivered</option>
                                             <option value="cancelled" @selected($order->status === 'cancelled')>cancelled</option>
                                         </select>
-                                        <input type="hidden" name="tracking_msg" value="Updated by admin">
+                                        <input type="text" name="tracking_msg" class="form-control form-control-sm" placeholder="Tracking note" value="{{ $order->tracking_msg }}" style="min-width:160px">
+                                        <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm" target="_blank" title="PDF Invoice"><i class="bi bi-file-pdf"></i></a>
                                         <button type="submit" class="btn btn-soft btn-sm">Save</button>
                                     </form>
                                 </td>
@@ -609,6 +665,24 @@
         @if (($adminSection ?? '') === 'marketing')
         <div class="admin-section" id="tab-marketing">
         @include('dashboards.partials.promotion-email-form')
+        <div class="bb-card p-4 mb-4">
+            <h4 class="fw-bold mb-2">Newsletter subscribers <span class="badge bg-light text-dark">{{ $newsletterCount ?? 0 }}</span></h4>
+            <div class="table-responsive" style="max-height:280px">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Email</th><th>Joined</th></tr></thead>
+                    <tbody>
+                        @forelse($newsletterSubscribers ?? [] as $sub)
+                            <tr>
+                                <td>{{ $sub->email }}</td>
+                                <td class="small text-muted">{{ $sub->created_at?->format('d M Y') }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="2" class="text-muted">No subscribers yet.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bb-card p-4">
@@ -688,6 +762,18 @@
         @endif
         @if (($adminSection ?? '') === 'program')
             @include('dashboards.partials.admin-program-settings')
+        @endif
+        @if (($adminSection ?? '') === 'whatsapp')
+            @include('dashboards.partials.admin-whatsapp-outbox')
+        @endif
+        @if (($adminSection ?? '') === 'notifications')
+            @include('dashboards.partials.admin-notification-logs')
+        @endif
+        @if (($adminSection ?? '') === 'alerts')
+            @include('dashboards.partials.admin-stock-alerts')
+        @endif
+        @if (($adminSection ?? '') === 'reviews')
+            @include('dashboards.partials.admin-reviews')
         @endif
         @if (($adminSection ?? '') === 'team')
         <div class="admin-section" id="tab-team">

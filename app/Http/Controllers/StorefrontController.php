@@ -30,7 +30,7 @@ class StorefrontController extends Controller
 
     public function home(Request $request): View
     {
-        $query = Product::query()->with(['category', 'vendor'])->where('qc_status', 'approved')->withCount('orders');
+        $query = Product::query()->with(['category', 'vendor', 'images'])->where('qc_status', 'approved')->withCount('orders');
 
         if ($request->filled('search')) {
             $query->where('title', 'like', '%'.$request->search.'%');
@@ -69,15 +69,16 @@ class StorefrontController extends Controller
         });
 
         $recentIds = session()->get('recently_viewed', []);
-        $recentlyViewed = !empty($recentIds) 
-            ? Product::whereIn('id', $recentIds)->where('qc_status', 'approved')->get()->sortBy(fn($p) => array_search($p->id, $recentIds))
+        $recentlyViewed = ! empty($recentIds)
+            ? Product::with('images')->whereIn('id', $recentIds)->where('qc_status', 'approved')->get()->sortBy(fn ($p) => array_search($p->id, $recentIds, true))
             : collect();
 
         return view('store.home', [
             'products' => $query->paginate(12)->withQueryString(),
-            'newArrivals' => Product::where('qc_status', 'approved')->latest()->take(4)->get(),
-            'hotProducts' => Product::withCount('orders')->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
+            'newArrivals' => Product::with(['category', 'images', 'variants'])->where('qc_status', 'approved')->latest()->take(4)->get(),
+            'hotProducts' => Product::with(['category', 'images', 'variants'])->withCount('orders')->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
             'flashDeal' => Cache::remember('storefront.flash_deal', 300, fn () => Product::query()
+                ->with('images')
                 ->where('qc_status', 'approved')
                 ->latest('id')
                 ->first()),
@@ -106,16 +107,27 @@ class StorefrontController extends Controller
     {
         if (!$request->filled('q')) return response()->json([]);
 
+        $term = trim((string) $request->q);
+        $recent = session()->get('recent_searches', []);
+        if ($term !== '' && ! in_array($term, $recent, true)) {
+            array_unshift($recent, $term);
+            session()->put('recent_searches', array_slice($recent, 0, 8));
+        }
+
         $products = Product::where('qc_status', 'approved')
             ->where('title', 'like', '%'.$request->q.'%')
-            ->select('id', 'title', 'price', 'slug')
+            ->select('id', 'title', 'price', 'compare_at_price', 'slug')
             ->take(5)
             ->get();
-            
-        $products->map(function($product) {
+
+        $products->map(function ($product) {
             $product->url = route('product.show', $product);
-            $product->formatted_price = '₹' . number_format($product->price, 2);
+            $pricing = $product->pricing();
+            $product->formatted_price = '₹'.number_format($pricing['sale'], 2);
+            $product->formatted_mrp = $pricing['mrp'] ? '₹'.number_format($pricing['mrp'], 2) : null;
+            $product->percent_off = $pricing['percent_off'];
             $product->image = $product->imageUrl();
+
             return $product;
         });
 
@@ -149,8 +161,36 @@ class StorefrontController extends Controller
             ->get()
             ->groupBy('location');
 
+        $product->load(['category', 'vendor', 'reviews.user', 'images', 'sourceProduct', 'questions.user', 'variants']);
+
+        $approvedReviews = $product->reviews->where('is_approved', true);
+        $ratingCounts = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        foreach ($approvedReviews as $review) {
+            if (isset($ratingCounts[$review->rating])) {
+                $ratingCounts[$review->rating]++;
+            }
+        }
+
+        $recentIds = session()->get('recently_viewed', []);
+        $recentProducts = collect();
+        if (! empty($recentIds)) {
+            $recentProducts = Product::query()
+                ->whereIn('id', $recentIds)
+                ->where('qc_status', 'approved')
+                ->whereKeyNot($product->id)
+                ->get()
+                ->sortBy(fn ($p) => array_search($p->id, $recentIds, true))
+                ->take(6)
+                ->values();
+        }
+
         return view('store.product', [
-            'product' => $product->load(['category', 'vendor', 'reviews.user', 'images', 'sourceProduct']),
+            'product' => $product,
+            'galleryImages' => $product->galleryUrls(),
+            'totalReviews' => $approvedReviews->count(),
+            'avgRating' => $product->averageRating(),
+            'ratingCounts' => $ratingCounts,
+            'recentProducts' => $recentProducts,
             'ads' => $ads,
             'related' => Product::query()
                 ->where('qc_status', 'approved')
@@ -302,10 +342,14 @@ class StorefrontController extends Controller
 
         \App\Models\Review::updateOrCreate(
             ['user_id' => Auth::id(), 'product_id' => $product->id],
-            ['rating' => $request->rating, 'comment' => $request->comment]
+            [
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'is_approved' => false,
+            ]
         );
 
-        return back()->with('status', 'Thank you for your review!');
+        return back()->with('status', 'Thank you! Your review will appear after moderation.');
     }
 
     public function postQuestion(Request $request, Product $product): RedirectResponse

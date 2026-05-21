@@ -15,8 +15,17 @@
                     @endif
                     <span class="text-muted ms-2">₹{{ number_format($order->total_price,2) }}</span>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <a class="btn btn-bloom" href="{{ route('orders.track',$order) }}">Track Order</a>
+                    <a class="btn btn-outline-secondary" href="{{ route('orders.invoice', $order) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> Invoice</a>
+                    @if($order->product && $order->product->qc_status === 'approved')
+                        <form method="post" action="{{ route('cart.add', $order->product) }}" class="d-inline">
+                            @csrf
+                            @if($order->variant_id)<input type="hidden" name="variant_id" value="{{ $order->variant_id }}">@endif
+                            <input type="hidden" name="quantity" value="{{ max(1, $order->quantity) }}">
+                            <button type="submit" class="btn btn-outline-primary">Buy again</button>
+                        </form>
+                    @endif
                     @if(in_array($order->status, ['pending', 'processing']))
                         <form method="post" action="{{ route('orders.cancel', $order) }}" onsubmit="return confirm('Are you sure you want to cancel this order?');">
                             @csrf

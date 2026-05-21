@@ -3,6 +3,14 @@
 namespace App\Providers;
 
 use App\Models\CartItem;
+use App\Models\Product;
+use App\Models\VendorNotification;
+use App\Observers\ProductSeoObserver;
+use App\Support\Seo\SeoResolver;
+use App\Services\ReferralProgramService;
+use App\Services\VendorNotificationService;
+use App\Support\ReferralSettings;
+use App\Support\SiteBranding;
 use App\Support\SiteMedia;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +48,15 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::useBootstrapFive();
 
+        Product::observe(ProductSeoObserver::class);
+
+        View::composer('layouts.app', function ($view): void {
+            if (! config('seo.enabled', true)) {
+                return;
+            }
+            $view->with('seo', SeoResolver::resolve(request(), $view->getData()));
+        });
+
         View::composer(['layouts.app', 'layouts.dashboard'], function ($view): void {
             $cartCount = 0;
             $wishlistCount = 0;
@@ -57,8 +74,50 @@ class AppServiceProvider extends ServiceProvider
             $categories = \App\Models\Category::forNavigation();
 
             $siteDisplay = SiteMedia::config();
+            $siteBranding = SiteBranding::config();
+            $referralEnabled = ReferralSettings::enabled();
+            $referralCode = '';
+            $userCoins = 0;
 
-            $view->with(compact('cartCount', 'wishlistCount', 'categories', 'cartItemsPreview', 'siteDisplay'));
+            if (Auth::check()) {
+                $user = Auth::user();
+                $userCoins = (int) ($user->coins ?? 0);
+                if ($referralEnabled) {
+                    $referralCode = app(ReferralProgramService::class)->ensureReferralCode($user);
+                }
+            }
+
+            $view->with(compact(
+                'cartCount',
+                'wishlistCount',
+                'categories',
+                'cartItemsPreview',
+                'siteDisplay',
+                'siteBranding',
+                'referralEnabled',
+                'referralCode',
+                'userCoins',
+            ));
+        });
+
+        View::composer([
+            'layouts.dashboard',
+            'partials.vendor-notifications',
+            'dashboards.vendor',
+            'dashboards.resell-catalog',
+        ], function ($view): void {
+            $vendorNotifications = collect();
+            $vendorNotificationUnread = 0;
+
+            if (Auth::check() && Auth::user()->role === 'vendor') {
+                $vendorNotifications = VendorNotification::where('vendor_id', Auth::id())
+                    ->latest()
+                    ->take(15)
+                    ->get();
+                $vendorNotificationUnread = app(VendorNotificationService::class)->unreadCount((int) Auth::id());
+            }
+
+            $view->with(compact('vendorNotifications', 'vendorNotificationUnread'));
         });
     }
 }

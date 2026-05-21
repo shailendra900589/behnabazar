@@ -50,8 +50,29 @@
 <div class="d-flex flex-wrap gap-2 mb-4">
     <a href="{{ route('home') }}" class="btn btn-bloom btn-sm rounded-pill"><i class="bi bi-shop me-1"></i>Continue shopping</a>
     <a href="{{ route('wishlist') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-heart me-1"></i>Wishlist ({{ $wishlistCount }})</a>
+    <a href="{{ route('addresses') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-geo-alt me-1"></i>Addresses</a>
     <a href="{{ route('checkout') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-bag-check me-1"></i>Checkout</a>
 </div>
+
+@if(isset($coinHistory) && $coinHistory->isNotEmpty())
+<div class="table-card mb-4">
+    <div class="p-4 border-bottom"><h2 class="h6 fw-bold mb-0"><i class="bi bi-coin text-warning me-1"></i> Coin history</h2></div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>When</th><th>Amount</th><th>Note</th></tr></thead>
+            <tbody>
+                @foreach($coinHistory as $tx)
+                    <tr>
+                        <td class="small text-muted">{{ $tx->created_at->format('d M Y') }}</td>
+                        <td class="{{ $tx->amount >= 0 ? 'text-success' : 'text-danger' }} fw-semibold">{{ $tx->amount >= 0 ? '+' : '' }}{{ $tx->amount }}</td>
+                        <td class="small">{{ $tx->description ?? $tx->type }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+@endif
 
 <div class="row g-4">
     <div class="col-lg-7">
@@ -81,6 +102,7 @@
                                 <td class="fw-semibold">₹{{ number_format($order->total_price, 2) }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('orders.track', $order) }}" class="btn btn-soft btn-sm rounded-pill">Track</a>
+                                    <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm rounded-pill" target="_blank"><i class="bi bi-file-pdf"></i></a>
                                 </td>
                             </tr>
                         @empty

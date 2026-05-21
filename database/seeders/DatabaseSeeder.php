@@ -47,14 +47,19 @@ class DatabaseSeeder extends Seeder
             'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=900&auto=format&fit=crop',
         ];
 
+        $salePrices = [499, 349, 1499, 899, 1199, 299, 1299, 699];
+        $mrpPrices = [649, 449, 1999, 1199, 1499, 399, 1699, 899];
+
         foreach (range(1, 8) as $i) {
             $category = $categories[($i - 1) % $categories->count()];
+            $titles = ['Daily Grocery Pack', 'Organic Millet Mix', 'Wireless Earbuds', 'Cotton Casual Shirt', 'Steel Kitchen Set', 'Hydrating Face Cream', 'Classic Sneakers', 'Handmade Table Runner'];
             Product::create([
                 'vendor_id' => $i % 3 === 0 ? null : $vendor->id,
                 'category_id' => $category->id,
-                'title' => ['Daily Grocery Pack', 'Organic Millet Mix', 'Wireless Earbuds', 'Cotton Casual Shirt', 'Steel Kitchen Set', 'Hydrating Face Cream', 'Classic Sneakers', 'Handmade Table Runner'][$i - 1],
-                'slug' => Str::slug(['Daily Grocery Pack', 'Organic Millet Mix', 'Wireless Earbuds', 'Cotton Casual Shirt', 'Steel Kitchen Set', 'Hydrating Face Cream', 'Classic Sneakers', 'Handmade Table Runner'][$i - 1]),
-                'price' => [499, 349, 1499, 899, 1199, 299, 1299, 699][$i - 1],
+                'title' => $titles[$i - 1],
+                'slug' => Str::slug($titles[$i - 1]),
+                'price' => $salePrices[$i - 1],
+                'compare_at_price' => $mrpPrices[$i - 1],
                 'description' => 'A verified Behna Bazar marketplace product with category review, seller support, and professional fulfillment tracking.',
                 'image' => $images[$i - 1],
                 'qc_status' => $i === 8 ? 'pending' : 'approved',
@@ -73,8 +78,16 @@ class DatabaseSeeder extends Seeder
         Setting::updateOrCreate(['setting_key' => 'referral_vendor_triggers'], ['setting_value' => 'referee_first_sale,referee_first_product']);
         Setting::updateOrCreate(['setting_key' => 'resell_customize_fee'], ['setting_value' => '99']);
         Setting::updateOrCreate(['setting_key' => 'resell_program_enabled'], ['setting_value' => '1']);
+        Setting::updateOrCreate(['setting_key' => 'resell_bulk_min_qty'], ['setting_value' => '5']);
+        Setting::updateOrCreate(['setting_key' => 'resell_bulk_discount_percent'], ['setting_value' => '5']);
         Setting::updateOrCreate(['setting_key' => 'payout_min_amount'], ['setting_value' => '500']);
         Setting::updateOrCreate(['setting_key' => 'product_edit_requires_qc'], ['setting_value' => '1']);
+        Setting::updateOrCreate(['setting_key' => 'cod_enabled'], ['setting_value' => '1']);
+        Setting::updateOrCreate(['setting_key' => 'free_shipping_threshold'], ['setting_value' => '499']);
+        Setting::updateOrCreate(['setting_key' => 'seo_locality'], ['setting_value' => 'India']);
+        Setting::updateOrCreate(['setting_key' => 'seo_region'], ['setting_value' => 'IN']);
+        Setting::updateOrCreate(['setting_key' => 'seo_latitude'], ['setting_value' => '28.6139']);
+        Setting::updateOrCreate(['setting_key' => 'seo_longitude'], ['setting_value' => '77.2090']);
         Coupon::create(['code' => 'WELCOME50', 'discount_type' => 'flat', 'discount_value' => 50, 'min_cart_value' => 500, 'status' => true]);
         Ad::create(['location' => 'home_top', 'ad_type' => 'code', 'code' => '<div class="p-4 text-center">Promote your local brand on Behna Bazar</div>', 'status' => true]);
         Banner::create(['image' => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop', 'link' => '/', 'sort_order' => 1, 'status' => true]);

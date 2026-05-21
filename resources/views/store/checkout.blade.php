@@ -2,8 +2,8 @@
 @section('title', 'Checkout')
 @section('content')
 <section class="container py-4 py-lg-5">
+    @include('partials.trust-strip')
     <h1 class="fw-bold mb-4">Checkout</h1>
-    @php($total = max(0, $subtotal - $discount - $coinDiscount))
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="bb-card p-4 mb-4 shadow-sm rounded-4 border-0">
@@ -23,7 +23,6 @@
             <form method="post" action="{{ route('checkout.place') }}" class="bb-card p-4 shadow-sm rounded-4 border-0" id="checkoutForm">
                 @csrf
                 <input type="hidden" name="coupon_code" value="{{ request('coupon_code') }}">
-                <input type="hidden" name="payment_method" value="Prepaid">
                 <input type="hidden" name="razorpay_order_id" id="checkoutRazorpayOrderId">
                 <input type="hidden" name="razorpay_payment_id" id="checkoutRazorpayPaymentId">
                 <input type="hidden" name="razorpay_signature" id="checkoutRazorpaySignature">
@@ -39,7 +38,7 @@
                         <div class="col-md-6">
                             <label class="border rounded-4 p-3 d-block h-100 cursor-pointer position-relative" style="cursor:pointer;" onclick="document.getElementById('addr_{{ $addr->id }}').checked = true; document.getElementById('new_address_block').classList.add('d-none'); document.getElementById('addressTextarea').required = false; document.getElementById('phoneInput').required = false;">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="address_id" id="addr_{{ $addr->id }}" value="{{ $addr->id }}" {{ $loop->first ? 'checked' : '' }}>
+                                    <input class="form-check-input" type="radio" name="address_id" id="addr_{{ $addr->id }}" value="{{ $addr->id }}" {{ ($addr->is_default || ($loop->first && !$addresses->contains('is_default', true))) ? 'checked' : '' }}>
                                     <label class="form-check-label fw-bold d-block" for="addr_{{ $addr->id }}">
                                         {{ $addr->name ?? auth()->user()->name }}
                                         @if($addr->is_default)<span class="badge bg-primary ms-1">Default</span>@endif
@@ -78,18 +77,46 @@
                         <label class="form-label fw-semibold">Street Address</label>
                         <textarea id="addressTextarea" class="form-control bg-light border-0" name="address" rows="3" placeholder="House/Flat No., Building, Street..." {{ $addresses->isEmpty() ? 'required' : '' }}>{{ $addresses->isEmpty() ? auth()->user()->address : '' }}</textarea>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Phone Number</label>
-                        <input id="phoneInput" class="form-control bg-light border-0" name="phone" value="{{ $addresses->isEmpty() ? auth()->user()->phone : '' }}" placeholder="For delivery updates" {{ $addresses->isEmpty() ? 'required' : '' }}>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input id="phoneInput" class="form-control bg-light border-0" name="phone" value="{{ $addresses->isEmpty() ? auth()->user()->phone : '' }}" {{ $addresses->isEmpty() ? 'required' : '' }}>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">PIN</label>
+                            <input class="form-control bg-light border-0" name="pincode" maxlength="6" placeholder="6-digit">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">City</label>
+                            <input class="form-control bg-light border-0" name="city" value="{{ auth()->user()->city }}">
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="save_address" value="1" id="saveAddr">
+                        <label class="form-check-label" for="saveAddr">Save to address book</label>
                     </div>
                 </div>
 
                 <hr class="opacity-10 my-4">
 
                 <h4 class="fw-bold mb-3"><i class="bi bi-credit-card-fill me-2 text-success"></i>Payment Method</h4>
-                <div class="border rounded-4 p-3 mb-4 border-bloom bg-light">
-                    <div class="fw-bold"><i class="bi bi-shield-lock-fill me-2 text-bloom"></i>Online payment required</div>
-                    <div class="small text-muted">Orders are created only after successful Razorpay payment verification.</div>
+                <div class="d-flex flex-column gap-2 mb-4">
+                    <label class="border rounded-4 p-3 d-flex gap-3 align-items-center cursor-pointer payment-option border-bloom bg-light">
+                        <input type="radio" name="payment_method" value="Prepaid" class="form-check-input m-0" checked>
+                        <div>
+                            <div class="fw-bold"><i class="bi bi-shield-lock me-1 text-bloom"></i> Pay online (Razorpay)</div>
+                            <div class="small text-muted">UPI, cards, netbanking — instant confirmation</div>
+                        </div>
+                    </label>
+                    @if($codEnabled ?? true)
+                    <label class="border rounded-4 p-3 d-flex gap-3 align-items-center cursor-pointer payment-option">
+                        <input type="radio" name="payment_method" value="COD" class="form-check-input m-0">
+                        <div>
+                            <div class="fw-bold"><i class="bi bi-cash-coin me-1 text-success"></i> Cash on Delivery</div>
+                            <div class="small text-muted">Pay when your order arrives</div>
+                        </div>
+                    </label>
+                    @endif
                 </div>
 
                 <button type="submit" id="placeOrderBtn" class="btn btn-bloom btn-lg w-100 rounded-pill shadow-sm py-3 fs-5 fw-bold mt-2 position-relative overflow-hidden">
@@ -111,7 +138,21 @@
 
             <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
             <script>
+                const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+                const btnText = document.getElementById('btnText');
+                function selectedPayment() {
+                    return document.querySelector('input[name="payment_method"]:checked')?.value || 'Prepaid';
+                }
+                paymentRadios.forEach(r => r.addEventListener('change', () => {
+                    btnText.innerHTML = r.value === 'COD'
+                        ? '<i class="bi bi-cash me-2"></i> Place COD Order • ₹{{ number_format($total, 2) }}'
+                        : '<i class="bi bi-lock-fill me-2 opacity-50"></i> Place Order • ₹{{ number_format($total, 2) }}';
+                }));
+
                 document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+                    if (selectedPayment() === 'COD') {
+                        return true;
+                    }
                     e.preventDefault();
                     const form = this;
                         const overlay = document.getElementById('paymentOverlay');
@@ -171,6 +212,7 @@
         <div class="col-lg-4">
             <div class="bb-card p-4 shadow-sm rounded-4 border-0 sticky-top" style="top: 100px;">
                 <h4 class="fw-bold mb-4">Order Summary</h4>
+                @include('partials.free-shipping-bar', ['cartTotal' => $subtotal, 'freeShippingThreshold' => $freeShippingThreshold ?? 0])
                 
                 <form method="GET" action="{{ route('checkout') }}" class="mb-4">
                     <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden border">

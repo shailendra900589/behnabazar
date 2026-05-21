@@ -16,12 +16,16 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\VendorWalletTransaction;
+use App\Services\OrderNotificationService;
 use App\Services\ReferralProgramService;
+use App\Services\VendorNotificationService;
 use App\Services\VendorWalletService;
+use App\Support\NotificationSettings;
 use App\Support\AdPlacements;
 use App\Support\MarketplaceSettings;
 use App\Support\ReferralSettings;
 use App\Models\ProductImage;
+use App\Support\ProductVariantInput;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
@@ -54,16 +58,29 @@ class DashboardController extends Controller
     {
         $this->requireRole('admin');
 
-        $allowed = ['overview', 'products', 'orders', 'vendors', 'payouts', 'returns', 'catalog', 'storefront', 'marketing', 'referrals', 'program', 'team'];
+        $allowed = ['overview', 'products', 'orders', 'vendors', 'payouts', 'returns', 'catalog', 'storefront', 'marketing', 'referrals', 'program', 'whatsapp', 'notifications', 'alerts', 'team', 'reviews'];
         $section = $request->query('section', 'overview');
         if (! in_array($section, $allowed, true)) {
             $section = 'overview';
         }
 
+        $productQc = $request->query('qc');
+        $productsQuery = Product::with(['category', 'vendor', 'qcOfficer', 'images'])->latest();
+        if ($productQc && in_array($productQc, ['pending', 'approved', 'rejected'], true)) {
+            $productsQuery->where('qc_status', $productQc);
+        }
+
         return view('dashboards.admin', [
             'adminSection' => $section,
-            'products' => Product::with(['category', 'vendor', 'qcOfficer', 'images'])->latest()->get(),
-            'orders' => Order::with(['user', 'product'])->latest()->get(),
+            'products' => $productsQuery->limit(150)->get(),
+            'productQcFilter' => $productQc,
+            'orders' => $this->adminOrdersQuery($request)->limit(250)->get(),
+            'orderFilters' => [
+                'status' => $request->query('order_status'),
+                'from' => $request->query('order_from'),
+                'to' => $request->query('order_to'),
+                'q' => $request->query('order_q'),
+            ],
             'recentOrders' => Order::with(['user', 'product'])->latest()->take(10)->get(),
             'topProducts' => Product::with(['category', 'vendor'])
                 ->withCount('orders')
@@ -80,15 +97,50 @@ class DashboardController extends Controller
             'banners' => Banner::orderBy('sort_order')->latest()->get(),
             'pendingVendors' => User::where('role', 'vendor')->where('account_status', 'pending_approval')->count(),
             'pendingProducts' => Product::where('qc_status', 'pending')->count(),
+            'pendingQc' => Product::where('qc_status', 'pending')->count(),
             'revenue' => (float) Order::query()->sum('total_price'),
             'chartLabels' => collect(range(6, 0))->map(fn($days) => now()->subDays($days)->format('M d'))->toArray(),
             'chartData' => collect(range(6, 0))->map(fn($days) => Order::whereDate('created_at', now()->subDays($days))->sum('total_price'))->toArray(),
             'payoutRequests' => \App\Models\Payout::with('vendor')->latest()->get(),
             'returnRequests' => Order::whereNotNull('return_status')->with(['user', 'product'])->latest()->get(),
             'promotionProducts' => Product::where('qc_status', 'approved')->orderBy('title')->get(['id', 'title', 'price']),
+            'pendingReviews' => \App\Models\Review::with(['user', 'product'])->where('is_approved', false)->latest()->get(),
             'newsletterCount' => Newsletter::count(),
             'referralRewards' => ReferralReward::with(['referrer', 'referee', 'order'])->latest()->get(),
+            'whatsappOutbox' => \App\Models\WhatsappOutbox::pending()->latest()->limit(50)->get(),
+            'whatsappSent' => \App\Models\WhatsappOutbox::where('status', 'sent')->latest('sent_at')->limit(15)->get(),
+            'whatsappPendingCount' => \App\Models\WhatsappOutbox::pendingCount(),
+            'notificationLogs' => \App\Models\NotificationLog::latest()->limit(100)->get(),
+            'stockAlertsPending' => \App\Models\StockAlert::pending()->with(['product', 'variant'])->latest()->limit(50)->get(),
+            'stockAlertCount' => \App\Models\StockAlert::pending()->count(),
+            'newsletterSubscribers' => Newsletter::latest()->limit(100)->get(),
         ]);
+    }
+
+    private function adminOrdersQuery(Request $request)
+    {
+        $query = Order::with(['user', 'product'])->latest();
+
+        if ($request->filled('order_status')) {
+            $query->where('status', $request->query('order_status'));
+        }
+        if ($request->filled('order_from')) {
+            $query->whereDate('created_at', '>=', $request->query('order_from'));
+        }
+        if ($request->filled('order_to')) {
+            $query->whereDate('created_at', '<=', $request->query('order_to'));
+        }
+        if ($request->filled('order_q')) {
+            $q = '%'.$request->query('order_q').'%';
+            $query->where(function ($sub) use ($q) {
+                $sub->where('customer_name', 'like', $q)
+                    ->orWhere('phone', 'like', $q)
+                    ->orWhere('product_name', 'like', $q)
+                    ->orWhere('id', 'like', $q);
+            });
+        }
+
+        return $query;
     }
 
     public function sendPromotionEmail(Request $request): RedirectResponse
@@ -209,7 +261,7 @@ class DashboardController extends Controller
     public function vendor(): View
     {
         $this->requireRole('vendor');
-        $products = Product::with(['category', 'images'])->where('vendor_id', Auth::id())->latest()->get();
+        $products = Product::with(['category', 'images', 'sourceProduct'])->where('vendor_id', Auth::id())->latest()->get();
         $vendorProductIds = $products->pluck('id');
         $orders = Order::where(function ($q) use ($vendorProductIds) {
             $q->whereIn('product_id', $vendorProductIds)
@@ -223,9 +275,26 @@ class DashboardController extends Controller
         $viewsTotal = $products->sum('view_count');
         $conversionRate = $viewsTotal > 0 ? round(($orders->count() / $viewsTotal) * 100, 1) : 0;
 
+        $resellEnabled = MarketplaceSettings::resellEnabled();
+        $resellCatalogCount = $resellEnabled
+            ? Product::where('qc_status', 'approved')
+                ->whereNotNull('vendor_id')
+                ->where('vendor_id', '!=', Auth::id())
+                ->whereNull('source_product_id')
+                ->where(function ($q) {
+                    $q->where('resell_allowed', true)->orWhereNull('resell_allowed');
+                })
+                ->count()
+            : 0;
+
         return view('dashboards.vendor', [
             'products' => $products,
             'orders' => $orders,
+            'resellEnabled' => $resellEnabled,
+            'resellCatalogCount' => $resellCatalogCount,
+            'resellCustomizeFee' => MarketplaceSettings::resellCustomizeFee(),
+            'resellBulkMinQty' => MarketplaceSettings::resellBulkMinQty(),
+            'resellBulkDiscountPercent' => MarketplaceSettings::resellBulkDiscountPercent(),
             'categories' => Category::orderBy('name')->get(),
             'chartLabels' => collect(range(6, 0))->map(fn($days) => now()->subDays($days)->format('M d'))->toArray(),
             'chartData' => collect(range(6, 0))->map(fn($days) => Order::whereIn('product_id', $vendorProductIds)->whereDate('created_at', now()->subDays($days))->sum('total_price'))->toArray(),
@@ -337,7 +406,24 @@ class DashboardController extends Controller
             'lifetimeSpend' => (float) $user->orders()->sum('total_price'),
             'pendingOrders' => $user->orders()->whereIn('status', ['pending', 'processing', 'shipped', 'out_for_delivery'])->count(),
             'trendingProducts' => \App\Models\Product::with(['category', 'vendor'])->withCount('orders')->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
+            'coinHistory' => \App\Models\CoinTransaction::where('user_id', $user->id)->latest()->take(15)->get(),
         ]);
+    }
+
+    public function approveReview(\App\Models\Review $review): RedirectResponse
+    {
+        $this->requireRole('admin');
+        $review->update(['is_approved' => true]);
+
+        return redirect()->route('dashboard', ['section' => 'reviews'])->with('status', 'Review approved.');
+    }
+
+    public function deleteReview(\App\Models\Review $review): RedirectResponse
+    {
+        $this->requireRole('admin');
+        $review->delete();
+
+        return redirect()->route('dashboard', ['section' => 'reviews'])->with('status', 'Review removed.');
     }
 
     public function saveCategory(Request $request): RedirectResponse
@@ -471,35 +557,34 @@ class DashboardController extends Controller
             'title' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:1',
+            'compare_at_price' => 'nullable|numeric|min:1',
+            'reseller_dp_price' => 'nullable|numeric|min:0',
             'description' => 'required|max:3000',
             'image' => 'nullable|image|max:4096',
-            'images' => 'nullable|array|max:9',
+            'images' => 'nullable|array|max:'.config('product.max_gallery_images', 5),
             'images.*' => 'image|max:4096',
+            'variants' => 'nullable|array',
         ]);
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
+        if (! empty($data['compare_at_price']) && (float) $data['compare_at_price'] < (float) $data['price']) {
+            return back()->withErrors(['compare_at_price' => 'MRP must be greater than sale price.']);
+        }
+        if (! empty($data['reseller_dp_price']) && (float) $data['reseller_dp_price'] > (float) $data['price']) {
+            return back()->withErrors(['reseller_dp_price' => 'DP price should not exceed retail sale price.']);
+        }
+
         $data['slug'] = Str::slug($data['title']).'-'.Str::random(5);
         $data['vendor_id'] = $role === 'vendor' ? Auth::id() : null;
         $data['qc_status'] = $role === 'admin' ? 'approved' : 'pending';
+        $data['resell_allowed'] = $role === 'vendor' ? $request->boolean('resell_allowed', true) : true;
         $product = Product::create($data);
 
         $this->attachUploadedImages($product, $request, $data['image'] ?? null);
-
-        if ($request->has('variants') && is_array($request->variants)) {
-            foreach ($request->variants as $variant) {
-                if (!empty($variant['color']) || !empty($variant['size'])) {
-                    $product->variants()->create([
-                        'color' => $variant['color'] ?? null,
-                        'size' => $variant['size'] ?? null,
-                        'price' => $variant['price'] ?? null,
-                        'stock' => $variant['stock'] ?? 0,
-                    ]);
-                }
-            }
-        }
+        $this->syncProductVariants($product, $request->input('variants'));
 
         $this->clearStorefrontCaches();
 
@@ -518,12 +603,16 @@ class DashboardController extends Controller
             'title' => 'required|max:255',
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:1',
+            'compare_at_price' => 'nullable|numeric|min:1',
+            'reseller_dp_price' => 'nullable|numeric|min:0',
             'description' => 'required|max:3000',
             'image' => 'nullable|image|max:4096',
-            'images' => 'nullable|array|max:9',
+            'images' => 'nullable|array|max:'.config('product.max_gallery_images', 5),
             'images.*' => 'image|max:4096',
             'remove_image_ids' => 'nullable|array',
             'remove_image_ids.*' => 'integer|exists:product_images,id',
+            'variants' => 'nullable|array',
+            'replace_variants' => 'nullable|boolean',
         ];
 
         if ($product->isResellListing()) {
@@ -532,17 +621,34 @@ class DashboardController extends Controller
 
         $data = $request->validate($rules);
 
+        if (! $product->isResellListing()) {
+            if (! empty($data['compare_at_price']) && (float) $data['compare_at_price'] < (float) $data['price']) {
+                return back()->withErrors(['compare_at_price' => 'MRP must be greater than sale price.']);
+            }
+            if (! empty($data['reseller_dp_price']) && (float) $data['reseller_dp_price'] > (float) $data['price']) {
+                return back()->withErrors(['reseller_dp_price' => 'DP price should not exceed retail sale price.']);
+            }
+        }
+
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        $product->update([
+        $update = [
             'title' => $data['title'],
             'category_id' => $data['category_id'],
             'price' => $data['price'],
             'description' => $data['description'],
             'image' => $data['image'] ?? $product->image,
-        ]);
+        ];
+        $update['compare_at_price'] = $data['compare_at_price'] ?? null;
+        if (! $product->isResellListing()) {
+            $update['reseller_dp_price'] = $data['reseller_dp_price'] ?? null;
+            if ($user->role === 'vendor') {
+                $update['resell_allowed'] = $request->boolean('resell_allowed', true);
+            }
+        }
+        $product->update($update);
 
         if ($request->filled('remove_image_ids')) {
             $toRemove = ProductImage::where('product_id', $product->id)
@@ -562,6 +668,12 @@ class DashboardController extends Controller
 
         $this->attachUploadedImages($product, $request, $data['image'] ?? null);
 
+        if ($request->boolean('replace_variants') && $request->has('variants')) {
+            $product->variants()->delete();
+            $this->syncProductVariants($product, $request->input('variants'));
+            $this->checkVendorLowStock($product->fresh());
+        }
+
         if ($wasApproved && MarketplaceSettings::editRequiresQc()) {
             $product->update([
                 'qc_status' => 'pending',
@@ -572,6 +684,12 @@ class DashboardController extends Controller
         }
 
         $this->clearStorefrontCaches();
+
+        try {
+            app(\App\Services\StockAlertService::class)->processBackInStock();
+        } catch (\Throwable) {
+            // non-blocking
+        }
 
         $message = ($wasApproved && MarketplaceSettings::editRequiresQc())
             ? 'Product updated and sent to QC for re-verification.'
@@ -595,6 +713,8 @@ class DashboardController extends Controller
             'tracking_msg' => 'nullable|max:255',
             'location' => 'nullable|max:255'
         ]);
+
+        $previousStatus = $order->status;
         
         $order->update([
             'status' => $data['status'],
@@ -616,6 +736,12 @@ class DashboardController extends Controller
             }
         }
 
+        try {
+            app(OrderNotificationService::class)->orderStatusChanged($order->fresh(), $previousStatus);
+        } catch (\Throwable) {
+            // non-blocking
+        }
+
         if ($request->expectsJson()) {
             return response()->json(['status' => 'success', 'message' => 'Order updated.']);
         }
@@ -625,7 +751,7 @@ class DashboardController extends Controller
 
     public function reviewProduct(Request $request, Product $product): JsonResponse|RedirectResponse
     {
-        $this->requireRole(['qc_manager', 'qc_staff']);
+        $this->requireRole(['qc_manager', 'qc_staff', 'admin']);
         $data = $request->validate(['decision' => 'required|in:approved,rejected', 'reject_reason' => 'nullable|required_if:decision,rejected|max:1000']);
         $product->update([
             'qc_status' => $data['decision'],
@@ -703,10 +829,47 @@ class DashboardController extends Controller
         $data = $request->validate([
             'resell_program_enabled' => ['nullable'],
             'resell_customize_fee' => ['nullable', 'numeric', 'min:0'],
+            'resell_bulk_min_qty' => ['nullable', 'integer', 'min:1'],
+            'resell_bulk_discount_percent' => ['nullable', 'numeric', 'min:0', 'max:50'],
             'vendor_registration_amount' => ['nullable', 'numeric', 'min:0'],
             'payout_min_amount' => ['nullable', 'numeric', 'min:1'],
             'ad_wallet_min_topup' => ['nullable', 'numeric', 'min:1'],
             'product_edit_requires_qc' => ['nullable'],
+            'site_display_name' => ['nullable', 'string', 'max:80'],
+            'site_tagline' => ['nullable', 'string', 'max:300'],
+            'nav_home_label' => ['nullable', 'string', 'max:24'],
+            'seo_locality' => ['nullable', 'string', 'max:120'],
+            'seo_region' => ['nullable', 'string', 'max:10'],
+            'seo_latitude' => ['nullable', 'numeric'],
+            'seo_longitude' => ['nullable', 'numeric'],
+            'seo_contact_email' => ['nullable', 'email', 'max:120'],
+            'seo_contact_phone' => ['nullable', 'string', 'max:30'],
+            'cod_enabled' => ['nullable'],
+            'free_shipping_threshold' => ['nullable', 'numeric', 'min:0'],
+            'delivery_pincodes' => ['nullable', 'string', 'max:2000'],
+            'notify_sms_enabled' => ['nullable'],
+            'notify_whatsapp_enabled' => ['nullable'],
+            'notify_order_sms_customer' => ['nullable'],
+            'notify_order_sms_vendor' => ['nullable'],
+            'notify_order_whatsapp_customer' => ['nullable'],
+            'notify_order_whatsapp_admin' => ['nullable'],
+            'notify_order_whatsapp_vendor' => ['nullable'],
+            'whatsapp_business_phone' => ['nullable', 'string', 'max:20'],
+            'whatsapp_callmebot_api_key' => ['nullable', 'string', 'max:80'],
+            'whatsapp_cloud_token' => ['nullable', 'string', 'max:500'],
+            'whatsapp_cloud_phone_id' => ['nullable', 'string', 'max:40'],
+            'whatsapp_cloud_api_version' => ['nullable', 'string', 'max:12'],
+            'whatsapp_cloud_template' => ['nullable', 'string', 'max:80'],
+            'order_alert_phone' => ['nullable', 'string', 'max:20'],
+            'abandoned_cart_enabled' => ['nullable'],
+            'abandoned_cart_idle_hours' => ['nullable', 'integer', 'min:1'],
+            'abandoned_cart_cooldown_hours' => ['nullable', 'integer', 'min:24'],
+            'stock_alert_enabled' => ['nullable'],
+            'notify_order_status_customer' => ['nullable'],
+            'abandoned_cart_email' => ['nullable'],
+            'abandoned_cart_sms' => ['nullable'],
+            'abandoned_cart_whatsapp' => ['nullable'],
+            'vendor_low_stock_threshold' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
         if ($request->has('resell_program_enabled')) {
@@ -717,6 +880,16 @@ class DashboardController extends Controller
         if ($request->has('resell_customize_fee')) {
             Setting::updateOrCreate(['setting_key' => 'resell_customize_fee'], [
                 'setting_value' => (string) $data['resell_customize_fee'],
+            ]);
+        }
+        if ($request->has('resell_bulk_min_qty')) {
+            Setting::updateOrCreate(['setting_key' => 'resell_bulk_min_qty'], [
+                'setting_value' => (string) $data['resell_bulk_min_qty'],
+            ]);
+        }
+        if ($request->has('resell_bulk_discount_percent')) {
+            Setting::updateOrCreate(['setting_key' => 'resell_bulk_discount_percent'], [
+                'setting_value' => (string) $data['resell_bulk_discount_percent'],
             ]);
         }
         if ($request->has('vendor_registration_amount')) {
@@ -739,6 +912,102 @@ class DashboardController extends Controller
                 'setting_value' => $request->boolean('product_edit_requires_qc') ? '1' : '0',
             ]);
         }
+        if ($request->has('site_display_name')) {
+            Setting::updateOrCreate(['setting_key' => 'site_display_name'], [
+                'setting_value' => trim((string) $data['site_display_name']),
+            ]);
+            \App\Support\SiteBranding::flushCache();
+        }
+        if ($request->has('site_tagline')) {
+            Setting::updateOrCreate(['setting_key' => 'site_tagline'], [
+                'setting_value' => trim((string) $data['site_tagline']),
+            ]);
+            \App\Support\SiteBranding::flushCache();
+        }
+        if ($request->has('nav_home_label')) {
+            Setting::updateOrCreate(['setting_key' => 'nav_home_label'], [
+                'setting_value' => trim((string) $data['nav_home_label']),
+            ]);
+            \App\Support\SiteBranding::flushCache();
+        }
+
+        foreach (['seo_locality', 'seo_region', 'seo_latitude', 'seo_longitude', 'seo_contact_email', 'seo_contact_phone'] as $seoKey) {
+            if ($request->has($seoKey)) {
+                Setting::updateOrCreate(['setting_key' => $seoKey], [
+                    'setting_value' => trim((string) ($data[$seoKey] ?? '')),
+                ]);
+                \App\Support\Seo\SiteSeoSettings::flushCache();
+            }
+        }
+
+        if ($request->has('cod_enabled')) {
+            Setting::updateOrCreate(['setting_key' => 'cod_enabled'], [
+                'setting_value' => $request->boolean('cod_enabled') ? '1' : '0',
+            ]);
+        }
+        if ($request->has('free_shipping_threshold')) {
+            Setting::updateOrCreate(['setting_key' => 'free_shipping_threshold'], [
+                'setting_value' => (string) ($data['free_shipping_threshold'] ?? 499),
+            ]);
+        }
+        if ($request->has('delivery_pincodes')) {
+            Setting::updateOrCreate(['setting_key' => 'delivery_pincodes'], [
+                'setting_value' => trim((string) ($data['delivery_pincodes'] ?? '')),
+            ]);
+        }
+
+        $boolSettings = [
+            'notify_sms_enabled', 'notify_whatsapp_enabled', 'notify_order_sms_customer',
+            'notify_order_sms_vendor', 'notify_order_whatsapp_customer',
+            'notify_order_whatsapp_admin', 'notify_order_whatsapp_vendor',
+            'abandoned_cart_enabled', 'stock_alert_enabled', 'notify_order_status_customer',
+            'abandoned_cart_email', 'abandoned_cart_sms', 'abandoned_cart_whatsapp',
+        ];
+        foreach ($boolSettings as $key) {
+            if ($request->has($key)) {
+                Setting::updateOrCreate(['setting_key' => $key], [
+                    'setting_value' => $request->boolean($key) ? '1' : '0',
+                ]);
+            }
+        }
+        if ($request->has('whatsapp_business_phone')) {
+            Setting::updateOrCreate(['setting_key' => 'whatsapp_business_phone'], [
+                'setting_value' => preg_replace('/\D/', '', (string) ($data['whatsapp_business_phone'] ?? '')),
+            ]);
+        }
+        if ($request->has('whatsapp_callmebot_api_key')) {
+            Setting::updateOrCreate(['setting_key' => 'whatsapp_callmebot_api_key'], [
+                'setting_value' => trim((string) ($data['whatsapp_callmebot_api_key'] ?? '')),
+            ]);
+        }
+        foreach (['whatsapp_cloud_token', 'whatsapp_cloud_phone_id', 'whatsapp_cloud_api_version', 'whatsapp_cloud_template'] as $cloudKey) {
+            if ($request->has($cloudKey)) {
+                Setting::updateOrCreate(['setting_key' => $cloudKey], [
+                    'setting_value' => trim((string) ($data[$cloudKey] ?? '')),
+                ]);
+            }
+        }
+        if ($request->has('order_alert_phone')) {
+            Setting::updateOrCreate(['setting_key' => 'order_alert_phone'], [
+                'setting_value' => preg_replace('/\D/', '', (string) ($data['order_alert_phone'] ?? '')),
+            ]);
+        }
+        if ($request->has('abandoned_cart_idle_hours')) {
+            Setting::updateOrCreate(['setting_key' => 'abandoned_cart_idle_hours'], [
+                'setting_value' => (string) ($data['abandoned_cart_idle_hours'] ?? 24),
+            ]);
+        }
+        if ($request->has('abandoned_cart_cooldown_hours')) {
+            Setting::updateOrCreate(['setting_key' => 'abandoned_cart_cooldown_hours'], [
+                'setting_value' => (string) ($data['abandoned_cart_cooldown_hours'] ?? 72),
+            ]);
+        }
+        if ($request->has('vendor_low_stock_threshold')) {
+            Setting::updateOrCreate(['setting_key' => 'vendor_low_stock_threshold'], [
+                'setting_value' => (string) ($data['vendor_low_stock_threshold'] ?? 5),
+            ]);
+        }
+        \App\Support\NotificationSettings::flushCache();
 
         return redirect()->route('dashboard', ['section' => 'program'])->with('status', 'Program settings saved.');
     }
@@ -1013,6 +1282,25 @@ class DashboardController extends Controller
         return back()->with('status', 'Ad removed.');
     }
 
+    public function markNotificationRead(\App\Models\VendorNotification $notification): RedirectResponse
+    {
+        $this->requireRole('vendor');
+        abort_unless((int) $notification->vendor_id === (int) Auth::id(), 403);
+        $notification->markRead();
+
+        return back()->with('status', 'Notification marked as read.');
+    }
+
+    public function markAllNotificationsRead(): RedirectResponse
+    {
+        $this->requireRole('vendor');
+        \App\Models\VendorNotification::where('vendor_id', Auth::id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return back()->with('status', 'All notifications marked as read.');
+    }
+
     private function vendorCanManageShop(): bool
     {
         $user = Auth::user();
@@ -1050,9 +1338,11 @@ class DashboardController extends Controller
             $product->update(['image' => $primaryPath]);
         }
 
+        $maxImages = (int) config('product.max_gallery_images', 5);
+
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $extraImage) {
-                if ($product->images()->count() >= 10) {
+                if ($product->images()->count() >= $maxImages) {
                     break;
                 }
                 $path = $extraImage->store('products', 'public');
@@ -1065,6 +1355,35 @@ class DashboardController extends Controller
                     $product->update(['image' => $path]);
                 }
             }
+        }
+    }
+
+    private function checkVendorLowStock(Product $product): void
+    {
+        $threshold = NotificationSettings::all()['vendor_low_stock_threshold'];
+        $product->load('variants');
+
+        foreach ($product->variants as $variant) {
+            $stock = (int) $variant->stock;
+            if ($stock > 0 && $stock <= $threshold) {
+                app(VendorNotificationService::class)->notifyLowStock(
+                    $product,
+                    $variant->displayLabel(),
+                    $stock
+                );
+            }
+        }
+    }
+
+    private function syncProductVariants(Product $product, ?array $rows): void
+    {
+        foreach (ProductVariantInput::normalizeRows($rows) as $variant) {
+            if (! empty($variant['compare_at_price']) && $variant['price'] !== null
+                && (float) $variant['compare_at_price'] <= (float) $variant['price']) {
+                $variant['compare_at_price'] = null;
+            }
+
+            $product->variants()->create($variant);
         }
     }
 
@@ -1152,6 +1471,7 @@ class DashboardController extends Controller
     {
         Cache::forget('storefront.price_bounds');
         Cache::forget('storefront.flash_deal');
+        Cache::forget('seo.sitemap.xml');
     }
 
     private function requireRole(string|array $roles): void

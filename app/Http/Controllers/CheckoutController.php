@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CartItem;
 use App\Models\Coupon;
-use App\Models\Order;
 use App\Models\Setting;
+use App\Services\CheckoutOrderService;
+use App\Support\MarketplaceSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
+    public function __construct(
+        private readonly CheckoutOrderService $checkout,
+    ) {}
+
     public function createPaymentOrder(Request $request)
     {
-        $total = $this->checkoutTotal($request);
+        $total = $this->checkout->checkoutTotal($request);
         abort_if($total <= 0, 422, 'Invalid checkout amount.');
 
         $order = $this->createRazorpayOrder($total, 'order_'.Auth::id().'_'.time());
@@ -38,141 +41,77 @@ class CheckoutController extends Controller
 
     public function show(Request $request): View
     {
-        $items = $this->items();
+        $items = $this->checkout->items();
         $subtotal = $items->sum(fn ($item) => $item->quantity * ($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price));
         $coupon = $this->coupon($request->input('coupon_code'));
         $discount = $this->discount($coupon, $subtotal);
         $coinLimit = (float) Setting::value('coin_redeem_limit', 5);
         $coinDiscount = $request->boolean('use_coins') ? min(Auth::user()->coins, ($subtotal * $coinLimit / 100), max(0, $subtotal - $discount)) : 0;
-        $addresses = Auth::user()->addresses()->latest()->get();
+        $addresses = Auth::user()->addresses()->orderByDesc('is_default')->latest()->get();
         $availableCoupons = Coupon::where('status', true)
             ->where('min_cart_value', '<=', $subtotal)
             ->orderByDesc('discount_value')
             ->get();
 
-        return view('store.checkout', compact('items', 'subtotal', 'coupon', 'discount', 'coinDiscount', 'addresses', 'availableCoupons'));
+        $total = max(0, $subtotal - $discount - $coinDiscount);
+
+        return view('store.checkout', [
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'coupon' => $coupon,
+            'discount' => $discount,
+            'coinDiscount' => $coinDiscount,
+            'addresses' => $addresses,
+            'availableCoupons' => $availableCoupons,
+            'total' => $total,
+            'codEnabled' => MarketplaceSettings::codEnabled(),
+            'freeShippingThreshold' => MarketplaceSettings::freeShippingThreshold(),
+        ]);
     }
 
     public function place(Request $request): RedirectResponse
     {
+        $codEnabled = MarketplaceSettings::codEnabled();
+        $methods = $codEnabled ? 'Prepaid,COD' : 'Prepaid';
+
         $data = $request->validate([
             'address_id' => ['nullable', 'exists:user_addresses,id'],
             'address' => ['required_without:address_id', 'max:1000'],
             'phone' => ['required_without:address_id', 'max:30'],
-            'payment_method' => ['required', 'in:Prepaid'],
+            'pincode' => ['nullable', 'digits:6'],
+            'city' => ['nullable', 'max:100'],
+            'save_address' => ['nullable'],
+            'payment_method' => ['required', 'in:'.$methods],
             'coupon_code' => ['nullable', 'string', 'max:50'],
             'use_coins' => ['nullable'],
-            'razorpay_order_id' => ['required', 'string'],
-            'razorpay_payment_id' => ['required', 'string'],
-            'razorpay_signature' => ['required', 'string'],
+            'razorpay_order_id' => ['required_if:payment_method,Prepaid', 'nullable', 'string'],
+            'razorpay_payment_id' => ['required_if:payment_method,Prepaid', 'nullable', 'string'],
+            'razorpay_signature' => ['required_if:payment_method,Prepaid', 'nullable', 'string'],
         ]);
 
-        abort_unless($data['razorpay_order_id'] === session('checkout_razorpay_order_id'), 403);
-        abort_unless($this->verifyRazorpaySignature($data['razorpay_order_id'], $data['razorpay_payment_id'], $data['razorpay_signature']), 403);
-
-        if (!empty($data['address_id'])) {
-            $addr = \App\Models\UserAddress::where('id', $data['address_id'])->where('user_id', Auth::id())->firstOrFail();
-            $data['address'] = $addr->address . ($addr->city ? ', ' . $addr->city : '') . ($addr->pincode ? ' - ' . $addr->pincode : '');
-            $data['phone'] = $addr->phone;
-        } else {
-            // Save new address
-            \App\Models\UserAddress::create([
-                'user_id' => Auth::id(),
-                'name' => Auth::user()->name,
-                'phone' => $data['phone'],
-                'address' => $data['address'],
-            ]);
+        if ($data['payment_method'] === 'Prepaid') {
+            abort_unless($data['razorpay_order_id'] === session('checkout_razorpay_order_id'), 403);
+            abort_unless($this->verifyRazorpaySignature(
+                $data['razorpay_order_id'],
+                $data['razorpay_payment_id'],
+                $data['razorpay_signature']
+            ), 403);
         }
 
-        $items = $this->items();
-        if ($items->isEmpty()) {
-            return redirect()->route('cart')->withErrors(['cart' => 'Your cart is empty.']);
+        try {
+            $result = $this->checkout->place($request, $data['payment_method']);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('checkout', $request->only('coupon_code', 'use_coins'))
+                ->withErrors(['checkout' => $e->getMessage()]);
         }
-
-        $subtotal = $items->sum(fn ($item) => $item->quantity * ($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price));
-        $coupon = $this->coupon($data['coupon_code'] ?? null);
-        $discount = $this->discount($coupon, $subtotal);
-        $coinLimit = (float) Setting::value('coin_redeem_limit', 5);
-        $coinDiscount = $request->boolean('use_coins') ? min(Auth::user()->coins, ($subtotal * $coinLimit / 100), max(0, $subtotal - $discount)) : 0;
-        $finalTotal = max(0, $subtotal - $discount - $coinDiscount);
-        $coinsEarned = (int) floor($finalTotal / (float) Setting::value('coin_earn_rate', 10));
-
-        DB::transaction(function () use ($items, $data, $coupon, $subtotal, $discount, $coinDiscount, $coinsEarned) {
-            $list = $items->values();
-            $allocatedDisc = 0.0;
-            $allocatedCoin = 0.0;
-
-            foreach ($list as $idx => $item) {
-                $unitPrice = $item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price;
-                $lineTotal = $item->quantity * $unitPrice;
-                $isLast = $idx === $list->count() - 1;
-                $lineDiscount = $isLast
-                    ? max(0, $discount - $allocatedDisc)
-                    : round($discount * ($subtotal > 0 ? $lineTotal / $subtotal : 0), 2);
-                $lineCoin = $isLast
-                    ? max(0, $coinDiscount - $allocatedCoin)
-                    : round($coinDiscount * ($subtotal > 0 ? $lineTotal / $subtotal : 0), 2);
-                $allocatedDisc += $lineDiscount;
-                $allocatedCoin += $lineCoin;
-
-                $product = $item->product->loadMissing('sourceProduct');
-                $sourceAmount = null;
-                $listingAmount = null;
-                $fulfillmentVendorId = $product->fulfillmentVendorId();
-                $listingVendorId = $product->vendor_id;
-
-                if ($product->isResellListing()) {
-                    $sourceAmount = (float) ($product->source_base_price ?? $product->sourceProduct?->price ?? 0);
-                    $listingAmount = max(0, $lineTotal - $sourceAmount);
-                }
-
-                Order::create([
-                    'user_id' => Auth::id(),
-                    'product_id' => $item->product_id,
-                    'variant_id' => $item->variant_id,
-                    'fulfillment_vendor_id' => $fulfillmentVendorId,
-                    'listing_vendor_id' => $product->isResellListing() ? $listingVendorId : null,
-                    'source_vendor_amount' => $sourceAmount,
-                    'listing_vendor_amount' => $listingAmount,
-                    'product_name' => $item->product->title . ($item->variant ? ' (' . trim($item->variant->color . ' ' . $item->variant->size) . ')' : ''),
-                    'quantity' => $item->quantity,
-                    'unit_price' => $unitPrice,
-                    'total_price' => $lineTotal,
-                    'customer_name' => Auth::user()->name,
-                    'address' => $data['address'],
-                    'phone' => $data['phone'],
-                    'payment_method' => $data['payment_method'],
-                    'coupon_code' => $coupon?->code,
-                    'discount_amount' => $lineDiscount,
-                    'coin_discount' => $lineCoin,
-                    'coins_earned' => $idx === 0 ? $coinsEarned : 0,
-                ]);
-            }
-
-            Auth::user()->update(['coins' => max(0, Auth::user()->coins - $coinDiscount + $coinsEarned)]);
-            $items->each->delete();
-        });
 
         $request->session()->forget(['checkout_razorpay_order_id', 'checkout_amount']);
 
-        return redirect()->route('orders')->with('status', "Payment verified. Order placed. You earned {$coinsEarned} coins.");
-    }
+        $msg = $data['payment_method'] === 'COD'
+            ? "Order placed with Cash on Delivery. You earned {$result['coins_earned']} coins."
+            : "Payment verified. Order placed. You earned {$result['coins_earned']} coins.";
 
-    private function checkoutTotal(Request $request): float
-    {
-        $items = $this->items();
-        $subtotal = $items->sum(fn ($item) => $item->quantity * ($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price));
-        $coupon = $this->coupon($request->input('coupon_code'));
-        $discount = $this->discount($coupon, $subtotal);
-        $coinLimit = (float) Setting::value('coin_redeem_limit', 5);
-        $coinDiscount = $request->boolean('use_coins') ? min(Auth::user()->coins, ($subtotal * $coinLimit / 100), max(0, $subtotal - $discount)) : 0;
-
-        return max(0, $subtotal - $discount - $coinDiscount);
-    }
-
-    private function items()
-    {
-        return CartItem::with(['product', 'variant'])->where('user_id', Auth::id())->latest()->get();
+        return redirect()->route('orders')->with('status', $msg);
     }
 
     private function coupon(?string $code): ?Coupon
@@ -186,7 +125,9 @@ class CheckoutController extends Controller
             return 0;
         }
 
-        return $coupon->discount_type === 'flat' ? min($coupon->discount_value, $subtotal) : min($subtotal, $subtotal * $coupon->discount_value / 100);
+        return $coupon->discount_type === 'flat'
+            ? min($coupon->discount_value, $subtotal)
+            : min($subtotal, $subtotal * $coupon->discount_value / 100);
     }
 
     private function createRazorpayOrder(float $amount, string $receipt): array

@@ -1,7 +1,9 @@
 @extends('layouts.dashboard')
 @section('title', 'Vendor Dashboard')
 @section('dashboard')
-@php($active = auth()->user()->account_status === 'active' || session()->has('impersonated_by'))
+@php
+    $active = auth()->user()->account_status === 'active' || session()->has('impersonated_by');
+@endphp
 
 @if (auth()->user()->account_status === 'pending_approval')
     <div class="alert alert-info rounded-4 border-0 shadow-sm mb-4">
@@ -38,9 +40,21 @@
         <p class="text-muted mb-0">{{ auth()->user()->shop_name }} · {{ auth()->user()->city }}</p>
     </div>
     @if ($active)
-        <button class="btn btn-bloom" type="button" data-bs-toggle="modal" data-bs-target="#productModal">
-            <i class="bi bi-plus-lg"></i> Add product
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-bloom" type="button" data-bs-toggle="modal" data-bs-target="#productModal">
+                <i class="bi bi-plus-lg"></i> Add product
+            </button>
+            @if($resellEnabled ?? false)
+                <a href="{{ route('manage.resell.catalog') }}" class="btn btn-outline-dark">
+                    <i class="bi bi-arrow-left-right"></i> Resell catalog
+                    @if(($resellCatalogCount ?? 0) > 0)
+                        <span class="badge bg-primary ms-1">{{ $resellCatalogCount }}</span>
+                    @endif
+                </a>
+            @endif
+        </div>
+    @else
+        <span class="badge bg-secondary-subtle text-secondary border">Add / edit unlocks after admin approval</span>
     @endif
 </div>
 
@@ -114,6 +128,34 @@
         });
     </script>
 </div>
+
+@if ($active && ($resellEnabled ?? false))
+<div class="bb-card mb-4 p-4 resell-dashboard-card">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-7">
+            <h3 class="h5 fw-bold mb-2"><i class="bi bi-arrow-left-right text-bloom me-2"></i>Resell other vendors' products</h3>
+            <p class="text-muted small mb-3">Browse approved listings from other sellers. You can:</p>
+            <ul class="small text-muted mb-0 ps-3">
+                <li><strong>Quick resell</strong> — list with source photos, your price (free)</li>
+                <li><strong>Branded listing</strong> — your title, photos &amp; copy (fee ₹{{ number_format($resellCustomizeFee ?? 99, 0) }})</li>
+                <li><strong>Bulk buy</strong> — stock from wallet at {{ $resellBulkDiscountPercent ?? 5 }}% off (min {{ $resellBulkMinQty ?? 5 }} units)</li>
+            </ul>
+        </div>
+        <div class="col-lg-5 text-lg-end">
+            <div class="display-6 fw-bold text-bloom mb-1">{{ $resellCatalogCount ?? 0 }}</div>
+            <p class="small text-muted mb-3">products available to resell</p>
+            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-bloom rounded-pill px-4">Open resell catalog</a>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($active && isset($vendorNotificationUnread) && $vendorNotificationUnread > 0)
+<div class="alert alert-info border-0 rounded-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <span><i class="bi bi-bell-fill me-2"></i>You have <strong>{{ $vendorNotificationUnread }}</strong> unread resell notification(s).</span>
+    <a href="{{ route('dashboard') }}" class="btn btn-sm btn-dark rounded-pill">View bell menu ↑</a>
+</div>
+@endif
 
 @include('partials.referral-program-card', [
     'referralCode' => $referralCode ?? '',
@@ -419,9 +461,26 @@
                     <tbody>
                         @foreach ($products as $product)
                             <tr>
-                                <td class="fw-semibold">{{ $product->title }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ $product->title }}</div>
+                                    @if($product->isResellListing())
+                                        <span class="badge bg-info-subtle text-info border mt-1">
+                                            {{ $product->resell_mode === 'customized' ? 'Branded resell' : 'Quick resell' }}
+                                        </span>
+                                        @if($product->sourceProduct)
+                                            <div class="small text-muted">Source: {{ $product->sourceProduct->title }}</div>
+                                        @endif
+                                    @else
+                                        <span class="badge bg-light text-muted border mt-1">Your listing</span>
+                                    @endif
+                                </td>
                                 <td class="text-muted small">{{ $product->category->name ?? 'N/A' }}</td>
-                                <td>₹{{ number_format($product->price, 2) }}</td>
+                                <td>
+                                    ₹{{ number_format($product->price, 2) }}
+                                    @if($product->isResellListing() && $product->source_base_price)
+                                        <div class="small text-muted">Min ₹{{ number_format($product->source_base_price, 2) }}</div>
+                                    @endif
+                                </td>
                                 <td><span class="badge badge-soft">{{ $product->qc_status }}</span></td>
                                 @if ($active)
                                     <td class="text-end">
@@ -434,6 +493,11 @@
                                                 data-category-id="{{ $product->category_id }}"
                                                 data-description="{{ e($product->description) }}"
                                                 data-qc-status="{{ $product->qc_status }}"
+                                                data-resell="{{ $product->isResellListing() ? '1' : '0' }}"
+                                                data-resell-min="{{ $product->source_base_price ?? '' }}"
+                                                data-compare-at="{{ $product->compare_at_price ?? '' }}"
+                                                data-reseller-dp="{{ $product->reseller_dp_price ?? '' }}"
+                                                data-resell-allowed="{{ $product->resell_allowed ? '1' : '0' }}"
                                                 data-images='@json($product->images->map(fn($i) => ["id" => $i->id, "url" => $i->url()])->values())'>
                                                 Edit
                                             </button>
@@ -473,6 +537,7 @@
                                 <td>{{ $order->product_name }}</td>
                                 <td><span class="badge badge-soft">{{ $order->status }}</span></td>
                                 <td>
+                                    <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Invoice PDF"><i class="bi bi-file-pdf"></i></a>
                                     <form data-ajax-form data-method="PATCH" action="{{ route('manage.orders.update', $order) }}" class="d-flex gap-2 flex-wrap">
                                         <select name="status" class="form-select form-select-sm" style="min-width: 130px" @disabled(! $active)>
                                             <option value="pending" @selected($order->status === 'pending')>pending</option>
@@ -550,9 +615,19 @@
                         <label class="form-label">Title</label>
                         <input name="title" class="form-control" required>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Price</label>
-                        <input name="price" type="number" step="0.01" class="form-control" required>
+                    <div class="col-md-4">
+                        <label class="form-label">Sale price (₹)</label>
+                        <input name="price" type="number" step="0.01" min="1" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">MRP / cross price (₹) <span class="text-danger">*</span></label>
+                        <input name="compare_at_price" type="number" step="0.01" min="1" class="form-control" placeholder="e.g. 599" required>
+                        <small class="text-muted">Must be higher than sale — shown crossed on shop</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Reseller DP (₹)</label>
+                        <input name="reseller_dp_price" type="number" step="0.01" min="0" class="form-control" placeholder="Price for other vendors">
+                        <small class="text-muted">Shown in resell catalog to resellers</small>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Category</label>
@@ -567,40 +642,21 @@
                         <input type="file" name="image" class="form-control" accept="image/*">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Additional images (up to 9)</label>
+                        <label class="form-label">Gallery images (max {{ config('product.max_gallery_images', 5) }})</label>
                         <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
-                        <small class="text-muted">Upload multiple angles — QC will review all photos before approval.</small>
+                        <small class="text-muted">Up to {{ config('product.max_gallery_images', 5) }} photos total (including primary). Cards auto-rotate when multiple.</small>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" required></textarea>
                     </div>
-                    
-                    <div class="col-12 mt-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label mb-0 fw-bold">Product Variants (Optional)</label>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addVariantRow()">+ Add Variant</button>
-                        </div>
-                        <div id="variantsContainer">
-                            <div class="row g-2 variant-row mb-2">
-                                <div class="col-md-3">
-                                    <input type="text" name="variants[0][color]" class="form-control form-control-sm" placeholder="Color (e.g. Red)">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="text" name="variants[0][size]" class="form-control form-control-sm" placeholder="Size (e.g. XL)">
-                                </div>
-                                <div class="col-md-3">
-                                    <input type="number" step="0.01" name="variants[0][price]" class="form-control form-control-sm" placeholder="Price override">
-                                </div>
-                                <div class="col-md-2">
-                                    <input type="number" name="variants[0][stock]" class="form-control form-control-sm" placeholder="Stock" value="10">
-                                </div>
-                                <div class="col-md-1 text-end">
-                                    <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()"><i class="bi bi-trash"></i></button>
-                                </div>
-                            </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="resell_allowed" value="1" id="resellAllowedNew" checked>
+                            <label class="form-check-label" for="resellAllowedNew">Allow other vendors to resell this product</label>
                         </div>
                     </div>
+                    @include('partials.variant-builder', ['prefix' => 'variants', 'containerId' => 'variantsContainer', 'rowIndex' => 0])
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-bloom">Submit for QC</button>
@@ -609,34 +665,6 @@
         </div>
     </div>
     
-    <script>
-        let variantCount = 1;
-        function addVariantRow() {
-            const container = document.getElementById('variantsContainer');
-            const row = document.createElement('div');
-            row.className = 'row g-2 variant-row mb-2';
-            row.innerHTML = `
-                <div class="col-md-3">
-                    <input type="text" name="variants[${variantCount}][color]" class="form-control form-control-sm" placeholder="Color">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="variants[${variantCount}][size]" class="form-control form-control-sm" placeholder="Size">
-                </div>
-                <div class="col-md-3">
-                    <input type="number" step="0.01" name="variants[${variantCount}][price]" class="form-control form-control-sm" placeholder="Price">
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="variants[${variantCount}][stock]" class="form-control form-control-sm" placeholder="Stock" value="10">
-                </div>
-                <div class="col-md-1 text-end">
-                    <button type="button" class="btn btn-sm btn-outline-danger w-100" onclick="this.closest('.variant-row').remove()"><i class="bi bi-trash"></i></button>
-                </div>
-            `;
-            container.appendChild(row);
-            variantCount++;
-        }
-    </script>
-
     @include('partials.product-edit-modal', ['categories' => $categories])
 @endif
 @endsection

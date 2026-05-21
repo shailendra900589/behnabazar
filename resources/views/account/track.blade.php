@@ -27,7 +27,7 @@
                 @if($order->status === 'delivered')
                     <a href="{{ route('product.show', $order->product->slug ?? '') }}#reviews" class="btn btn-warning rounded-pill align-self-start fw-bold text-dark"><i class="bi bi-star-fill me-1"></i> Leave Review</a>
                 @endif
-                <button onclick="printInvoice()" class="btn btn-outline-dark rounded-pill align-self-start"><i class="bi bi-printer me-1"></i> Print Invoice</button>
+                <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-dark rounded-pill align-self-start" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-1"></i> Download PDF Invoice</a>
                 <a href="{{ route('orders') }}" class="btn btn-bloom rounded-pill align-self-start">All orders</a>
             </div>
         </div>
@@ -120,7 +120,7 @@
                     <td style="padding: 15px 12px; border-bottom: 1px solid #e2e8f0;">
                         <strong>{{ $order->product_name }}</strong>
                         @if($order->variant)
-                            <br><small style="color: #666;">Variant: {{ $order->variant->color }} {{ $order->variant->size }}</small>
+                            <br><small style="color: #666;">Variant: {{ $order->variant->displayLabel() }}</small>
                         @endif
                     </td>
                     <td style="padding: 15px 12px; text-align: center; border-bottom: 1px solid #e2e8f0;">{{ $order->quantity }}</td>

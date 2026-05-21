@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Support\CartStockValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,7 +15,14 @@ class CartController extends Controller
 {
     public function index(): View
     {
-        return view('store.cart', ['items' => $this->items()]);
+        $items = $this->items();
+        $total = $items->sum(fn ($item) => $item->quantity * ($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price));
+
+        return view('store.cart', [
+            'items' => $items,
+            'total' => $total,
+            'freeShippingThreshold' => \App\Support\MarketplaceSettings::freeShippingThreshold(),
+        ]);
     }
 
     public function add(Request $request, Product $product): JsonResponse|RedirectResponse
@@ -24,7 +32,17 @@ class CartController extends Controller
         
         $lookup = Auth::check() ? ['user_id' => Auth::id(), 'product_id' => $product->id, 'variant_id' => $variantId] : ['session_id' => session()->getId(), 'product_id' => $product->id, 'variant_id' => $variantId];
         $item = CartItem::firstOrCreate($lookup, ['quantity' => 0]);
-        $item->increment('quantity', $qty);
+        $newQty = $item->quantity + $qty;
+        $item->load(['variant', 'product']);
+        $stockCheck = CartStockValidator::validateItem($item, $newQty);
+        if (! $stockCheck['ok']) {
+            if ($request->expectsJson()) {
+                return response()->json(['status' => 'error', 'message' => $stockCheck['message']], 422);
+            }
+
+            return back()->withErrors(['cart' => $stockCheck['message']]);
+        }
+        $item->update(['quantity' => $newQty]);
 
         if ($request->has('buy_now')) {
             return redirect()->route('checkout');
@@ -37,6 +55,15 @@ class CartController extends Controller
     {
         $this->authorizeCartItem($item);
         $qty = max(1, min(20, (int) $request->input('quantity', 1)));
+        $item->load(['variant', 'product']);
+        $stockCheck = CartStockValidator::validateItem($item, $qty);
+        if (! $stockCheck['ok']) {
+            if ($request->expectsJson()) {
+                return response()->json(['status' => 'error', 'message' => $stockCheck['message']], 422);
+            }
+
+            return back()->withErrors(['cart' => $stockCheck['message']]);
+        }
         $item->update(['quantity' => $qty]);
 
         return $this->response($request, 'Cart updated.');

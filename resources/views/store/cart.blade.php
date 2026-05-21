@@ -4,7 +4,7 @@
 @section('content')
 <section class="container py-5">
     <h1 class="fw-bold mb-4">Shopping Cart</h1>
-    @php($total = $items->sum(fn($i) => $i->quantity * ($i->variant ? ($i->variant->price ?? $i->product->price) : $i->product->price)))
+    @include('partials.trust-strip')
     @if($items->isEmpty())
         <div class="bb-card p-5 text-center">
             <i class="bi bi-bag display-1 text-bloom"></i>
@@ -21,9 +21,13 @@
                             <div class="flex-grow-1">
                                 <h5 class="fw-bold mb-1">{{ $item->product->title }}</h5>
                                 @if($item->variant)
-                                    <div class="small text-muted mb-1">{{ $item->variant->color }} {{ $item->variant->size }}</div>
+                                    <div class="small text-muted mb-1">{{ $item->variant->displayLabel() }}</div>
                                 @endif
-                                <div class="text-muted">₹{{ number_format($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price, 2) }}</div>
+                                @include('partials.product-price', [
+                                    'product' => $item->product,
+                                    'variantSale' => $item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price,
+                                    'size' => 'sm',
+                                ])
                             </div>
                             <form data-ajax-form data-method="PATCH" data-reload="true" action="{{ route('cart.update',$item) }}" class="d-flex gap-2 align-items-center">
                                 @csrf
@@ -41,6 +45,7 @@
             <div class="col-lg-4">
                 <div class="bb-card p-4 sticky-top" style="top:110px">
                     <h4 class="fw-bold">Order Summary</h4>
+                    @include('partials.free-shipping-bar', ['cartTotal' => $total, 'freeShippingThreshold' => $freeShippingThreshold ?? 0])
                     <div class="d-flex justify-content-between py-3 border-bottom">
                         <span>Subtotal</span>
                         <strong>₹{{ number_format($total,2) }}</strong>

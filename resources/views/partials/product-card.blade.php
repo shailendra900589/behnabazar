@@ -1,13 +1,13 @@
 <div class="bb-card product-card h-100 position-relative group">
     <div class="position-relative overflow-hidden">
-        <a href="{{ route('product.show', $product) }}">
-            <img src="{{ $product->imageUrl() }}" class="product-img" alt="{{ $product->title }}">
+        <a href="{{ route('product.show', $product) }}" class="d-block">
+            @include('partials.product-card-media', ['product' => $product])
             <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-10 d-none d-lg-block" style="transition: opacity 0.3s ease; opacity: 0;" onmouseover="this.style.opacity='0.2'" onmouseout="this.style.opacity='0'"></div>
         </a>
         
-        @if (($product->orders_count ?? 0) >= 4)
-            <span class="position-absolute top-0 start-0 m-3 badge rounded-pill bg-danger shadow-sm"><i class="bi bi-fire me-1"></i>Trending</span>
-        @endif
+        <div class="position-absolute top-0 start-0 m-2 d-flex flex-column gap-1 align-items-start" style="z-index: 5;">
+            @include('partials.product-badges', ['product' => $product])
+        </div>
         
         @auth
         <button class="icon-btn position-absolute top-0 end-0 m-3 shadow-sm" style="z-index: 10;" data-wishlist-toggle="{{ route('wishlist.toggle', $product) }}"><i class="bi bi-heart"></i></button>
@@ -41,7 +41,7 @@
         </div>
         <a href="{{ route('product.show', $product) }}" class="text-decoration-none"><h5 class="fw-bold mb-3 text-dark text-truncate">{{ $product->title }}</h5></a>
         <div class="d-flex align-items-center justify-content-between gap-2">
-            <span class="h5 fw-bold mb-0 text-bloom">₹{{ number_format($product->price, 2) }}</span>
+            @include('partials.product-price', ['product' => $product, 'size' => 'md'])
             <a href="{{ route('product.show', $product) }}#bbShareToggle" class="btn btn-soft btn-sm rounded-circle" title="Share product" aria-label="Share product"><i class="bi bi-share"></i></a>
         </div>
     </div>
