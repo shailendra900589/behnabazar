@@ -1,5 +1,5 @@
-<div class="bb-mobile-search d-lg-none">
-    <form class="bb-mobile-search-form" action="{{ route('home') }}" method="get" role="search">
+<div class="bb-mobile-search d-lg-none" data-live-search>
+    <form class="bb-mobile-search-form position-relative" action="{{ route('home') }}" method="get" role="search">
         @if (request('cat'))
             <input type="hidden" name="cat" value="{{ request('cat') }}">
         @endif
@@ -18,5 +18,6 @@
                 <i class="bi bi-x-lg"></i>
             </a>
         @endif
+        <div class="bb-live-search-results dropdown-menu w-100 shadow-lg border-0 rounded-3 p-2" style="top:100%;display:none;"></div>
     </form>
 </div>

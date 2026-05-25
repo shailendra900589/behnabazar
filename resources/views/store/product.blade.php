@@ -1,8 +1,8 @@
 @extends('layouts.app')
 @section('title', $product->title)
 @section('content')
-<section class="container py-3 py-md-4 py-lg-5">
-    <nav aria-label="breadcrumb" class="mb-3 mb-md-4">
+<section class="container py-2 py-md-4 py-lg-5">
+    <nav aria-label="breadcrumb" class="mb-2 mb-md-4">
         <ol class="breadcrumb small mb-0 flex-nowrap overflow-auto">
             <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none">Shop</a></li>
             @if ($product->category)
@@ -12,9 +12,9 @@
         </ol>
     </nav>
 
-    <div class="row g-5 align-items-start">
+    <div class="row g-3 g-lg-5 align-items-start">
         <div class="col-lg-6">
-            <div class="product-hero-card bb-card p-3 p-lg-4 rounded-4 shadow-sm mb-3">
+            <div class="product-hero-card bb-card p-0 p-lg-4 rounded-4 shadow-sm mb-2 mb-lg-3">
                 <div class="bb-product-gallery-stage position-relative overflow-hidden rounded-4 zoom-container" data-product-gallery data-interval="5000" style="cursor: crosshair;">
                     @foreach ($galleryImages ?? [$product->imageUrl()] as $idx => $imgUrl)
                         <img src="{{ $imgUrl }}"
@@ -76,9 +76,9 @@
             @endif
         </div>
         <div class="col-lg-6">
-            <span class="badge badge-soft rounded-pill mb-3">{{ $product->category->name ?? 'Product' }}</span>
-            <h1 class="display-6 fw-bold lh-sm mb-2">{{ $product->title }}</h1>
-            <p class="text-muted mb-3 product-vendor-meta">
+            <span class="badge badge-soft rounded-pill mb-2">{{ $product->category->name ?? 'Product' }}</span>
+            <h1 class="h3 h3-md display-6-lg fw-bold lh-sm mb-1">{{ $product->title }}</h1>
+            <p class="text-muted mb-2 product-vendor-meta small">
                 <span class="d-block d-sm-inline"><i class="bi bi-shop me-1"></i>Sold by
                 @if($product->vendor)
                     <a href="{{ route('vendor.shop', $product->vendor) }}" class="fw-bold text-bloom text-decoration-none">{{ $product->vendor->shop_name }} <i class="bi bi-patch-check-fill text-primary" title="Verified Seller"></i></a>
@@ -88,7 +88,7 @@
                 </span>
                 <span class="d-block d-sm-inline mt-1 mt-sm-0 ms-sm-3 product-rating-meta"><i class="bi bi-star-fill text-warning me-1"></i>{{ number_format($product->averageRating(), 1) }} / 5 ({{ $product->reviews->count() }} reviews)</span>
             </p>
-            <div class="mb-3" id="productPriceBlock">
+            <div class="mb-2" id="productPriceBlock">
                 @include('partials.product-price', ['product' => $product, 'size' => 'lg'])
                 <span class="small text-muted d-block mt-1">Inclusive of handling</span>
             </div>
@@ -99,7 +99,7 @@
                 @include('partials.ad-slot', ['slot' => 'product_mid', 'ads' => $ads, 'class' => 'mb-3'])
             @endif
             
-            <div class="mb-4 d-flex align-items-center gap-2 text-muted small">
+            <div class="mb-3 d-flex align-items-center gap-2 text-muted small">
                 <i class="bi bi-eye text-primary"></i> 
                 <strong>{{ number_format($product->view_count) }}</strong> people have viewed this product
             </div>
@@ -147,7 +147,7 @@
                 </script>
             @endif
 
-            <div class="mb-4 bg-light p-3 rounded-3" style="max-width: 400px;">
+            <div class="mb-3 bg-light p-2 p-md-3 rounded-3" style="max-width: 400px;">
                 <label class="form-label fw-bold small mb-1"><i class="bi bi-geo-alt-fill me-1 text-danger"></i>Check Delivery</label>
                 <div class="input-group input-group-sm">
                     <input type="text" id="pincodeInput" class="form-control" placeholder="Enter PIN code" maxlength="6">
@@ -175,12 +175,12 @@
 
             @include('partials.stock-notify-form', ['product' => $product])
 
-            <div class="d-flex flex-wrap gap-2 mb-4">
-                <form id="addToCartForm" data-ajax-form action="{{ route('cart.add', $product) }}" method="post" class="d-flex gap-2 flex-wrap align-items-center">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <form id="addToCartForm" data-ajax-form action="{{ route('cart.add', $product) }}" method="post" class="d-flex gap-2 flex-wrap align-items-center w-100">
                     @csrf
-                    <input class="form-control" style="max-width: 100px" type="number" min="1" max="20" name="quantity" value="1" aria-label="Quantity">
-                    <button type="submit" class="btn btn-bloom btn-lg px-4"><i class="bi bi-bag-plus me-1"></i>Add to cart</button>
-                    <button type="submit" name="buy_now" value="1" onclick="this.form.removeAttribute('data-ajax-form');" class="btn btn-dark btn-lg px-4"><i class="bi bi-lightning-charge me-1"></i>Buy Now</button>
+                    <input class="form-control" style="max-width: 70px" type="number" min="1" max="20" name="quantity" value="1" aria-label="Quantity">
+                    <button type="submit" class="btn btn-bloom px-3 px-md-4 flex-grow-1 flex-md-grow-0"><i class="bi bi-bag-plus me-1"></i>Add to cart</button>
+                    <button type="submit" name="buy_now" value="1" onclick="this.form.removeAttribute('data-ajax-form');" class="btn btn-dark px-3 px-md-4"><i class="bi bi-lightning-charge me-1"></i>Buy Now</button>
                 </form>
                 @auth
                     <button type="button" class="btn btn-soft btn-lg" data-wishlist-toggle="{{ route('wishlist.toggle', $product) }}" title="Add to Wishlist"><i class="bi bi-heart"></i></button>
@@ -188,7 +188,7 @@
                 @include('partials.product-share', ['product' => $product])
             </div>
 
-            <ul class="nav nav-tabs nav-fill product-info-tabs mb-3" id="productTabs" role="tablist">
+            <ul class="nav nav-tabs nav-fill product-info-tabs mb-0" id="productTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active rounded-top-3" id="tab-desc-tab" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button" role="tab">Details</button>
                 </li>
@@ -202,7 +202,7 @@
                     <button class="nav-link rounded-top-3" id="tab-qa-tab" data-bs-toggle="tab" data-bs-target="#tab-qa" type="button" role="tab">Q&A ({{ $product->questions->where('status', 'answered')->count() }})</button>
                 </li>
             </ul>
-            <div class="tab-content bb-card-lite p-4 rounded-bottom-4 rounded-end-4 border">
+            <div class="tab-content bb-card-lite p-3 p-md-4 rounded-bottom-4 rounded-end-4 border">
                 <div class="tab-pane fade show active" id="tab-desc" role="tabpanel">
                     <p class="lead text-muted mb-0">{{ $product->description }}</p>
                 </div>
@@ -329,22 +329,22 @@
     </div>
 
     @if ($related->isNotEmpty())
-        <hr class="my-5 opacity-25">
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <h2 class="h4 fw-bold mb-0">You may also like</h2>
-            <a href="{{ route('home', ['cat' => $product->category?->slug]) }}" class="small fw-semibold text-bloom text-decoration-none">More in {{ $product->category->name ?? 'shop' }}</a>
+        <hr class="my-3 my-md-5 opacity-25">
+        <div class="d-flex justify-content-between align-items-end mb-2 mb-md-4">
+            <h2 class="h5 h4-md fw-bold mb-0">You may also like</h2>
+            <a href="{{ route('home', ['cat' => $product->category?->slug]) }}" class="small fw-semibold text-bloom text-decoration-none">More <span class="d-none d-sm-inline">in {{ $product->category->name ?? 'shop' }}</span></a>
         </div>
-        <div class="row g-4">
+        <div class="row g-2 g-md-4">
             @foreach ($related as $item)
-                <div class="col-sm-6 col-lg-3">@include('partials.product-card', ['product' => $item])</div>
+                <div class="col-6 col-lg-3">@include('partials.product-card', ['product' => $item])</div>
             @endforeach
         </div>
     @endif
 
     @if (isset($recentProducts) && $recentProducts->isNotEmpty())
-        <hr class="my-5 opacity-25">
-        <div class="d-flex justify-content-between align-items-end mb-4">
-            <h2 class="h4 fw-bold mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>Recently Viewed</h2>
+        <hr class="my-3 my-md-5 opacity-25">
+        <div class="d-flex justify-content-between align-items-end mb-2 mb-md-4">
+            <h2 class="h5 h4-md fw-bold mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>Recently Viewed</h2>
         </div>
         <div class="horizontal-scroller">
             @foreach ($recentProducts as $recentItem)
@@ -354,7 +354,7 @@
     @endif
 
     <!-- Trust Badges -->
-    <div class="row g-3 mt-5 mb-4">
+    <div class="row g-2 g-md-3 mt-3 mt-md-5 mb-3 mb-md-4">
         <div class="col-6 col-md-3">
             <div class="trust-badge">
                 <i class="bi bi-shield-check text-success"></i>

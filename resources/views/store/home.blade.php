@@ -9,10 +9,10 @@
         'max_price' => request('max_price'),
     ], fn ($v) => $v !== null && $v !== '');
 @endphp
-<section class="container py-3 py-md-4 py-lg-5">
-    @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-4'])
+<section class="container py-2 py-md-4 py-lg-5">
+    @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-3 mb-md-4'])
 
-    <div class="marketplace-intro mb-5">
+    <div class="marketplace-intro mb-3 mb-md-5">
         <div class="row g-4 align-items-center">
             <div class="col-lg-6">
                 <span class="marketplace-kicker">{{ $siteBranding['name'] ?? 'Behna Bazar' }} · Multipurpose marketplace</span>
@@ -41,7 +41,7 @@
     </div>
 
     @if ($banners->isNotEmpty())
-        <div id="homeHero" class="carousel slide bb-card overflow-hidden rounded-4 mb-5 shadow-sm" data-bs-ride="carousel">
+        <div id="homeHero" class="carousel slide bb-card overflow-hidden rounded-4 mb-3 mb-md-5 shadow-sm" data-bs-ride="carousel">
             <div class="carousel-indicators">
                 @foreach ($banners as $i => $b)
                     <button type="button" data-bs-target="#homeHero" data-bs-slide-to="{{ $i }}" class="{{ $i === 0 ? 'active' : '' }}" aria-current="{{ $i === 0 ? 'true' : 'false' }}"></button>
@@ -74,7 +74,7 @@
             </button>
         </div>
     @else
-        <div class="hero p-4 p-lg-5 mb-5 rounded-4">
+        <div class="hero p-3 p-lg-5 mb-3 mb-md-5 rounded-4">
             <div class="row align-items-center g-4">
                 <div class="col-lg-7">
                     <span class="badge badge-soft rounded-pill mb-3">Shop everything. Sell smarter.</span>
@@ -103,7 +103,7 @@
         </div>
     @endif
 
-    <div class="row g-3 g-md-4 mb-4 mb-md-5 text-center bb-feature-grid">
+    <div class="row g-2 g-md-4 mb-3 mb-md-5 text-center bb-feature-grid">
         <div class="col-6 col-lg-3">
             <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
@@ -147,7 +147,7 @@
     @endif
 
     @if (! empty($flashDeal))
-        <div class="bb-card p-4 rounded-4 mb-5 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-left: 4px solid #d9534f;">
+        <div class="bb-card p-3 p-md-4 rounded-4 mb-3 mb-md-5 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-left: 4px solid #d9534f;">
             <div class="position-absolute top-0 end-0 p-3 opacity-25">
                 <i class="bi bi-lightning-fill" style="font-size: 8rem; color: #d9534f;"></i>
             </div>
@@ -201,7 +201,7 @@
         </div>
     @endif
 
-    @include('partials.ad-slot', ['slot' => 'home_mid', 'class' => 'mb-5'])
+    @include('partials.ad-slot', ['slot' => 'home_mid', 'class' => 'mb-3 mb-md-5'])
 
     @if (isset($hotProducts) && $hotProducts->isNotEmpty())
         <div class="d-flex align-items-end justify-content-between mb-3">
