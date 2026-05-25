@@ -68,7 +68,7 @@
                         <i class="bi bi-bag"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-dark border border-white" data-cart-count>{{ $cartCount ?? 0 }}</span>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-3" style="width: 320px;">
+                    <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-4 mt-2 p-3" style="width: 300px; max-width: calc(100vw - 2rem); right: 0;">
                         <h6 class="fw-bold mb-3">Your Cart</h6>
                         @if(isset($cartItemsPreview) && $cartItemsPreview->isNotEmpty())
                             <div class="d-flex flex-column gap-3 mb-3 max-h-300 overflow-auto">
@@ -77,7 +77,7 @@
                                         <img src="{{ $item->product->imageUrl() }}" class="rounded-3 object-fit-cover" width="50" height="50">
                                         <div class="min-w-0 flex-grow-1">
                                             <div class="fw-semibold text-truncate small">{{ $item->product->title }}</div>
-                                            <div class="small text-muted">{{ $item->quantity }} x â‚¹{{ number_format($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price, 2) }}</div>
+                                            <div class="small text-muted">{{ $item->quantity }} x &#8377;{{ number_format($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price, 2) }}</div>
                                         </div>
                                     </div>
                                 @endforeach
