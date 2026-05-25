@@ -99,17 +99,47 @@
                             <a class="nav-link rounded-3" href="{{ route('addresses') }}"><i class="bi bi-geo-alt me-2"></i>Addresses</a>
                             <a class="nav-link rounded-3" href="{{ route('checkout') }}"><i class="bi bi-bag-check me-2"></i>Checkout</a>
                         @elseif (in_array($u->role, ['vendor', 'qc_manager', 'qc_staff'], true))
-                            <a class="nav-link rounded-3 {{ request()->routeIs('dashboard') ? 'active fw-semibold' : '' }}" href="{{ route('dashboard') }}">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            @php
+                                $vSec = request('section', 'overview');
+                                $vActive = $u->account_status === 'active' || session()->has('impersonated_by');
+                            @endphp
+                            <p class="sidebar-section-label text-uppercase small fw-semibold mb-2">Main</p>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'overview' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'overview']) }}">
+                                <i class="bi bi-speedometer2"></i><span>Dashboard</span>
                             </a>
-                            <a class="nav-link rounded-3" href="{{ route('home') }}">
-                                <i class="bi bi-shop me-2"></i>Storefront
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'products' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'products']) }}">
+                                <i class="bi bi-bag"></i><span>My Products</span>
                             </a>
-                            <a class="nav-link rounded-3" href="{{ route('orders') }}"><i class="bi bi-receipt me-2"></i>Orders</a>
-                            @if ($u->role === 'vendor' && ($u->account_status === 'active' || session()->has('impersonated_by')) && \App\Support\MarketplaceSettings::resellEnabled())
-                                <a class="nav-link rounded-3 {{ request()->routeIs('manage.resell.catalog') ? 'active fw-semibold' : '' }}" href="{{ route('manage.resell.catalog') }}"><i class="bi bi-arrow-left-right me-2"></i>Resell catalog</a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'orders' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'orders']) }}">
+                                <i class="bi bi-receipt"></i><span>Orders</span>
+                            </a>
+                            @if ($u->role === 'vendor' && $vActive)
+                                <p class="sidebar-section-label text-uppercase small fw-semibold mb-2 mt-3">Business</p>
+                                <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'wallet' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'wallet']) }}">
+                                    <i class="bi bi-piggy-bank"></i><span>Sales Wallet</span>
+                                </a>
+                                <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'promotions' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'promotions']) }}">
+                                    <i class="bi bi-megaphone"></i><span>Promotions</span>
+                                </a>
+                                @if (\App\Support\MarketplaceSettings::resellEnabled())
+                                    <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'resell' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'resell']) }}">
+                                        <i class="bi bi-arrow-left-right"></i><span>Resell</span>
+                                    </a>
+                                @endif
+                                <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'referrals' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'referrals']) }}">
+                                    <i class="bi bi-share"></i><span>Refer & Earn</span>
+                                </a>
+                                <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'questions' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'questions']) }}">
+                                    <i class="bi bi-chat-left-text"></i><span>Q&A</span>
+                                </a>
                             @endif
-                            <a class="nav-link rounded-3" href="{{ route('profile') }}"><i class="bi bi-person me-2"></i>Profile</a>
+                            <hr class="border-secondary opacity-25 my-3">
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2" href="{{ route('home') }}">
+                                <i class="bi bi-shop"></i><span>View Store</span>
+                            </a>
+                            <a class="nav-link rounded-3 d-flex align-items-center gap-2" href="{{ route('profile') }}">
+                                <i class="bi bi-person"></i><span>Profile</span>
+                            </a>
                         @endif
                     @endauth
                 </nav>
