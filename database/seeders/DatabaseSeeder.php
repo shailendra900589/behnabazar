@@ -89,7 +89,7 @@ class DatabaseSeeder extends Seeder
         Setting::updateOrCreate(['setting_key' => 'seo_latitude'], ['setting_value' => '28.6139']);
         Setting::updateOrCreate(['setting_key' => 'seo_longitude'], ['setting_value' => '77.2090']);
         Coupon::create(['code' => 'WELCOME50', 'discount_type' => 'flat', 'discount_value' => 50, 'min_cart_value' => 500, 'status' => true]);
-        Ad::create(['location' => 'home_top', 'ad_type' => 'code', 'code' => '<div class="p-4 text-center">Promote your local brand on Behna Bazar</div>', 'status' => true]);
+        // No placeholder ads — real vendor ads are created via dashboard
         Banner::create(['image' => 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1400&auto=format&fit=crop', 'link' => '/', 'sort_order' => 1, 'status' => true]);
     }
 }

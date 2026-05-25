@@ -524,6 +524,11 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 
 .ad-code {
     min-height: 70px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
 }
 
 @media (max-width: 575px) {

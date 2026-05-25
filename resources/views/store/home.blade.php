@@ -10,7 +10,9 @@
     ], fn ($v) => $v !== null && $v !== '');
 @endphp
 <section class="container py-2 py-md-4 py-lg-5">
-    @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-2 mb-md-4'])
+    @if(!empty($ads['home_top']))
+        @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-2 mb-md-4'])
+    @endif
 
     <!-- Category strip - Flipkart/Meesho style -->
     <div class="bb-category-strip mb-2 mb-md-4">
@@ -176,7 +178,9 @@
         </div>
     @endif
 
-    @include('partials.ad-slot', ['slot' => 'home_mid', 'class' => 'mb-3 mb-md-5'])
+    @if(!empty($ads['home_mid']))
+        @include('partials.ad-slot', ['slot' => 'home_mid', 'class' => 'mb-3 mb-md-5'])
+    @endif
 
     @if (isset($hotProducts) && $hotProducts->isNotEmpty())
         <div class="d-flex align-items-end justify-content-between mb-3">
@@ -259,7 +263,9 @@
             <div class="col-12"><div class="bb-card p-5 text-center text-muted">No products found.</div></div>
         @endforelse
     </div>
-    @include('partials.ad-slot', ['slot' => 'home_bottom', 'class' => 'mt-4'])
+    @if(!empty($ads['home_bottom']))
+        @include('partials.ad-slot', ['slot' => 'home_bottom', 'class' => 'mt-4'])
+    @endif
     <div class="mt-4">{{ $products->links() }}</div>
 </section>
 @endsection
