@@ -233,25 +233,91 @@
                     @endif
 
                     @auth
-                        <form method="post" action="{{ route('product.review', $product) }}" class="mb-4 bg-white p-3 rounded-3 border">
+                        <form id="reviewForm" method="post" action="{{ route('product.review', $product) }}" class="mb-4 bg-white p-3 rounded-3 border" data-ajax-form>
                             @csrf
                             <h5 class="fw-bold mb-3">Write a review</h5>
                             <div class="mb-3">
-                                <label class="form-label">Rating</label>
-                                <select name="rating" class="form-select w-auto">
-                                    <option value="5">5 - Excellent</option>
-                                    <option value="4">4 - Good</option>
-                                    <option value="3">3 - Average</option>
-                                    <option value="2">2 - Poor</option>
-                                    <option value="1">1 - Terrible</option>
-                                </select>
+                                <label class="form-label fw-semibold small">Your Rating</label>
+                                <input type="hidden" name="rating" id="ratingValue" value="5">
+                                <div class="bb-star-rating" id="starRating">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <i class="bi bi-star-fill bb-star" data-star="{{ $i }}"></i>
+                                    @endfor
+                                    <span class="bb-star-label ms-2" id="starLabel">Excellent</span>
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Comment (Optional)</label>
+                                <label class="form-label fw-semibold small">Comment (Optional)</label>
                                 <textarea name="comment" class="form-control" rows="2" placeholder="Tell others what you think"></textarea>
                             </div>
-                            <button type="submit" class="btn btn-bloom btn-sm">Submit Review</button>
+                            <button type="submit" class="btn btn-bloom btn-sm" id="reviewSubmitBtn">
+                                <i class="bi bi-send me-1"></i>Submit Review
+                            </button>
                         </form>
+                        <script>
+                        (function(){
+                            const labels = {1:'Terrible', 2:'Poor', 3:'Average', 4:'Good', 5:'Excellent'};
+                            const stars = document.querySelectorAll('#starRating .bb-star');
+                            const input = document.getElementById('ratingValue');
+                            const label = document.getElementById('starLabel');
+                            let selected = 5;
+
+                            function render(val) {
+                                stars.forEach(s => {
+                                    const sv = +s.dataset.star;
+                                    s.classList.toggle('bi-star-fill', sv <= val);
+                                    s.classList.toggle('bi-star', sv > val);
+                                    s.classList.toggle('active', sv <= val);
+                                });
+                                label.textContent = labels[val] || '';
+                            }
+
+                            stars.forEach(s => {
+                                s.addEventListener('mouseenter', () => render(+s.dataset.star));
+                                s.addEventListener('click', () => { selected = +s.dataset.star; input.value = selected; render(selected); });
+                            });
+
+                            document.getElementById('starRating').addEventListener('mouseleave', () => render(selected));
+                            render(selected);
+
+                            const form = document.getElementById('reviewForm');
+                            form.addEventListener('submit', async function(e) {
+                                e.preventDefault();
+                                const btn = document.getElementById('reviewSubmitBtn');
+                                btn.disabled = true;
+                                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';
+                                try {
+                                    const res = await fetch(form.action, {
+                                        method: 'POST',
+                                        headers: {'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json'},
+                                        body: new FormData(form)
+                                    });
+                                    const data = await res.json();
+                                    if (res.ok && data.status === 'success') {
+                                        form.reset();
+                                        input.value = 5; selected = 5; render(5);
+                                        if (typeof bbToast === 'function') bbToast(data.message || 'Review submitted!', 'success');
+                                        else alert(data.message || 'Review submitted!');
+                                        if (data.html) {
+                                            document.querySelector('.vstack.gap-3.mt-4')?.insertAdjacentHTML('afterbegin', data.html);
+                                        }
+                                        if (data.avg_rating) {
+                                            const metaEl = document.querySelector('.product-rating-meta');
+                                            if (metaEl) metaEl.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>' + data.avg_rating + ' / 5 (' + data.total_reviews + ' reviews)';
+                                        }
+                                    } else {
+                                        if (typeof bbToast === 'function') bbToast(data.message || 'Error submitting review', 'error');
+                                        else alert(data.message || 'Error');
+                                    }
+                                } catch(err) {
+                                    if (typeof bbToast === 'function') bbToast('Network error', 'error');
+                                } finally {
+                                    btn.disabled = false;
+                                    btn.innerHTML = '<i class="bi bi-send me-1"></i>Submit Review';
+                                }
+                            });
+                        })();
+                        </script>
                     @else
                         <div class="alert alert-light border text-center">
                             Please <a href="{{ route('login') }}" class="fw-bold text-bloom text-decoration-none">login</a> to write a review.

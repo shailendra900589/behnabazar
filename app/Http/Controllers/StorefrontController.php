@@ -352,24 +352,26 @@ class StorefrontController extends Controller
         ]);
     }
 
-    public function postReview(Request $request, Product $product): RedirectResponse
+    public function postReview(Request $request, Product $product): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $request->validate([
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'comment' => ['nullable', 'string', 'max:1000']
         ]);
 
-        // Must have bought the product
         $hasOrdered = Order::where('user_id', Auth::id())
             ->where('product_id', $product->id)
             ->where('status', 'delivered')
             ->exists();
 
         if (!$hasOrdered) {
+            if ($request->expectsJson()) {
+                return response()->json(['status' => 'error', 'message' => 'You can only review products after they have been delivered.'], 422);
+            }
             return back()->withErrors(['review' => 'You can only review products after they have been delivered.']);
         }
 
-        \App\Models\Review::updateOrCreate(
+        $review = \App\Models\Review::updateOrCreate(
             ['user_id' => Auth::id(), 'product_id' => $product->id],
             [
                 'rating' => $request->rating,
@@ -377,6 +379,19 @@ class StorefrontController extends Controller
                 'is_approved' => false,
             ]
         );
+
+        if ($request->expectsJson()) {
+            $product->load('reviews');
+            $avgRating = number_format($product->averageRating(), 1);
+            $totalReviews = $product->reviews->count();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Thank you! Your review will appear after moderation.',
+                'avg_rating' => $avgRating,
+                'total_reviews' => $totalReviews,
+            ]);
+        }
 
         return back()->with('status', 'Thank you! Your review will appear after moderation.');
     }
