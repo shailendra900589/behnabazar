@@ -34,19 +34,19 @@
     </div>
 @endif
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
     <div>
-        <h1 class="fw-bold mb-1">Vendor dashboard</h1>
-        <p class="text-muted mb-0">{{ auth()->user()->shop_name }} · {{ auth()->user()->city }}</p>
+        <h1 class="fw-bold mb-0" style="font-size:1.3rem;">Vendor dashboard</h1>
+        <p class="text-muted small mb-0">{{ auth()->user()->shop_name }} · {{ auth()->user()->city }}</p>
     </div>
     @if ($active)
         <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-bloom" type="button" data-bs-toggle="modal" data-bs-target="#productModal">
-                <i class="bi bi-plus-lg"></i> Add product
+            <button class="btn btn-bloom btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#productModal">
+                <i class="bi bi-plus-lg me-1"></i>Add product
             </button>
             @if($resellEnabled ?? false)
-                <a href="{{ route('manage.resell.catalog') }}" class="btn btn-outline-dark">
-                    <i class="bi bi-arrow-left-right"></i> Resell catalog
+                <a href="{{ route('manage.resell.catalog') }}" class="btn btn-outline-dark btn-sm">
+                    <i class="bi bi-arrow-left-right me-1"></i>Resell catalog
                     @if(($resellCatalogCount ?? 0) > 0)
                         <span class="badge bg-primary ms-1">{{ $resellCatalogCount }}</span>
                     @endif
@@ -54,56 +54,58 @@
             @endif
         </div>
     @else
-        <span class="badge bg-secondary-subtle text-secondary border">Add / edit unlocks after admin approval</span>
+        <span class="badge bg-secondary-subtle text-secondary border" style="font-size:0.65rem;">Unlocks after admin approval</span>
     @endif
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="text-muted small">Total Products</span>
-                <span class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="bi bi-box-seam"></i></span>
+                <span class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.85rem;"><i class="bi bi-box-seam"></i></span>
             </div>
-            <div class="h2 fw-bold mb-0">{{ $products->count() }}</div>
-            <div class="small text-muted mt-1"><i class="bi bi-check-circle text-success me-1"></i>{{ $products->where('qc_status','approved')->count() }} approved</div>
+            <div class="h2 fw-bold">{{ $products->count() }}</div>
+            <div class="small text-muted"><i class="bi bi-check-circle text-success me-1"></i>{{ $products->where('qc_status','approved')->count() }} approved</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="text-muted small">Total Orders</span>
-                <span class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="bi bi-receipt"></i></span>
+                <span class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.85rem;"><i class="bi bi-receipt"></i></span>
             </div>
-            <div class="h2 fw-bold mb-0">{{ $orders->count() }}</div>
-            <div class="small text-muted mt-1"><i class="bi bi-clock text-warning me-1"></i>{{ $orders->where('status','pending')->count() }} pending</div>
+            <div class="h2 fw-bold">{{ $orders->count() }}</div>
+            <div class="small text-muted"><i class="bi bi-clock text-warning me-1"></i>{{ $orders->where('status','pending')->count() }} pending</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="text-muted small">Revenue</span>
-                <span class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="bi bi-currency-rupee"></i></span>
+                <span class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.85rem;"><i class="bi bi-currency-rupee"></i></span>
             </div>
-            <div class="h2 fw-bold mb-0">₹{{ number_format($orders->sum('total_price'), 0) }}</div>
-            <div class="small text-muted mt-1"><i class="bi bi-graph-up-arrow text-success me-1"></i>Lifetime earnings</div>
+            <div class="h2 fw-bold">₹{{ number_format($orders->sum('total_price'), 0) }}</div>
+            <div class="small text-muted"><i class="bi bi-graph-up-arrow text-success me-1"></i>Lifetime earnings</div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="stat-card p-4">
-            <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="text-muted small">Conversion</span>
-                <span class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="bi bi-bullseye"></i></span>
+                <span class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;font-size:0.85rem;"><i class="bi bi-bullseye"></i></span>
             </div>
-            <div class="h2 fw-bold mb-0">{{ $conversionRate ?? 0 }}%</div>
-            <div class="small text-muted mt-1"><i class="bi bi-eye text-primary me-1"></i>{{ number_format($viewsTotal ?? 0) }} views</div>
+            <div class="h2 fw-bold">{{ $conversionRate ?? 0 }}%</div>
+            <div class="small text-muted"><i class="bi bi-eye text-primary me-1"></i>{{ number_format($viewsTotal ?? 0) }} views</div>
         </div>
     </div>
 </div>
 
-<div class="bb-card mb-4 p-4">
-    <h3 class="h6 fw-bold mb-3">My Revenue (Last 7 Days)</h3>
-    <canvas id="vendorRevenueChart" height="80"></canvas>
+<div class="bb-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h6 fw-bold mb-0"><i class="bi bi-bar-chart-line me-2 text-primary"></i>My Revenue (Last 7 Days)</h3>
+    </div>
+    <canvas id="vendorRevenueChart" height="70"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -115,14 +117,16 @@
                     datasets: [{
                         label: 'Revenue (₹)',
                         data: @json($chartData),
-                        backgroundColor: '#4f46e5',
-                        borderRadius: 4
+                        backgroundColor: 'rgba(79,70,229,0.75)',
+                        hoverBackgroundColor: '#4f46e5',
+                        borderRadius: 6,
+                        borderSkipped: false
                     }]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', titleFont: { size: 11 }, bodyFont: { size: 11 } } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
                 }
             });
         });
@@ -130,21 +134,24 @@
 </div>
 
 @if ($active && ($resellEnabled ?? false))
-<div class="bb-card mb-4 p-4 resell-dashboard-card">
-    <div class="row g-4 align-items-center">
-        <div class="col-lg-7">
-            <h3 class="h5 fw-bold mb-2"><i class="bi bi-arrow-left-right text-bloom me-2"></i>Resell other vendors' products</h3>
-            <p class="text-muted small mb-3">Browse approved listings from other sellers. You can:</p>
-            <ul class="small text-muted mb-0 ps-3">
-                <li><strong>Quick resell</strong> — list with source photos, your price (free)</li>
-                <li><strong>Branded listing</strong> — your title, photos &amp; copy (fee ₹{{ number_format($resellCustomizeFee ?? 99, 0) }})</li>
-                <li><strong>Bulk buy</strong> — stock from wallet at {{ $resellBulkDiscountPercent ?? 5 }}% off (min {{ $resellBulkMinQty ?? 5 }} units)</li>
-            </ul>
+<div class="bb-card mb-4 resell-dashboard-card">
+    <div class="row g-3 align-items-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-arrow-left-right"></i></span>
+                <h3 class="h6 fw-bold mb-0">Resell other vendors' products</h3>
+            </div>
+            <p class="text-muted small mb-2">Browse approved listings from other sellers:</p>
+            <div class="d-flex flex-wrap gap-2 small">
+                <span class="badge bg-light text-dark border px-2 py-1"><strong>Quick resell</strong> — free</span>
+                <span class="badge bg-light text-dark border px-2 py-1"><strong>Branded</strong> — ₹{{ number_format($resellCustomizeFee ?? 99, 0) }}</span>
+                <span class="badge bg-light text-dark border px-2 py-1"><strong>Bulk</strong> — {{ $resellBulkDiscountPercent ?? 5 }}% off</span>
+            </div>
         </div>
-        <div class="col-lg-5 text-lg-end">
-            <div class="display-6 fw-bold text-bloom mb-1">{{ $resellCatalogCount ?? 0 }}</div>
-            <p class="small text-muted mb-3">products available to resell</p>
-            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-bloom rounded-pill px-4">Open resell catalog</a>
+        <div class="col-lg-4 text-lg-end">
+            <div class="h3 fw-bold text-bloom mb-0">{{ $resellCatalogCount ?? 0 }}</div>
+            <p class="small text-muted mb-2">products available</p>
+            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-bloom btn-sm rounded-pill px-3">Open catalog</a>
         </div>
     </div>
 </div>
@@ -165,15 +172,18 @@
 ])
 
 @if ($active)
-<div class="bb-card mb-4 p-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-        <div>
-            <h3 class="h6 fw-bold mb-1">Sales wallet &amp; payouts</h3>
-            <p class="text-muted small mb-0">Delivered orders and approved referral bonuses credit your sales wallet. Claim to bank when balance is ₹{{ number_format($payoutMin ?? 500, 0) }}+.</p>
+<div class="bb-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-piggy-bank"></i></span>
+            <div>
+                <h3 class="h6 fw-bold mb-0">Sales wallet & payouts</h3>
+                <p class="text-muted small mb-0">Claim to bank when balance is ₹{{ number_format($payoutMin ?? 500, 0) }}+</p>
+            </div>
         </div>
         <div class="text-end">
             <span class="text-muted small d-block">Available for Payout</span>
-            <span class="h4 fw-bold text-bloom">₹{{ number_format($availableBalance, 2) }}</span>
+            <span class="h5 fw-bold text-bloom">₹{{ number_format($availableBalance, 2) }}</span>
         </div>
     </div>
     
@@ -256,63 +266,65 @@
 @endif
 
 @if ($active)
-<div class="bb-card mb-4 p-4">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-        <div>
-            <h3 class="h6 fw-bold mb-1">Promote your products</h3>
-            <p class="text-muted small mb-0">Feature an approved listing on storefront ad placements. The ad space auto-adjusts when no ad is available or a shopper closes it.</p>
+<div class="bb-card mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-megaphone"></i></span>
+            <h3 class="h6 fw-bold mb-0">Promote your products</h3>
         </div>
-        <span class="badge badge-soft">{{ $promotions->count() }} promotion(s)</span>
+        <span class="badge bg-primary bg-opacity-10 text-primary">{{ $promotions->count() }} promotion(s)</span>
     </div>
+    <p class="text-muted small mb-3">Feature an approved listing on storefront ad placements. Ad space auto-adjusts when no ad is available.</p>
 
-    <form method="post" action="{{ route('manage.promotions.save') }}" enctype="multipart/form-data" class="row g-3 align-items-end bg-light rounded-4 p-3 mb-4">
+    <form method="post" action="{{ route('manage.promotions.save') }}" enctype="multipart/form-data" class="row g-2 align-items-end bg-light rounded-3 p-3 mb-3 border">
         @csrf
-        <div class="col-md-4">
-            <label class="form-label small">Approved product</label>
-            <select name="product_id" class="form-select" required>
+        <div class="col-md-4 col-6">
+            <label class="form-label">Approved product</label>
+            <select name="product_id" class="form-select form-select-sm" required>
                 <option value="">Choose product</option>
                 @foreach ($products->where('qc_status', 'approved') as $product)
                     <option value="{{ $product->id }}">{{ $product->title }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="col-md-3">
-            <label class="form-label small">Placement</label>
-            <select name="location" class="form-select" required>
-                <option value="home_mid">Home middle - Rs. {{ number_format($adRates['home_mid'], 2) }}/day</option>
-                <option value="home_top">Home top - Rs. {{ number_format($adRates['home_top'], 2) }}/day</option>
-                <option value="home_bottom">Home bottom - Rs. {{ number_format($adRates['home_bottom'], 2) }}/day</option>
+        <div class="col-md-3 col-6">
+            <label class="form-label">Placement</label>
+            <select name="location" class="form-select form-select-sm" required>
+                <option value="home_mid">Home mid - ₹{{ number_format($adRates['home_mid'], 0) }}/day</option>
+                <option value="home_top">Home top - ₹{{ number_format($adRates['home_top'], 0) }}/day</option>
+                <option value="home_bottom">Home bottom - ₹{{ number_format($adRates['home_bottom'], 0) }}/day</option>
             </select>
         </div>
-        <div class="col-md-5">
-            <label class="form-label small">Headline</label>
-            <input class="form-control" name="title" maxlength="160" placeholder="Feature offer headline">
+        <div class="col-md-5 col-12">
+            <label class="form-label">Headline</label>
+            <input class="form-control form-control-sm" name="title" maxlength="160" placeholder="Feature offer headline">
         </div>
-        <div class="col-md-5">
-            <label class="form-label small">Short message</label>
-            <input class="form-control" name="subtitle" maxlength="255" placeholder="Why customers should click">
+        <div class="col-md-4 col-6">
+            <label class="form-label">Short message</label>
+            <input class="form-control form-control-sm" name="subtitle" maxlength="255" placeholder="Why customers should click">
         </div>
-        <div class="col-md-3">
-            <label class="form-label small">CTA</label>
-            <input class="form-control" name="cta_text" maxlength="80" placeholder="Shop now">
+        <div class="col-md-2 col-6">
+            <label class="form-label">CTA</label>
+            <input class="form-control form-control-sm" name="cta_text" maxlength="80" placeholder="Shop now">
         </div>
-        <div class="col-md-4">
-            <label class="form-label small">Optional ad image</label>
-            <input class="form-control" type="file" name="image" accept="image/*">
+        <div class="col-md-3 col-6">
+            <label class="form-label">Ad image</label>
+            <input class="form-control form-control-sm" type="file" name="image" accept="image/*">
         </div>
-        <div class="col-md-3">
-            <label class="form-label small">Starts at</label>
-            <input class="form-control" type="datetime-local" name="starts_at">
+        <div class="col-md-3 col-6">
+            <label class="form-label">Starts</label>
+            <input class="form-control form-control-sm" type="datetime-local" name="starts_at">
         </div>
-        <div class="col-md-3">
-            <label class="form-label small">Ends at</label>
-            <input class="form-control" type="datetime-local" name="ends_at">
+        <div class="col-md-3 col-6">
+            <label class="form-label">Ends</label>
+            <input class="form-control form-control-sm" type="datetime-local" name="ends_at">
         </div>
-        <div class="col-md-6 d-grid">
-            <button type="submit" class="btn btn-bloom">Create promotion</button>
+        <div class="col-md-3 col-6 d-grid">
+            <button type="submit" class="btn btn-bloom btn-sm"><i class="bi bi-plus-lg me-1"></i>Create</button>
         </div>
     </form>
 
+    @if($promotions->count())
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
             <thead>
@@ -325,52 +337,58 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($promotions as $promotion)
+                @foreach ($promotions as $promotion)
                     <tr>
-                        <td>{{ $promotion->product->title ?? $promotion->title }}</td>
-                        <td>{{ str_replace('_', ' ', $promotion->location) }}</td>
-                        <td><span class="badge badge-soft">{{ $promotion->isActiveNow() ? 'active' : 'scheduled/ended' }}</span></td>
-                        <td>{{ $promotion->clicks }}</td>
+                        <td class="fw-semibold">{{ $promotion->product->title ?? $promotion->title }}</td>
+                        <td class="text-muted">{{ str_replace('_', ' ', $promotion->location) }}</td>
+                        <td><span class="badge {{ $promotion->isActiveNow() ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }}" style="font-size:0.6rem;">{{ $promotion->isActiveNow() ? 'active' : 'ended' }}</span></td>
+                        <td class="fw-semibold">{{ $promotion->clicks }}</td>
                         <td class="text-end">
                             <form method="post" action="{{ route('manage.promotions.delete', $promotion) }}" onsubmit="return confirm('Remove this promotion?');">
-                                @csrf
-                                @method('DELETE')
-                                <button class="btn btn-outline-danger btn-sm">Remove</button>
+                                @csrf @method('DELETE')
+                                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3"></i></button>
                             </form>
                         </td>
                     </tr>
-                @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">No promotions yet. Create one from an approved product.</td></tr>
-                @endforelse
+                @endforeach
             </tbody>
         </table>
     </div>
+    @else
+    <p class="text-muted small text-center py-2 mb-0">No promotions yet. Create one above.</p>
+    @endif
 </div>
 
 @if ($active)
-<div class="bb-card mb-4 p-4">
-    <div class="row g-4 align-items-center">
+<div class="bb-card mb-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-wallet2"></i></span>
+        <h3 class="h6 fw-bold mb-0">Ad Wallet</h3>
+    </div>
+    <div class="row g-3 align-items-center">
         <div class="col-lg-4">
-            <div class="text-muted small">Ad wallet balance</div>
-            <div class="display-6 fw-bold text-bloom">Rs. {{ number_format(auth()->user()->ad_wallet_balance, 2) }}</div>
-            <div class="small text-muted">Top up with Razorpay before creating promotions. Minimum: Rs. {{ number_format($adWalletMinTopup, 2) }}</div>
+            <div class="bg-light rounded-3 p-3 text-center">
+                <div class="text-muted small mb-1">Balance</div>
+                <div class="h4 fw-bold text-bloom mb-0">₹{{ number_format(auth()->user()->ad_wallet_balance, 2) }}</div>
+                <div class="small text-muted mt-1">Min top-up: ₹{{ number_format($adWalletMinTopup, 0) }}</div>
+            </div>
         </div>
         <div class="col-lg-4">
-            <div class="small text-muted mb-2">Current ad rates</div>
+            <div class="small text-muted mb-2 fw-semibold">Current ad rates</div>
             <div class="d-flex flex-column gap-1 small">
-                <span>Home top: Rs. {{ number_format($adRates['home_top'], 2) }}/day</span>
-                <span>Home middle: Rs. {{ number_format($adRates['home_mid'], 2) }}/day</span>
-                <span>Home bottom: Rs. {{ number_format($adRates['home_bottom'], 2) }}/day</span>
+                <span class="d-flex justify-content-between"><span>Home top</span><strong>₹{{ number_format($adRates['home_top'], 0) }}/day</strong></span>
+                <span class="d-flex justify-content-between"><span>Home middle</span><strong>₹{{ number_format($adRates['home_mid'], 0) }}/day</strong></span>
+                <span class="d-flex justify-content-between"><span>Home bottom</span><strong>₹{{ number_format($adRates['home_bottom'], 0) }}/day</strong></span>
             </div>
         </div>
         <div class="col-lg-4">
             <form id="adWalletTopupForm" method="post" action="{{ route('manage.ad-wallet.verify') }}" class="d-grid gap-2">
                 @csrf
-                <input type="number" min="{{ $adWalletMinTopup }}" step="1" name="amount" id="adWalletAmount" class="form-control" placeholder="Top-up amount, e.g. 1000" required>
+                <input type="number" min="{{ $adWalletMinTopup }}" step="1" name="amount" id="adWalletAmount" class="form-control form-control-sm" placeholder="Amount, e.g. 1000" required>
                 <input type="hidden" name="razorpay_order_id" id="walletRazorpayOrderId">
                 <input type="hidden" name="razorpay_payment_id" id="walletRazorpayPaymentId">
                 <input type="hidden" name="razorpay_signature" id="walletRazorpaySignature">
-                <button type="button" class="btn btn-dark" id="adWalletPayBtn">Top up ad wallet</button>
+                <button type="button" class="btn btn-dark btn-sm" id="adWalletPayBtn"><i class="bi bi-plus-lg me-1"></i>Top up wallet</button>
             </form>
         </div>
     </div>
@@ -439,11 +457,12 @@
 </script>
 @endif
 
-<div class="row g-4">
-    <div class="col-xl-6">
-        <div class="table-card">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                <h4 class="fw-bold mb-0">My products</h4>
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="table-card h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h4 class="fw-bold mb-0"><i class="bi bi-bag me-2 text-primary"></i>My products</h4>
+                <span class="badge bg-primary bg-opacity-10 text-primary">{{ $products->count() }} total</span>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -459,32 +478,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($products as $product)
+                        @forelse ($products as $product)
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">{{ $product->title }}</div>
+                                    <div class="fw-semibold" style="max-width:160px;">{{ $product->title }}</div>
                                     @if($product->isResellListing())
-                                        <span class="badge bg-info-subtle text-info border mt-1">
-                                            {{ $product->resell_mode === 'customized' ? 'Branded resell' : 'Quick resell' }}
+                                        <span class="badge bg-info-subtle text-info border mt-1" style="font-size:0.6rem;">
+                                            {{ $product->resell_mode === 'customized' ? 'Branded' : 'Quick resell' }}
                                         </span>
-                                        @if($product->sourceProduct)
-                                            <div class="small text-muted">Source: {{ $product->sourceProduct->title }}</div>
-                                        @endif
                                     @else
-                                        <span class="badge bg-light text-muted border mt-1">Your listing</span>
+                                        <span class="badge bg-light text-muted border mt-1" style="font-size:0.6rem;">Your listing</span>
                                     @endif
                                 </td>
                                 <td class="text-muted small">{{ $product->category->name ?? 'N/A' }}</td>
+                                <td class="fw-semibold">₹{{ number_format($product->price, 0) }}</td>
                                 <td>
-                                    ₹{{ number_format($product->price, 2) }}
-                                    @if($product->isResellListing() && $product->source_base_price)
-                                        <div class="small text-muted">Min ₹{{ number_format($product->source_base_price, 2) }}</div>
-                                    @endif
+                                    <span class="badge {{ $product->qc_status === 'approved' ? 'bg-success-subtle text-success' : ($product->qc_status === 'pending' ? 'bg-warning-subtle text-warning' : 'bg-danger-subtle text-danger') }}" style="font-size:0.65rem;">{{ $product->qc_status }}</span>
                                 </td>
-                                <td><span class="badge badge-soft">{{ $product->qc_status }}</span></td>
                                 @if ($active)
                                     <td class="text-end">
-                                        <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                        <div class="d-flex gap-1 justify-content-end">
                                             <button type="button" class="btn btn-soft btn-sm btn-edit-product"
                                                 data-bs-toggle="modal" data-bs-target="#productEditModal"
                                                 data-id="{{ $product->id }}"
@@ -499,28 +512,30 @@
                                                 data-reseller-dp="{{ $product->reseller_dp_price ?? '' }}"
                                                 data-resell-allowed="{{ $product->resell_allowed ? '1' : '0' }}"
                                                 data-images='@json($product->images->map(fn($i) => ["id" => $i->id, "url" => $i->url()])->values())'>
-                                                Edit
+                                                <i class="bi bi-pencil me-1"></i>Edit
                                             </button>
                                             <form method="post" action="{{ route('manage.products.delete', $product) }}" class="d-inline" onsubmit="return confirm('Delete this listing?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3"></i></button>
                                             </form>
                                         </div>
                                     </td>
                                 @endif
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="5" class="text-center text-muted py-4">No products yet. Add your first product!</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-    <div class="col-xl-6">
-        <div class="table-card">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
-                <h4 class="fw-bold mb-0">Orders</h4>
-                <a href="{{ route('manage.orders.export') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-download me-1"></i>Export CSV</a>
+    <div class="col-lg-5">
+        <div class="table-card h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h4 class="fw-bold mb-0"><i class="bi bi-receipt me-2 text-success"></i>Orders</h4>
+                <a href="{{ route('manage.orders.export') }}" class="btn btn-outline-dark btn-sm rounded-pill" style="font-size:0.7rem;"><i class="bi bi-download me-1"></i>CSV</a>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
@@ -532,28 +547,32 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($orders as $order)
+                        @forelse ($orders as $order)
                             <tr>
-                                <td>{{ $order->product_name }}</td>
-                                <td><span class="badge badge-soft">{{ $order->status }}</span></td>
+                                <td class="fw-semibold" style="max-width:120px;">{{ $order->product_name }}</td>
                                 <td>
-                                    <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm" target="_blank" title="Invoice PDF"><i class="bi bi-file-pdf"></i></a>
-                                    <form data-ajax-form data-method="PATCH" action="{{ route('manage.orders.update', $order) }}" class="d-flex gap-2 flex-wrap">
-                                        <select name="status" class="form-select form-select-sm" style="min-width: 130px" @disabled(! $active)>
-                                            <option value="pending" @selected($order->status === 'pending')>pending</option>
-                                            <option value="processing" @selected($order->status === 'processing')>processing</option>
-                                            <option value="shipped" @selected($order->status === 'shipped')>shipped</option>
-                                            <option value="out_for_delivery" @selected($order->status === 'out_for_delivery')>out_for_delivery</option>
-                                            <option value="delivered" @selected($order->status === 'delivered')>delivered</option>
-                                            <option value="cancelled" @selected($order->status === 'cancelled')>cancelled</option>
-                                        </select>
-                                        <input type="text" name="location" class="form-control form-control-sm" style="min-width: 130px;" placeholder="Location (e.g. Delhi Hub)" @disabled(! $active)>
-                                        <input type="text" name="tracking_msg" class="form-control form-control-sm" style="min-width: 150px;" placeholder="Message (e.g. In transit)" value="{{ $order->tracking_msg }}" @disabled(! $active)>
-                                        <button type="submit" class="btn btn-soft btn-sm" @disabled(! $active)>Add Update</button>
-                                    </form>
+                                    <span class="badge {{ $order->status === 'delivered' ? 'bg-success-subtle text-success' : ($order->status === 'cancelled' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning') }}" style="font-size:0.6rem;">{{ $order->status }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column gap-1">
+                                        <form data-ajax-form data-method="PATCH" action="{{ route('manage.orders.update', $order) }}" class="d-flex gap-1 flex-wrap align-items-center">
+                                            <select name="status" class="form-select form-select-sm" style="min-width:110px;font-size:0.7rem;" @disabled(! $active)>
+                                                <option value="pending" @selected($order->status === 'pending')>pending</option>
+                                                <option value="processing" @selected($order->status === 'processing')>processing</option>
+                                                <option value="shipped" @selected($order->status === 'shipped')>shipped</option>
+                                                <option value="out_for_delivery" @selected($order->status === 'out_for_delivery')>out for delivery</option>
+                                                <option value="delivered" @selected($order->status === 'delivered')>delivered</option>
+                                                <option value="cancelled" @selected($order->status === 'cancelled')>cancelled</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-soft btn-sm" style="font-size:0.65rem;" @disabled(! $active)>Update</button>
+                                        </form>
+                                        <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm" style="font-size:0.65rem;width:fit-content;" target="_blank"><i class="bi bi-file-pdf me-1"></i>Invoice</a>
+                                    </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="3" class="text-center text-muted py-4">No orders yet.</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -561,43 +580,42 @@
     </div>
 </div>
 
-<div class="row g-4 mt-1">
-    <div class="col-12">
-        <div class="table-card">
-            <div class="p-4 border-bottom"><h4 class="fw-bold mb-0">Customer Questions (Q&A)</h4></div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Question</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($questions as $q)
-                            <tr>
-                                <td>{{ $q->product->title }}</td>
-                                <td>
-                                    <div class="small text-muted mb-1">Asked by {{ $q->user->name }}</div>
-                                    <div class="fw-bold">{{ $q->question }}</div>
-                                </td>
-                                <td>
-                                    <form method="post" action="{{ route('manage.questions.update', $q) }}" class="d-flex gap-2">
-                                        @csrf @method('PATCH')
-                                        <input type="text" name="answer" class="form-control form-control-sm" style="min-width: 250px" placeholder="Write your answer..." required @disabled(! $active)>
-                                        <button type="submit" name="status" value="answered" class="btn btn-dark btn-sm" @disabled(! $active)>Answer</button>
-                                        <button type="submit" name="status" value="rejected" class="btn btn-outline-danger btn-sm" formnovalidate @disabled(! $active)>Reject</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="text-center text-muted py-4">No pending questions.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<div class="table-card mt-3">
+    <div class="p-3 border-bottom d-flex align-items-center gap-2">
+        <i class="bi bi-chat-left-text text-primary"></i>
+        <h4 class="fw-bold mb-0">Customer Questions (Q&A)</h4>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Question</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($questions as $q)
+                    <tr>
+                        <td class="fw-semibold" style="max-width:130px;">{{ $q->product->title }}</td>
+                        <td>
+                            <div class="small text-muted mb-1">Asked by {{ $q->user->name }}</div>
+                            <div class="fw-semibold">{{ $q->question }}</div>
+                        </td>
+                        <td>
+                            <form method="post" action="{{ route('manage.questions.update', $q) }}" class="d-flex gap-1 flex-wrap align-items-center">
+                                @csrf @method('PATCH')
+                                <input type="text" name="answer" class="form-control form-control-sm" style="min-width:180px;" placeholder="Write your answer..." required @disabled(! $active)>
+                                <button type="submit" name="status" value="answered" class="btn btn-dark btn-sm" style="font-size:0.7rem;" @disabled(! $active)>Answer</button>
+                                <button type="submit" name="status" value="rejected" class="btn btn-outline-danger btn-sm" style="font-size:0.7rem;" formnovalidate @disabled(! $active)>Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="3" class="text-center text-muted py-4">No pending questions.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 

@@ -4,22 +4,25 @@
     $refLink = route('home').'?ref='.$refCode;
     $isVendor = ($referralRole ?? auth()->user()?->role) === 'vendor';
 @endphp
-<div class="bb-card p-4 mb-4" id="referralProgramCard">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
-        <div>
-            <h2 class="h5 fw-bold mb-1"><i class="bi bi-share me-2 text-bloom"></i>Refer &amp; earn</h2>
-            <p class="text-muted small mb-0">
-                @if ($refEnabled)
-                    Share products or your link. Rewards unlock when friends join and complete the actions your admin has enabled.
-                @else
-                    The referral program is paused by admin. You can still share products from any listing page.
-                @endif
-            </p>
+<div class="bb-card mb-4" id="referralProgramCard">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-share"></i></span>
+            <div>
+                <h2 class="h6 fw-bold mb-0">Refer & earn</h2>
+                <p class="text-muted small mb-0">
+                    @if ($refEnabled)
+                        Share products or your link. Rewards unlock when friends complete actions.
+                    @else
+                        Referral program paused. You can still share products.
+                    @endif
+                </p>
+            </div>
         </div>
         @if ($refEnabled)
-            <span class="badge rounded-pill bg-success-subtle text-success border">Active</span>
+            <span class="badge rounded-pill bg-success-subtle text-success border" style="font-size:0.6rem;">Active</span>
         @else
-            <span class="badge rounded-pill bg-secondary-subtle text-secondary border">Paused</span>
+            <span class="badge rounded-pill bg-secondary-subtle text-secondary border" style="font-size:0.6rem;">Paused</span>
         @endif
     </div>
 
