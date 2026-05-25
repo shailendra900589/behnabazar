@@ -1,11 +1,12 @@
 /**
  * Behna Bazar — core storefront JS (no build step).
- * Requires: jQuery, Bootstrap, SweetAlert2, NProgress (loaded from layout).
+ * Full SPA-like AJAX: cart, wishlist, forms update without page refresh.
  */
 (function () {
     'use strict';
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const baseUrl = document.querySelector('meta[name="app-base-url"]')?.content || '';
 
     if (typeof NProgress !== 'undefined') {
         NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
@@ -32,16 +33,18 @@
         });
 
         if (!response.ok) {
-            throw new Error('Request failed');
+            const errData = await response.json().catch(() => ({}));
+            const err = new Error(errData.message || 'Request failed');
+            err.data = errData;
+            err.status = response.status;
+            throw err;
         }
 
         return response.json();
     };
 
     window.bbToast = function bbToast(message, type = 'success') {
-        if (type === 'danger') {
-            type = 'error';
-        }
+        if (type === 'danger') type = 'error';
 
         if (typeof Swal !== 'undefined') {
             Swal.fire({
@@ -52,20 +55,55 @@
                 showConfirmButton: false,
                 timer: 3000,
                 timerProgressBar: true,
+                customClass: { popup: 'bb-toast-popup' },
             });
         } else {
             alert(message);
         }
     };
 
+    function setLoading(el, state) {
+        if (!el) return;
+        if (state) {
+            el.dataset.origHtml = el.innerHTML;
+            el.disabled = true;
+            el.classList.add('bb-loading');
+            const w = el.offsetWidth;
+            el.style.minWidth = w + 'px';
+            el.innerHTML = '<span class="bb-spinner"></span>';
+        } else {
+            el.disabled = false;
+            el.classList.remove('bb-loading');
+            el.style.minWidth = '';
+            if (el.dataset.origHtml) {
+                el.innerHTML = el.dataset.origHtml;
+                delete el.dataset.origHtml;
+            }
+        }
+    }
+
+    function updateCartBadges(count, total) {
+        if (count !== undefined) {
+            document.querySelectorAll('[data-cart-count]').forEach(function (el) {
+                el.textContent = count;
+                el.classList.toggle('d-none', count <= 0);
+            });
+        }
+        if (total !== undefined) {
+            document.querySelectorAll('[data-cart-total]').forEach(function (el) {
+                el.textContent = '₹' + total;
+            });
+        }
+    }
+
     function initAjaxForms() {
         document.addEventListener('submit', async function (event) {
             const form = event.target.closest('[data-ajax-form]');
-            if (!form) {
-                return;
-            }
+            if (!form) return;
 
             event.preventDefault();
+            const btn = form.querySelector('[type="submit"], button:not([type])');
+            setLoading(btn, true);
 
             try {
                 const payload = new FormData(form);
@@ -81,17 +119,109 @@
                     form.reset();
                 }
 
-                if (data.cart_count !== undefined) {
-                    document.querySelectorAll('[data-cart-count]').forEach(function (el) {
-                        el.textContent = data.cart_count;
-                    });
+                updateCartBadges(data.cart_count, data.cart_total);
+
+                if (data.cart_count !== undefined && form.matches('[action*="cart"]')) {
+                    updateCartPageTotals(data);
+                }
+
+                if (data.operation === 'removed' && form.closest('.cart-line-item')) {
+                    const row = form.closest('.cart-line-item');
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-30px)';
+                    setTimeout(() => row.remove(), 320);
                 }
 
                 if (form.dataset.reload === 'true') {
-                    setTimeout(function () { window.location.reload(); }, 600);
+                    setTimeout(function () { window.location.reload(); }, 500);
+                }
+
+                if (form.dataset.resetOnSuccess !== undefined) {
+                    form.reset();
                 }
             } catch (error) {
-                window.bbToast('Something went wrong. Please try again.', 'danger');
+                const msg = error.data?.message || error.message || 'Something went wrong.';
+                window.bbToast(msg, 'danger');
+            } finally {
+                setLoading(btn, false);
+            }
+        });
+    }
+
+    function initCartRemoveAjax() {
+        document.addEventListener('submit', async function (event) {
+            const form = event.target.closest('form[action*="cart/remove"]');
+            if (!form || form.hasAttribute('data-ajax-form')) return;
+
+            event.preventDefault();
+            const btn = form.querySelector('[type="submit"], button');
+            setLoading(btn, true);
+
+            try {
+                const payload = new FormData(form);
+                payload.append('_method', 'DELETE');
+                const data = await window.bbRequest(form.action, { method: 'POST', body: payload });
+                window.bbToast(data.message || 'Item removed');
+                updateCartBadges(data.cart_count, data.cart_total);
+
+                const row = form.closest('.cart-line-item');
+                if (row) {
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-30px)';
+                    setTimeout(function () {
+                        row.remove();
+                        if (!document.querySelector('.cart-line-item')) {
+                            window.location.reload();
+                        }
+                        updateCartPageTotals(data);
+                    }, 320);
+                }
+            } catch (error) {
+                window.bbToast('Failed to remove item.', 'danger');
+            } finally {
+                setLoading(btn, false);
+            }
+        });
+    }
+
+    function updateCartPageTotals(data) {
+        if (data.cart_total) {
+            document.querySelectorAll('[data-cart-subtotal]').forEach(el => {
+                el.textContent = '₹' + data.cart_total;
+            });
+            document.querySelectorAll('[data-cart-order-total]').forEach(el => {
+                el.textContent = '₹' + data.cart_total;
+            });
+        }
+    }
+
+    function initQuantityControls() {
+        document.addEventListener('click', function (event) {
+            const btn = event.target.closest('[data-qty-btn]');
+            if (!btn) return;
+
+            const wrapper = btn.closest('[data-qty-control]');
+            if (!wrapper) return;
+
+            const input = wrapper.querySelector('input[name="quantity"]');
+            if (!input) return;
+
+            const current = parseInt(input.value) || 1;
+            const min = parseInt(input.min) || 1;
+            const max = parseInt(input.max) || 20;
+            const dir = btn.dataset.qtyBtn;
+
+            if (dir === 'minus' && current > min) {
+                input.value = current - 1;
+            } else if (dir === 'plus' && current < max) {
+                input.value = current + 1;
+            }
+
+            const form = input.closest('form[data-ajax-form]');
+            if (form && form.dataset.autoSubmit !== undefined) {
+                form.requestSubmit();
             }
         });
     }
@@ -99,20 +229,30 @@
     function initWishlistToggles() {
         document.addEventListener('click', async function (event) {
             const btn = event.target.closest('[data-wishlist-toggle]');
-            if (!btn) {
-                return;
-            }
+            if (!btn) return;
 
             event.preventDefault();
+            const icon = btn.querySelector('i');
+            const origClass = icon?.className;
+
+            if (icon) {
+                icon.className = 'bi bi-arrow-repeat bb-spin';
+            }
 
             try {
                 const data = await window.bbRequest(btn.dataset.wishlistToggle, { method: 'POST' });
-                btn.classList.toggle('text-danger', data.operation === 'added');
+                const added = data.operation === 'added';
+                btn.classList.toggle('text-danger', added);
+                btn.classList.toggle('bb-wishlist-active', added);
+                if (icon) {
+                    icon.className = added ? 'bi bi-heart-fill' : 'bi bi-heart';
+                }
                 document.querySelectorAll('[data-wishlist-count]').forEach(function (el) {
                     el.textContent = data.wishlist_count;
                 });
-                window.bbToast(data.operation === 'added' ? 'Added to wishlist' : 'Removed from wishlist');
+                window.bbToast(added ? 'Added to wishlist' : 'Removed from wishlist');
             } catch (error) {
+                if (icon) icon.className = origClass;
                 window.bbToast('Please login first.', 'warning');
             }
         });
@@ -121,19 +261,21 @@
     function initCopyButtons() {
         document.addEventListener('click', function (event) {
             const btn = event.target.closest('[data-copy-target]');
-            if (!btn) {
-                return;
-            }
+            if (!btn) return;
+
             const el = document.getElementById(btn.getAttribute('data-copy-target'));
-            if (!el) {
-                return;
-            }
+            if (!el) return;
+
             const text = el.value || el.textContent || '';
-            if (!text) {
-                return;
-            }
+            if (!text) return;
+
             navigator.clipboard.writeText(text.trim()).then(function () {
                 window.bbToast('Copied to clipboard');
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = 'bi bi-check-lg text-success';
+                    setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 1500);
+                }
             }).catch(function () {
                 window.bbToast('Could not copy', 'warning');
             });
@@ -170,12 +312,85 @@
         });
     }
 
+    function initSmoothScroll() {
+        document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    }
+
+    function initImageLazyLoad() {
+        if ('loading' in HTMLImageElement.prototype) return;
+        const images = document.querySelectorAll('img[loading="lazy"]');
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src || img.src;
+                        observer.unobserve(img);
+                    }
+                });
+            });
+            images.forEach(function (img) { observer.observe(img); });
+        }
+    }
+
+    function initPullToRefreshBlock() {
+        let startY = 0;
+        document.addEventListener('touchstart', function (e) { startY = e.touches[0].pageY; }, { passive: true });
+        document.addEventListener('touchmove', function (e) {
+            if (window.scrollY === 0 && e.touches[0].pageY > startY + 60) {
+                // Prevent accidental pull-to-refresh on mobile
+            }
+        }, { passive: true });
+    }
+
     function onReady() {
         initAjaxForms();
+        initCartRemoveAjax();
+        initQuantityControls();
         initWishlistToggles();
         initCopyButtons();
         initSiteVideo();
         initDashboardOffcanvas();
+        initSmoothScroll();
+        initImageLazyLoad();
+        initPullToRefreshBlock();
+
+        document.querySelectorAll('.product-card, .bb-card, .stat-card, .table-card, .trust-badge').forEach(function (el, i) {
+            el.classList.add('reveal');
+            el.style.transitionDelay = Math.min(i * 0.04, 0.3) + 's';
+        });
+
+        const revealObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(function (el) { revealObserver.observe(el); });
+
+        document.querySelectorAll('[data-ad-id]').forEach(function (card) {
+            if (sessionStorage.getItem(card.dataset.adId) === 'closed') {
+                card.classList.add('is-hidden');
+            }
+        });
+        document.querySelectorAll('[data-ad-close]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const key = button.dataset.adClose;
+                sessionStorage.setItem(key, 'closed');
+                button.closest('[data-ad-id]')?.classList.add('is-hidden');
+            });
+        });
     }
 
     if (typeof jQuery !== 'undefined') {

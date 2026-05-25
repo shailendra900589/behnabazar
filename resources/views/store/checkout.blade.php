@@ -1,10 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Checkout')
 @section('content')
-<section class="container py-4 py-lg-5">
+<section class="container py-3 py-md-4 py-lg-5">
     @include('partials.trust-strip')
-    <h1 class="fw-bold mb-4">Checkout</h1>
-    <div class="row g-4">
+    <h1 class="fw-bold mb-3 mb-md-4">Checkout</h1>
+    <div class="row g-3 g-md-4">
         <div class="col-lg-8">
             <div class="bb-card p-4 mb-4 shadow-sm rounded-4 border-0">
                 <form method="get">
@@ -119,7 +119,7 @@
                     @endif
                 </div>
 
-                <button type="submit" id="placeOrderBtn" class="btn btn-bloom btn-lg w-100 rounded-pill shadow-sm py-3 fs-5 fw-bold mt-2 position-relative overflow-hidden">
+                <button type="submit" id="placeOrderBtn" class="btn btn-bloom btn-lg w-100 rounded-pill shadow-sm py-2 py-md-3 fw-bold mt-2 position-relative overflow-hidden">
                     <span id="btnText"><i class="bi bi-lock-fill me-2 opacity-50"></i> Place Order • ₹{{ number_format($total, 2) }}</span>
                 </button>
             </form>
