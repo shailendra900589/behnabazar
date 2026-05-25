@@ -30,7 +30,11 @@ class StorefrontController extends Controller
 
     public function home(Request $request): View
     {
-        $query = Product::query()->with(['category', 'vendor', 'images'])->where('qc_status', 'approved')->withCount('orders');
+        $query = Product::query()
+            ->select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'vendor_id', 'created_at', 'image'])
+            ->with(['category:id,name,slug', 'vendor:id,name,shop_name', 'images:id,product_id,path'])
+            ->where('qc_status', 'approved')
+            ->withCount('orders');
 
         if ($request->filled('search')) {
             $query->where('title', 'like', '%'.$request->search.'%');
@@ -72,13 +76,21 @@ class StorefrontController extends Controller
 
         $recentIds = session()->get('recently_viewed', []);
         $recentlyViewed = ! empty($recentIds)
-            ? Product::with('images')->whereIn('id', $recentIds)->where('qc_status', 'approved')->get()->sortBy(fn ($p) => array_search($p->id, $recentIds, true))
+            ? Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'image'])
+                ->with('images:id,product_id,path')
+                ->whereIn('id', $recentIds)->where('qc_status', 'approved')
+                ->get()->sortBy(fn ($p) => array_search($p->id, $recentIds, true))
             : collect();
 
         return view('store.home', [
             'products' => $query->paginate(12)->withQueryString(),
-            'newArrivals' => Product::with(['category', 'images', 'variants'])->where('qc_status', 'approved')->latest()->take(4)->get(),
-            'hotProducts' => Product::with(['category', 'images', 'variants'])->withCount('orders')->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
+            'newArrivals' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'created_at'])
+                ->with(['category:id,name,slug', 'images:id,product_id,path'])
+                ->where('qc_status', 'approved')->latest()->take(4)->get(),
+            'hotProducts' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'created_at'])
+                ->with(['category:id,name,slug', 'images:id,product_id,path'])
+                ->withCount('orders')
+                ->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),
             'flashDeal' => Cache::remember('storefront.flash_deal', 300, fn () => Product::query()
                 ->with('images')
                 ->where('qc_status', 'approved')

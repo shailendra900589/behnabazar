@@ -25,70 +25,13 @@
             <i class="bi bi-list fs-4 text-dark"></i>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
-            <form class="d-none d-lg-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 position-relative" style="max-width: 500px" action="{{ route('home') }}">
+            <form class="d-none d-lg-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 position-relative" style="max-width: 500px" action="{{ route('home') }}" data-live-search>
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-4"><i class="bi bi-search text-muted"></i></span>
-                    <input class="form-control bg-light border-start-0 rounded-end-pill bb-search-input" id="liveSearchInput" name="search" autocomplete="off" value="{{ request('search') }}" placeholder="Search products, brands...">
+                    <input class="form-control bg-light border-start-0 rounded-end-pill bb-search-input" name="search" autocomplete="off" value="{{ request('search') }}" placeholder="Search products, brands...">
                 </div>
-                <div id="liveSearchResults" class="dropdown-menu w-100 shadow-lg border-0 rounded-4 mt-2 p-2 position-absolute" style="top: 100%; display: none;">
-                    <!-- Results injected here -->
-                </div>
+                <div class="bb-live-search-results dropdown-menu w-100 shadow-lg border-0 rounded-4 mt-2 p-2" style="top:100%;display:none;"></div>
             </form>
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const searchInput = document.getElementById('liveSearchInput');
-                    const resultsBox = document.getElementById('liveSearchResults');
-                    let timeout = null;
-                    let searchAbort = null;
-
-                    searchInput.addEventListener('input', function() {
-                        clearTimeout(timeout);
-                        const query = this.value.trim();
-                        
-                        if (query.length < 2) {
-                            resultsBox.style.display = 'none';
-                            return;
-                        }
-
-                        timeout = setTimeout(() => {
-                            if (searchAbort) searchAbort.abort();
-                            searchAbort = new AbortController();
-                            fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: searchAbort.signal })
-                                .then(res => res.json())
-                                .then(data => {
-                                    resultsBox.innerHTML = '';
-                                    if (data.length === 0) {
-                                        resultsBox.innerHTML = '<div class="text-muted text-center p-3 small">No products found</div>';
-                                    } else {
-                                        data.forEach(item => {
-                                            resultsBox.innerHTML += `
-                                                <a href="${item.url}" class="dropdown-item d-flex align-items-center gap-3 p-2 rounded-3">
-                                                    <img src="${item.image}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 8px;">
-                                                    <div class="min-w-0">
-                                                        <div class="fw-semibold text-truncate text-wrap" style="max-width: 250px">${item.title}</div>
-                                                        <div class="small">
-                                                            ${item.percent_off ? `<span class="badge bg-danger me-1" style="font-size:0.65rem">${item.percent_off}% off</span>` : ''}
-                                                            <span class="text-bloom fw-bold">${item.formatted_price}</span>
-                                                            ${item.formatted_mrp ? `<span class="text-muted text-decoration-line-through ms-1">${item.formatted_mrp}</span>` : ''}
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            `;
-                                        });
-                                    }
-                                    resultsBox.style.display = 'block';
-                                })
-                                .catch(() => {});
-                        }, 300);
-                    });
-
-                    document.addEventListener('click', function(e) {
-                        if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
-                            resultsBox.style.display = 'none';
-                        }
-                    });
-                });
-            </script>
             <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 bb-nav-links">
                 <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">{{ $siteBranding['nav_home_label'] }}</a></li>
                 <li class="nav-item dropdown">
@@ -186,83 +129,30 @@
 <main class="bb-main">@yield('content')</main>
 
 @include('partials.assets-foot')
+@if (session('status') || session('warning') || session('info') || $errors->any())
 <script>
-    const Toast = Swal.mixin({
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-        didOpen: (toast) => {
-            toast.addEventListener('mouseenter', Swal.stopTimer)
-            toast.addEventListener('mouseleave', Swal.resumeTimer)
-        }
-    });
-
+document.addEventListener('DOMContentLoaded',function(){
     @if (session('status'))
-        Toast.fire({ icon: 'success', title: "{{ session('status') }}" });
+    window.bbToast("{{ session('status') }}");
     @endif
     @if (session('warning'))
-        Toast.fire({ icon: 'warning', title: "{{ session('warning') }}" });
+    window.bbToast("{{ session('warning') }}", "warning");
     @endif
     @if (session('info'))
-        Toast.fire({ icon: 'info', title: "{{ session('info') }}" });
+    window.bbToast("{{ session('info') }}", "info");
     @endif
     @if ($errors->any())
-        Toast.fire({ icon: 'error', title: "{{ $errors->first() }}" });
+    window.bbToast("{{ $errors->first() }}", "danger");
     @endif
+});
 </script>
+@endif
 @include('partials.footer')
 @include('partials.mobile-bottom-nav')
-
-<!-- Back to Top Button -->
-<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
-    <i class="bi bi-chevron-up"></i>
-</button>
-
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top"><i class="bi bi-chevron-up"></i></button>
 <script>
-    // Back to Top visibility
-    const backToTop = document.getElementById('backToTop');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 400) {
-            backToTop.classList.add('visible');
-        } else {
-            backToTop.classList.remove('visible');
-        }
-    });
-
-    // Scroll Reveal - animate elements when they come into viewport
-    const revealObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('revealed');
-                revealObserver.unobserve(entry.target);
-            }
-        });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-ad-id]').forEach((card) => {
-            if (sessionStorage.getItem(card.dataset.adId) === 'closed') {
-                card.classList.add('is-hidden');
-            }
-        });
-
-        document.querySelectorAll('[data-ad-close]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const key = button.dataset.adClose;
-                sessionStorage.setItem(key, 'closed');
-                button.closest('[data-ad-id]')?.classList.add('is-hidden');
-            });
-        });
-
-        // Auto-apply reveal to content sections
-        document.querySelectorAll('.product-card, .bb-card, .stat-card, .table-card, .trust-badge').forEach((el, i) => {
-            el.classList.add('reveal');
-            el.style.transitionDelay = `${Math.min(i * 0.05, 0.4)}s`;
-            revealObserver.observe(el);
-        });
-    });
+const backToTop=document.getElementById('backToTop');
+window.addEventListener('scroll',()=>{backToTop.classList.toggle('visible',window.scrollY>400);},{passive:true});
 </script>
 </body>
 </html>
