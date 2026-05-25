@@ -15,7 +15,7 @@
 </head>
 <body class="bb-storefront">
 <div id="bb-toasts" class="toast-container position-fixed top-0 end-0 p-3"></div>
-@include('partials.header-marquee')
+{{-- marquee removed for clean mobile UX --}}
 <nav class="navbar navbar-expand-lg sticky-top bb-navbar bb-navbar-compact shadow-sm">
     <div class="container">
         <a class="navbar-brand bb-logo-link me-4" href="{{ route('home') }}" aria-label="{{ $siteBranding['name'] }} home">

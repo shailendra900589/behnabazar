@@ -10,34 +10,40 @@
     ], fn ($v) => $v !== null && $v !== '');
 @endphp
 <section class="container py-2 py-md-4 py-lg-5">
-    @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-3 mb-md-4'])
+    @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-2 mb-md-4'])
 
-    <div class="marketplace-intro mb-3 mb-md-5">
-        <div class="row g-4 align-items-center">
-            <div class="col-lg-6">
-                <span class="marketplace-kicker">{{ $siteBranding['name'] ?? 'Behna Bazar' }} · Multipurpose marketplace</span>
-                <h1 class="marketplace-title">Everything for daily life, home, work, style, and celebrations.</h1>
-                <p class="marketplace-copy">Shop organic and non-organic grocery, fresh essentials, fashion, electronics, home products, beauty, accessories, and verified local finds in one trusted {{ $siteBranding['name'] ?? 'Behna Bazar' }} experience.</p>
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="#products" class="btn btn-bloom rounded-pill px-4">Explore products</a>
-                    @if($referralEnabled ?? false)
-                        <a href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}" class="btn btn-light border rounded-pill px-4">
-                            <i class="bi bi-gift me-1"></i> Refer &amp; earn coins
-                        </a>
-                    @endif
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="marketplace-category-grid">
-                    <div><i class="bi bi-basket2"></i><span>Grocery</span></div>
-                    <div><i class="bi bi-flower1"></i><span>Organic</span></div>
-                    <div><i class="bi bi-cpu"></i><span>Electronics</span></div>
-                    <div><i class="bi bi-bag-heart"></i><span>Fashion</span></div>
-                    <div><i class="bi bi-house-heart"></i><span>Home</span></div>
-                    <div><i class="bi bi-stars"></i><span>Beauty</span></div>
-                </div>
-            </div>
-        </div>
+    <!-- Category strip - Flipkart/Meesho style -->
+    <div class="bb-category-strip mb-2 mb-md-4">
+        <a href="{{ route('home', ['cat' => 'grocery']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-basket2"></i></div>
+            <span>Grocery</span>
+        </a>
+        <a href="{{ route('home', ['cat' => 'organic']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-flower1"></i></div>
+            <span>Organic</span>
+        </a>
+        <a href="{{ route('home', ['cat' => 'electronics']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-cpu"></i></div>
+            <span>Electronics</span>
+        </a>
+        <a href="{{ route('home', ['cat' => 'fashion']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-bag-heart"></i></div>
+            <span>Fashion</span>
+        </a>
+        <a href="{{ route('home', ['cat' => 'home-living']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-house-heart"></i></div>
+            <span>Home</span>
+        </a>
+        <a href="{{ route('home', ['cat' => 'beauty']) }}" class="bb-cat-item">
+            <div class="bb-cat-icon"><i class="bi bi-stars"></i></div>
+            <span>Beauty</span>
+        </a>
+        @if($referralEnabled ?? false)
+        <a href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}" class="bb-cat-item">
+            <div class="bb-cat-icon bb-cat-icon--accent"><i class="bi bi-gift"></i></div>
+            <span>Refer</span>
+        </a>
+        @endif
     </div>
 
     @if ($banners->isNotEmpty())
@@ -103,43 +109,12 @@
         </div>
     @endif
 
-    <div class="row g-2 g-md-4 mb-3 mb-md-5 text-center bb-feature-grid">
-        <div class="col-6 col-lg-3">
-            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
-                <div class="feature-icon-wrapper mx-auto">
-                    <i class="bi bi-truck fs-3"></i>
-                </div>
-                <h3 class="h5 fw-bold mb-2">All-category shopping</h3>
-                <p class="small text-muted mb-0">Grocery, fashion, electronics, home, and more</p>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
-                <div class="feature-icon-wrapper mx-auto">
-                    <i class="bi bi-patch-check fs-3"></i>
-                </div>
-                <h3 class="h5 fw-bold mb-2">Verified sellers</h3>
-                <p class="small text-muted mb-0">Products reviewed before going live</p>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
-                <div class="feature-icon-wrapper mx-auto">
-                    <i class="bi bi-coin fs-3"></i>
-                </div>
-                <h3 class="h5 fw-bold mb-2">Coin rewards</h3>
-                <p class="small text-muted mb-0">Earn on orders and referrals — see balance in the header</p>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
-                <div class="feature-icon-wrapper mx-auto">
-                    <i class="bi bi-gift fs-3"></i>
-                </div>
-                <h3 class="h5 fw-bold mb-2">Refer &amp; earn</h3>
-                <p class="small text-muted mb-0">Share your link from the footer or dashboard</p>
-            </div>
-        </div>
+    <!-- Compact trust strip - desktop only, mobile uses footer badges -->
+    <div class="d-none d-md-flex justify-content-center gap-4 mb-4 py-2 border-top border-bottom small text-muted">
+        <span><i class="bi bi-patch-check text-primary me-1"></i>Verified sellers</span>
+        <span><i class="bi bi-truck text-success me-1"></i>Fast delivery</span>
+        <span><i class="bi bi-coin text-warning me-1"></i>Coin rewards</span>
+        <span><i class="bi bi-shield-check text-bloom me-1"></i>Secure payments</span>
     </div>
 
     @if ($categories->isNotEmpty())

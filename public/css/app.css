@@ -1493,6 +1493,76 @@ h5, .h5 { font-size: 0.95rem; }
     width: 100%;
 }
 
+/* Category strip - Flipkart/Meesho style */
+.bb-category-strip {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.bb-category-strip::-webkit-scrollbar { display: none; }
+
+.bb-cat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 4.5rem;
+    padding: 0.5rem 0.25rem;
+    text-decoration: none;
+    color: #334155;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    border-radius: 0.75rem;
+    transition: background 0.2s, transform 0.2s;
+}
+.bb-cat-item:hover {
+    background: #f1f5f9;
+    transform: translateY(-2px);
+    color: var(--bb-primary-dark);
+}
+
+.bb-cat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+    font-size: 1.25rem;
+    color: var(--bb-primary-dark);
+    transition: box-shadow 0.2s;
+}
+.bb-cat-item:hover .bb-cat-icon {
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.bb-cat-icon--accent {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #d97706;
+}
+
+@media (min-width: 768px) {
+    .bb-category-strip {
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .bb-cat-item {
+        min-width: 5.5rem;
+        font-size: 0.75rem;
+    }
+    .bb-cat-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        font-size: 1.4rem;
+    }
+}
+
 .bb-footer-credit {
     font-weight: 600;
     color: #94a3b8 !important;
@@ -2130,45 +2200,93 @@ h5, .h5 { font-size: 0.95rem; }
     }
 }
 
-/* —— Cart mobile —— */
-.cart-line-img {
-    width: 72px;
-    height: 72px;
+/* —— Cart page —— */
+.bb-cart-item {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    transition: box-shadow 0.2s;
+}
+.bb-cart-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.bb-cart-item-img {
+    width: 64px;
+    height: 64px;
     object-fit: cover;
+    border-radius: 0.5rem;
     flex-shrink: 0;
 }
 
-.cart-line-title {
-    font-size: 0.9375rem;
-    line-height: 1.3;
+.bb-cart-remove-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    border: 1px solid #fecaca;
+    background: #fff;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.bb-cart-remove-btn:hover {
+    background: #fef2f2;
+    border-color: #ef4444;
 }
 
-.cart-qty-input {
-    width: 4.5rem;
-    min-height: 2.5rem;
+.bb-cart-summary {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    position: sticky;
+    top: 110px;
+}
+
+@media (max-width: 767px) {
+    .bb-cart-item-img {
+        width: 56px;
+        height: 56px;
+    }
+
+    .bb-cart-item {
+        padding: 0.65rem;
+    }
+
+    .bb-cart-summary {
+        position: static;
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+
+    .bb-qty-control {
+        height: 2rem;
+    }
+
+    .bb-qty-btn {
+        width: 2rem;
+        font-size: 0.9rem;
+    }
+
+    .bb-qty-value {
+        width: 2rem;
+        font-size: 0.8125rem;
+    }
 }
 
 @media (min-width: 768px) {
-    .cart-line-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+    .bb-cart-item-img {
+        width: 80px;
+        height: 80px;
     }
 
-    .cart-line-main {
-        flex: 1;
-        align-items: center !important;
-    }
-
-    .cart-line-img {
-        width: 92px;
-        height: 92px;
-    }
-
-    .cart-line-actions {
-        margin-top: 0 !important;
-        flex-shrink: 0;
-        width: auto;
+    .bb-cart-item {
+        padding: 1rem;
     }
 }
 
