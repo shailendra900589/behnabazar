@@ -2633,9 +2633,6 @@ html {
         border-radius: 0.75rem !important;
         box-shadow: none !important;
         border: 1px solid #e2e8f0;
-    }
-
-    .product-hero-card {
         margin-bottom: 0.5rem !important;
     }
 
@@ -2648,9 +2645,10 @@ html {
         border-radius: 0.75rem;
     }
 
+    section.container.py-1,
     section.container.py-2 {
         padding-top: 0.25rem !important;
-        padding-bottom: 0.75rem !important;
+        padding-bottom: 0 !important;
     }
 
     section.container .breadcrumb {
@@ -2739,13 +2737,16 @@ html {
         font-size: 0.75rem;
     }
 
+    .row.g-2.mt-2,
     .row.g-3.mt-5 {
-        margin-top: 1.5rem !important;
+        margin-top: 0.75rem !important;
+        margin-bottom: 0 !important;
     }
 
+    .row.g-2.mt-2 .col-6,
     .row.g-3.mt-5 .col-6 {
-        padding-left: 0.35rem;
-        padding-right: 0.35rem;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
     }
 
     hr.my-5 {

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', $product->title)
 @section('content')
-<section class="container py-2 py-md-4 py-lg-5">
+<section class="container py-1 py-md-4 py-lg-5">
     <nav aria-label="breadcrumb" class="mb-2 mb-md-4">
         <ol class="breadcrumb small mb-0 flex-nowrap overflow-auto">
             <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none">Shop</a></li>
@@ -354,7 +354,7 @@
     @endif
 
     <!-- Trust Badges -->
-    <div class="row g-2 g-md-3 mt-3 mt-md-5 mb-3 mb-md-4">
+    <div class="row g-2 g-md-3 mt-2 mt-md-5 mb-0 mb-md-4">
         <div class="col-6 col-md-3">
             <div class="trust-badge">
                 <i class="bi bi-shield-check text-success"></i>
