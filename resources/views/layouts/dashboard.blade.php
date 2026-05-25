@@ -6,7 +6,7 @@
 <div class="dashboard-shell">
     <div class="container-fluid px-3 px-md-4 py-3">
         <div class="row g-0 g-lg-4">
-            <div class="col-lg-3 col-xl-2">
+            <div class="col-lg-3">
                 <button class="btn btn-bloom rounded-pill w-100 d-lg-none dashboard-mobile-toggle mb-3 mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar">
                     <i class="bi bi-list me-2"></i>Dashboard menu
                 </button>
@@ -119,7 +119,7 @@
                     </aside>
                 </div>
             </div>
-            <section class="col-lg-9 col-xl-10 p-3 p-md-4 dashboard-main">
+            <section class="col-lg-9 p-3 p-md-4 dashboard-main">
                 @if ($u->role === 'vendor')
                     <div class="d-flex justify-content-end mb-3">
                         @include('partials.vendor-notifications')
