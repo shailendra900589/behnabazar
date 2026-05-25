@@ -44,8 +44,8 @@
                                                 <button type="button" class="bb-qty-btn" data-qty-btn="plus"><i class="bi bi-plus"></i></button>
                                             </div>
                                         </form>
-                                        <form action="{{ route('cart.remove',$item) }}" method="post">
-                                            @csrf @method('DELETE')
+                                        <form data-ajax-form data-method="DELETE" action="{{ route('cart.remove',$item) }}">
+                                            @csrf
                                             <button type="submit" class="bb-cart-remove-btn bb-cart-remove"><i class="bi bi-trash3"></i></button>
                                         </form>
                                     </div>

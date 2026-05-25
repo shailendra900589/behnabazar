@@ -123,12 +123,19 @@
                     updateCartPageTotals(data);
                 }
 
-                if (data.operation === 'removed' && form.closest('.cart-line-item')) {
-                    const row = form.closest('.cart-line-item');
-                    row.style.transition = 'all 0.3s ease';
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateX(-30px)';
-                    setTimeout(() => row.remove(), 320);
+                if (data.operation === 'removed') {
+                    const row = form.closest('.bb-cart-item') || form.closest('.cart-line-item');
+                    if (row) {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(-30px)';
+                        setTimeout(function () {
+                            row.remove();
+                            if (!document.querySelector('.bb-cart-item') && !document.querySelector('.cart-line-item')) {
+                                window.location.reload();
+                            }
+                        }, 320);
+                    }
                 }
 
                 if (form.dataset.reload === 'true') {
@@ -149,7 +156,7 @@
 
     function initCartRemoveAjax() {
         document.addEventListener('submit', async function (event) {
-            const form = event.target.closest('form[action*="cart/remove"]');
+            const form = event.target.closest('form .bb-cart-remove')?.closest('form');
             if (!form || form.hasAttribute('data-ajax-form')) return;
 
             event.preventDefault();
@@ -163,14 +170,14 @@
                 window.bbToast(data.message || 'Item removed');
                 updateCartBadges(data.cart_count, data.cart_total);
 
-                const row = form.closest('.cart-line-item');
+                const row = form.closest('.bb-cart-item') || form.closest('.cart-line-item');
                 if (row) {
                     row.style.transition = 'all 0.3s ease';
                     row.style.opacity = '0';
                     row.style.transform = 'translateX(-30px)';
                     setTimeout(function () {
                         row.remove();
-                        if (!document.querySelector('.cart-line-item')) {
+                        if (!document.querySelector('.bb-cart-item') && !document.querySelector('.cart-line-item')) {
                             window.location.reload();
                         }
                         updateCartPageTotals(data);
@@ -404,6 +411,16 @@
         }
     }
 
+    function initImageFallback() {
+        document.addEventListener('error', function (e) {
+            if (e.target.tagName !== 'IMG') return;
+            if (e.target.dataset.fallbackApplied) return;
+            e.target.dataset.fallbackApplied = '1';
+            e.target.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="#f1f5f9" width="200" height="200"/><text x="50%" y="50%" font-family="sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle" dy=".3em">No Image</text></svg>');
+            e.target.style.objectFit = 'contain';
+        }, true);
+    }
+
     function initPullToRefreshBlock() {
         let startY = 0;
         document.addEventListener('touchstart', function (e) { startY = e.touches[0].pageY; }, { passive: true });
@@ -426,6 +443,7 @@
         initVisitorCounter();
         initSmoothScroll();
         initImageLazyLoad();
+        initImageFallback();
         initPullToRefreshBlock();
 
         document.querySelectorAll('.product-card, .bb-card, .stat-card, .table-card, .trust-badge').forEach(function (el, i) {

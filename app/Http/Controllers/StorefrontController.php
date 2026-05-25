@@ -31,7 +31,7 @@ class StorefrontController extends Controller
     public function home(Request $request): View
     {
         $query = Product::query()
-            ->select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'vendor_id', 'created_at', 'image'])
+            ->select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'vendor_id', 'created_at', 'image', 'image2', 'image3', 'image4'])
             ->with(['category:id,name,slug', 'vendor:id,name,shop_name', 'images:id,product_id,path'])
             ->where('qc_status', 'approved')
             ->withCount('orders');
@@ -76,7 +76,7 @@ class StorefrontController extends Controller
 
         $recentIds = session()->get('recently_viewed', []);
         $recentlyViewed = ! empty($recentIds)
-            ? Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'image'])
+            ? Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'image', 'image2', 'image3', 'image4'])
                 ->with('images:id,product_id,path')
                 ->whereIn('id', $recentIds)->where('qc_status', 'approved')
                 ->get()->sortBy(fn ($p) => array_search($p->id, $recentIds, true))
@@ -84,10 +84,10 @@ class StorefrontController extends Controller
 
         return view('store.home', [
             'products' => $query->paginate(12)->withQueryString(),
-            'newArrivals' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'created_at'])
+            'newArrivals' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'image2', 'image3', 'image4', 'created_at'])
                 ->with(['category:id,name,slug', 'images:id,product_id,path'])
                 ->where('qc_status', 'approved')->latest()->take(4)->get(),
-            'hotProducts' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'created_at'])
+            'hotProducts' => Product::select(['id', 'title', 'slug', 'price', 'compare_at_price', 'category_id', 'image', 'image2', 'image3', 'image4', 'created_at'])
                 ->with(['category:id,name,slug', 'images:id,product_id,path'])
                 ->withCount('orders')
                 ->where('qc_status', 'approved')->orderByDesc('orders_count')->take(4)->get(),

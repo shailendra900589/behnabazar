@@ -74,7 +74,21 @@ class CartController extends Controller
         $this->authorizeCartItem($item);
         $item->delete();
 
-        return $this->response($request, 'Item removed.');
+        $items = $this->items();
+        $count = $items->sum('quantity');
+        $total = $items->sum(fn ($i) => $i->quantity * ($i->variant ? ($i->variant->price ?? $i->product->price) : $i->product->price));
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Item removed.',
+                'operation' => 'removed',
+                'cart_count' => $count,
+                'cart_total' => number_format($total, 2),
+            ]);
+        }
+
+        return back()->with('status', 'Item removed.');
     }
 
     public function clear(Request $request): RedirectResponse

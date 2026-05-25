@@ -1525,10 +1525,16 @@ h5, .h5 { font-size: 0.95rem; }
     border-radius: 0.75rem;
     transition: background 0.2s, transform 0.2s;
 }
-.bb-cat-item:hover {
+.bb-cat-item:hover,
+.bb-cat-item.is-active {
     background: #f1f5f9;
     transform: translateY(-2px);
     color: var(--bb-primary-dark);
+}
+.bb-cat-item.is-active .bb-cat-icon {
+    background: linear-gradient(135deg, var(--bb-primary), var(--bb-primary-dark));
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .bb-cat-icon {

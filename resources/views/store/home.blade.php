@@ -15,31 +15,18 @@
     @endif
 
     <!-- Category strip - Flipkart/Meesho style -->
+    @if($categories->isNotEmpty())
     <div class="bb-category-strip mb-2 mb-md-4">
-        <a href="{{ route('home', ['cat' => 'grocery']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-basket2"></i></div>
-            <span>Grocery</span>
+        <a href="{{ route('home', array_filter(['search' => request('search'), 'sort' => request('sort')])) }}" class="bb-cat-item {{ !request('cat') ? 'is-active' : '' }}">
+            <div class="bb-cat-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+            <span>All</span>
         </a>
-        <a href="{{ route('home', ['cat' => 'organic']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-flower1"></i></div>
-            <span>Organic</span>
-        </a>
-        <a href="{{ route('home', ['cat' => 'electronics']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-cpu"></i></div>
-            <span>Electronics</span>
-        </a>
-        <a href="{{ route('home', ['cat' => 'fashion']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-bag-heart"></i></div>
-            <span>Fashion</span>
-        </a>
-        <a href="{{ route('home', ['cat' => 'home-living']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-house-heart"></i></div>
-            <span>Home</span>
-        </a>
-        <a href="{{ route('home', ['cat' => 'beauty']) }}" class="bb-cat-item">
-            <div class="bb-cat-icon"><i class="bi bi-stars"></i></div>
-            <span>Beauty</span>
-        </a>
+        @foreach($categories->take(7) as $cat)
+            <a href="{{ route('home', array_filter(['cat' => $cat->slug, 'search' => request('search'), 'sort' => request('sort')])) }}" class="bb-cat-item {{ request('cat') === $cat->slug ? 'is-active' : '' }}">
+                <div class="bb-cat-icon"><i class="bi {{ $cat->icon ?: 'bi-grid' }}"></i></div>
+                <span>{{ $cat->name }}</span>
+            </a>
+        @endforeach
         @if($referralEnabled ?? false)
         <a href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}" class="bb-cat-item">
             <div class="bb-cat-icon bb-cat-icon--accent"><i class="bi bi-gift"></i></div>
@@ -47,6 +34,7 @@
         </a>
         @endif
     </div>
+    @endif
 
     @if ($banners->isNotEmpty())
         <div id="homeHero" class="carousel slide bb-card overflow-hidden rounded-4 mb-3 mb-md-5 shadow-sm" data-bs-ride="carousel">
@@ -119,9 +107,7 @@
         <span><i class="bi bi-shield-check text-bloom me-1"></i>Secure payments</span>
     </div>
 
-    @if ($categories->isNotEmpty())
-        @include('partials.category-chips', ['categories' => $categories, 'filterQs' => $filterQs])
-    @endif
+    {{-- Category chips removed - strip above handles category navigation --}}
 
     @if (! empty($flashDeal))
         <div class="bb-card p-3 p-md-4 rounded-4 mb-3 mb-md-5 shadow-sm position-relative overflow-hidden" style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-left: 4px solid #d9534f;">
