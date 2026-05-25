@@ -96,6 +96,7 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
     Route::post('/addresses', [AccountAddressController::class, 'store'])->name('addresses.store');
     Route::delete('/addresses/{address}', [AccountAddressController::class, 'destroy'])->name('addresses.destroy');
     Route::post('/addresses/{address}/default', [AccountAddressController::class, 'makeDefault'])->name('addresses.default');
+    Route::get('/referral', [StorefrontController::class, 'referral'])->name('referral');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist');
     Route::post('/wishlist/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
     Route::get('/checkout', [CheckoutController::class, 'show'])->name('checkout');

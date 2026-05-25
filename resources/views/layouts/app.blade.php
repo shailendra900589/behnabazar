@@ -44,7 +44,7 @@
                 </li>
                 @if($referralEnabled)
                     <li class="nav-item d-none d-xl-block">
-                        <a class="nav-link" href="{{ auth()->check() ? route('dashboard').'#referralProgramCard' : route('register') }}">
+                        <a class="nav-link" href="{{ auth()->check() ? route('referral') : route('register') }}">
                             <i class="bi bi-gift me-1"></i>Refer &amp; earn
                         </a>
                     </li>

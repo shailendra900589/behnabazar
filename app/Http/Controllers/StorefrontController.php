@@ -217,6 +217,21 @@ class StorefrontController extends Controller
         ]);
     }
 
+    public function referral(): View
+    {
+        $user = Auth::user();
+        $referralRewards = \App\Models\ReferralReward::where('referrer_id', $user->id)
+            ->with('referee')
+            ->latest()
+            ->get();
+
+        return view('account.referral', [
+            'user' => $user,
+            'referralCode' => $user->referral_code ?? '',
+            'referralRewards' => $referralRewards,
+        ]);
+    }
+
     public function profile(): View
     {
         return view('account.profile', ['user' => Auth::user()]);

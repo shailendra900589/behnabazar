@@ -120,10 +120,10 @@
                 <span class="bb-footer-feature-text">Local delivery</span>
             </div>
             @if($referralEnabled ?? false)
-                <div class="bb-footer-feature">
+                <a href="{{ auth()->check() ? route('referral') : route('register') }}" class="bb-footer-feature text-decoration-none">
                     <span class="bb-footer-feature-icon"><i class="bi bi-gift"></i></span>
                     <span class="bb-footer-feature-text">Refer &amp; earn</span>
-                </div>
+                </a>
             @endif
         </div>
     </div>

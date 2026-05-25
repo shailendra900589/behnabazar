@@ -17,20 +17,19 @@
         <span>Cart</span>
     </a>
     @auth
-        <a href="{{ route('wishlist') }}" class="bb-mobile-nav-item {{ request()->routeIs('wishlist') ? 'is-active' : '' }}" aria-label="Wishlist">
-            <span class="bb-mobile-nav-icon-wrap">
-                <i class="bi bi-heart-fill"></i>
-                @if(($wishlistCount ?? 0) > 0)
-                    <span class="bb-mobile-nav-badge bb-mobile-nav-badge--muted" data-wishlist-count>{{ $wishlistCount }}</span>
-                @endif
-            </span>
-            <span>Saved</span>
+        <a href="{{ route('referral') }}" class="bb-mobile-nav-item {{ request()->routeIs('referral') ? 'is-active' : '' }}" aria-label="Refer & Earn">
+            <i class="bi bi-gift-fill"></i>
+            <span>Refer</span>
         </a>
         <a href="{{ route('dashboard') }}" class="bb-mobile-nav-item {{ request()->routeIs('dashboard') || request()->routeIs('profile') || request()->routeIs('orders') ? 'is-active' : '' }}" aria-label="Account">
             <i class="bi bi-person-circle"></i>
             <span>Account</span>
         </a>
     @else
+        <a href="{{ route('register') }}" class="bb-mobile-nav-item" aria-label="Refer & Earn">
+            <i class="bi bi-gift"></i>
+            <span>Refer</span>
+        </a>
         <a href="{{ route('login') }}" class="bb-mobile-nav-item {{ request()->routeIs('login') ? 'is-active' : '' }}" aria-label="Sign in">
             <i class="bi bi-person"></i>
             <span>Sign in</span>
