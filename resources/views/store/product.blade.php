@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title', $product->title)
 @section('content')
-<section class="container py-4 py-lg-5">
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb small mb-0">
+<section class="container py-3 py-md-4 py-lg-5">
+    <nav aria-label="breadcrumb" class="mb-3 mb-md-4">
+        <ol class="breadcrumb small mb-0 flex-nowrap overflow-auto">
             <li class="breadcrumb-item"><a href="{{ route('home') }}" class="text-decoration-none">Shop</a></li>
             @if ($product->category)
                 <li class="breadcrumb-item"><a href="{{ route('home', ['cat' => $product->category->slug]) }}" class="text-decoration-none">{{ $product->category->name }}</a></li>
@@ -39,6 +39,9 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const container = document.querySelector('.zoom-container');
+                    if (!container || window.matchMedia('(hover: none)').matches) {
+                        return;
+                    }
                     const img = container.querySelector('.bb-gallery-slide.is-active') || container.querySelector('.zoom-image');
                     
                     container.addEventListener('mousemove', (e) => {
@@ -75,14 +78,15 @@
         <div class="col-lg-6">
             <span class="badge badge-soft rounded-pill mb-3">{{ $product->category->name ?? 'Product' }}</span>
             <h1 class="display-6 fw-bold lh-sm mb-2">{{ $product->title }}</h1>
-            <p class="text-muted mb-3">
-                <i class="bi bi-shop me-1"></i>Sold by 
+            <p class="text-muted mb-3 product-vendor-meta">
+                <span class="d-block d-sm-inline"><i class="bi bi-shop me-1"></i>Sold by
                 @if($product->vendor)
                     <a href="{{ route('vendor.shop', $product->vendor) }}" class="fw-bold text-bloom text-decoration-none">{{ $product->vendor->shop_name }} <i class="bi bi-patch-check-fill text-primary" title="Verified Seller"></i></a>
                 @else
                     <strong>Behna Bazar Official <i class="bi bi-patch-check-fill text-primary" title="Verified Seller"></i></strong>
                 @endif
-                <span class="ms-3"><i class="bi bi-star-fill text-warning me-1"></i>{{ number_format($product->averageRating(), 1) }} / 5 ({{ $product->reviews->count() }} reviews)</span>
+                </span>
+                <span class="d-block d-sm-inline mt-1 mt-sm-0 ms-sm-3 product-rating-meta"><i class="bi bi-star-fill text-warning me-1"></i>{{ number_format($product->averageRating(), 1) }} / 5 ({{ $product->reviews->count() }} reviews)</span>
             </p>
             <div class="mb-3" id="productPriceBlock">
                 @include('partials.product-price', ['product' => $product, 'size' => 'lg'])
@@ -392,18 +396,18 @@
 
 <!-- Sticky Bottom Add-to-Cart Bar -->
 <div class="sticky-product-bar" id="stickyProductBar">
-    <div class="container d-flex justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-3 min-w-0">
-            <img src="{{ $product->imageUrl() }}" alt="" class="rounded-3 d-none d-md-block" style="width:48px;height:48px;object-fit:cover;">
+    <div class="container d-flex justify-content-between align-items-center gap-2 gap-md-3">
+        <div class="d-flex align-items-center gap-2 gap-md-3 min-w-0 flex-grow-1">
+            <img src="{{ $product->imageUrl() }}" alt="" class="rounded-3 sticky-bar-thumb" style="width:44px;height:44px;object-fit:cover;">
             <div class="min-w-0">
-                <div class="fw-bold text-truncate">{{ $product->title }}</div>
+                <div class="fw-bold text-truncate sticky-bar-title">{{ $product->title }}</div>
                 @include('partials.product-price', ['product' => $product, 'size' => 'sm'])
             </div>
         </div>
-        <div class="d-flex gap-2 flex-shrink-0">
+        <div class="d-flex gap-2 flex-shrink-0 sticky-bar-actions">
             <form data-ajax-form action="{{ route('cart.add', $product) }}" method="post">
                 @csrf<input type="hidden" name="quantity" value="1">
-                <button class="btn btn-bloom rounded-pill px-4 fw-bold shadow-sm"><i class="bi bi-bag-plus me-1"></i> Add to Cart</button>
+                <button type="submit" class="btn btn-bloom rounded-pill px-3 px-md-4 fw-bold shadow-sm"><i class="bi bi-bag-plus me-1"></i><span class="d-none d-sm-inline">Add to</span> Cart</button>
             </form>
             <form action="{{ route('cart.add', $product) }}" method="post">
                 @csrf<input type="hidden" name="quantity" value="1"><input type="hidden" name="buy_now" value="1">

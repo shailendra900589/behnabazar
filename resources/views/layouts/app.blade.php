@@ -13,7 +13,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     @include('partials.assets-head')
 </head>
-<body>
+<body class="bb-storefront">
 <div id="bb-toasts" class="toast-container position-fixed top-0 end-0 p-3"></div>
 @include('partials.header-marquee')
 <nav class="navbar navbar-expand-lg sticky-top bb-navbar bb-navbar-compact shadow-sm">
@@ -25,7 +25,7 @@
             <i class="bi bi-list fs-4 text-dark"></i>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
-            <form class="d-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 position-relative" style="max-width: 500px" action="{{ route('home') }}">
+            <form class="d-none d-lg-flex mx-lg-4 my-3 my-lg-0 flex-grow-1 position-relative" style="max-width: 500px" action="{{ route('home') }}">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 rounded-start-pill ps-4"><i class="bi bi-search text-muted"></i></span>
                     <input class="form-control bg-light border-start-0 rounded-end-pill bb-search-input" id="liveSearchInput" name="search" autocomplete="off" value="{{ request('search') }}" placeholder="Search products, brands...">
@@ -108,19 +108,19 @@
                 @endif
                 <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
                 @auth
-                    <li class="nav-item">
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link bb-coin-pill" href="{{ route('dashboard') }}" title="Your reward coins">
                             <i class="bi bi-coin text-warning"></i>
                             <span class="bb-coin-amount">{{ number_format($userCoins) }}</span>
                             <span class="d-none d-md-inline small text-muted">coins</span>
                         </a>
                     </li>
-                    <li class="nav-item"><a class="nav-link position-relative" href="{{ route('wishlist') }}">
+                    <li class="nav-item d-none d-lg-block"><a class="nav-link position-relative" href="{{ route('wishlist') }}">
                         <i class="bi bi-heart"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-danger border border-white" data-wishlist-count>{{ $wishlistCount ?? 0 }}</span>
                     </a></li>
                 @endauth
-                <li class="nav-item dropdown dropdown-cart">
+                <li class="nav-item dropdown dropdown-cart d-none d-lg-block">
                     <a class="nav-link position-relative dropdown-toggle" href="{{ route('cart') }}" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
                         <i class="bi bi-bag"></i>
                         <span class="position-absolute top-25 start-100 translate-middle badge rounded-pill bg-dark border border-white" data-cart-count>{{ $cartCount ?? 0 }}</span>
@@ -181,6 +181,7 @@
         </div>
     </div>
 </nav>
+@include('partials.mobile-search-bar')
 @include('partials.site-video')
 <main class="bb-main">@yield('content')</main>
 
@@ -212,6 +213,7 @@
     @endif
 </script>
 @include('partials.footer')
+@include('partials.mobile-bottom-nav')
 
 <!-- Back to Top Button -->
 <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">

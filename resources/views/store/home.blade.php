@@ -9,7 +9,7 @@
         'max_price' => request('max_price'),
     ], fn ($v) => $v !== null && $v !== '');
 @endphp
-<section class="container py-4 py-lg-5">
+<section class="container py-3 py-md-4 py-lg-5">
     @include('partials.ad-slot', ['slot' => 'home_top', 'class' => 'mb-4'])
 
     <div class="marketplace-intro mb-5">
@@ -103,9 +103,9 @@
         </div>
     @endif
 
-    <div class="row g-4 mb-5 text-center">
-        <div class="col-md-6 col-lg-3">
-            <div class="feature-card p-4 p-lg-5 h-100">
+    <div class="row g-3 g-md-4 mb-4 mb-md-5 text-center bb-feature-grid">
+        <div class="col-6 col-lg-3">
+            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-truck fs-3"></i>
                 </div>
@@ -113,8 +113,8 @@
                 <p class="small text-muted mb-0">Grocery, fashion, electronics, home, and more</p>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="feature-card p-4 p-lg-5 h-100">
+        <div class="col-6 col-lg-3">
+            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-patch-check fs-3"></i>
                 </div>
@@ -122,8 +122,8 @@
                 <p class="small text-muted mb-0">Products reviewed before going live</p>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="feature-card p-4 p-lg-5 h-100">
+        <div class="col-6 col-lg-3">
+            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-coin fs-3"></i>
                 </div>
@@ -131,8 +131,8 @@
                 <p class="small text-muted mb-0">Earn on orders and referrals — see balance in the header</p>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="feature-card p-4 p-lg-5 h-100">
+        <div class="col-6 col-lg-3">
+            <div class="feature-card p-3 p-md-4 p-lg-5 h-100">
                 <div class="feature-icon-wrapper mx-auto">
                     <i class="bi bi-gift fs-3"></i>
                 </div>
@@ -194,9 +194,9 @@
             <h2 class="fw-bold mb-0">New arrivals</h2>
             <a href="#products" class="small text-bloom fw-semibold text-decoration-none">View all</a>
         </div>
-        <div class="row g-4 mb-5">
+        <div class="row g-3 g-md-4 mb-4 mb-md-5 bb-product-rail">
             @foreach ($newArrivals as $product)
-                <div class="col-sm-6 col-lg-3">@include('partials.product-card', ['product' => $product])</div>
+                <div class="col-6 col-sm-6 col-lg-3 bb-product-rail-item">@include('partials.product-card', ['product' => $product])</div>
             @endforeach
         </div>
     @endif
@@ -208,9 +208,9 @@
             <h2 class="fw-bold mb-0">Trending now</h2>
             <span class="small text-muted">Based on recent orders</span>
         </div>
-        <div class="row g-4 mb-5">
+        <div class="row g-3 g-md-4 mb-4 mb-md-5 bb-product-rail">
             @foreach ($hotProducts as $product)
-                <div class="col-sm-6 col-lg-3">@include('partials.product-card', ['product' => $product])</div>
+                <div class="col-6 col-sm-6 col-lg-3 bb-product-rail-item">@include('partials.product-card', ['product' => $product])</div>
             @endforeach
         </div>
     @endif
@@ -219,9 +219,9 @@
         <div class="d-flex align-items-end justify-content-between mb-3">
             <h2 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>Recently viewed</h2>
         </div>
-        <div class="row g-4 mb-5">
+        <div class="row g-3 g-md-4 mb-4 mb-md-5 bb-product-rail">
             @foreach ($recentlyViewed as $product)
-                <div class="col-sm-6 col-lg-3">@include('partials.product-card', ['product' => $product])</div>
+                <div class="col-6 col-sm-6 col-lg-3 bb-product-rail-item">@include('partials.product-card', ['product' => $product])</div>
             @endforeach
         </div>
     @endif
@@ -232,15 +232,15 @@
                 <h2 class="fw-bold mb-1">Shop products</h2>
                 <p class="text-muted mb-0">Sort, filter by price, and shop approved listings across all categories.</p>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
+            <div class="d-flex gap-2 flex-wrap bb-sort-rail">
                 <a class="btn btn-outline-secondary btn-sm rounded-pill {{ ($sort ?? 'new') === 'new' ? 'active' : '' }}" href="{{ route('home', array_filter(array_merge($filterQs, ['cat' => request('cat'), 'sort' => 'new']))) }}">Newest</a>
                 <a class="btn btn-outline-secondary btn-sm rounded-pill {{ ($sort ?? '') === 'popular' ? 'active' : '' }}" href="{{ route('home', array_filter(array_merge($filterQs, ['cat' => request('cat'), 'sort' => 'popular']))) }}">Bestsellers</a>
                 <a class="btn btn-outline-secondary btn-sm rounded-pill {{ ($sort ?? '') === 'price_low' ? 'active' : '' }}" href="{{ route('home', array_filter(array_merge($filterQs, ['cat' => request('cat'), 'sort' => 'price_low']))) }}">Price ↑</a>
                 <a class="btn btn-outline-secondary btn-sm rounded-pill {{ ($sort ?? '') === 'price_high' ? 'active' : '' }}" href="{{ route('home', array_filter(array_merge($filterQs, ['cat' => request('cat'), 'sort' => 'price_high']))) }}">Price ↓</a>
             </div>
         </div>
-        <div class="store-filter-card bb-card-lite p-4 rounded-4 mb-4">
-            <form class="row g-3 align-items-end" method="get" action="{{ route('home') }}">
+        <div class="store-filter-card bb-card-lite p-3 p-md-4 rounded-4 mb-4">
+            <form class="row g-2 g-md-3 align-items-end store-filter-form" method="get" action="{{ route('home') }}">
                 @if (request('cat'))
                     <input type="hidden" name="cat" value="{{ request('cat') }}">
                 @endif
@@ -270,9 +270,9 @@
             @endif
         </div>
     </div>
-    <div class="row g-4">
+    <div class="row g-3 g-md-4 bb-product-grid">
         @forelse ($products as $index => $product)
-            <div class="col-sm-6 col-lg-4 col-xl-3">@include('partials.product-card', ['product' => $product])</div>
+            <div class="col-6 col-md-6 col-lg-4 col-xl-3">@include('partials.product-card', ['product' => $product])</div>
             @if ($index === 3)
                 <div class="col-12">@include('partials.ad-slot', ['slot' => 'home_grid_1', 'ads' => $ads, 'card' => true, 'class' => 'mb-2'])</div>
             @elseif ($index === 7)

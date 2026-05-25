@@ -152,6 +152,22 @@
                 ? '<i class="bi bi-chevron-up"></i>'
                 : '<i class="bi bi-dash-lg"></i>';
         });
+
+        if (window.matchMedia('(max-width: 767px)').matches && videoWrap && !sessionStorage.getItem('bbVideoMinimized')) {
+            videoWrap.classList.add('is-minimized');
+            sessionStorage.setItem('bbVideoMinimized', '1');
+        }
+    }
+
+    function initDashboardOffcanvas() {
+        document.querySelectorAll('#dashboardSidebar .nav-link').forEach(function (link) {
+            link.addEventListener('click', function () {
+                const panel = document.getElementById('dashboardSidebar');
+                if (panel && window.bootstrap && window.getComputedStyle(panel).position === 'fixed') {
+                    window.bootstrap.Offcanvas.getInstance(panel)?.hide();
+                }
+            });
+        });
     }
 
     function onReady() {
@@ -159,6 +175,7 @@
         initWishlistToggles();
         initCopyButtons();
         initSiteVideo();
+        initDashboardOffcanvas();
     }
 
     if (typeof jQuery !== 'undefined') {

@@ -4,9 +4,18 @@
     $u = auth()->user();
 @endphp
 <div class="dashboard-shell">
-    <div class="container-fluid">
-        <div class="row">
-            <aside class="col-lg-2 p-4 dashboard-sidebar">
+    <div class="container-fluid px-3 px-md-4">
+        <div class="row g-0 g-lg-3">
+            <div class="col-lg-2">
+                <button class="btn btn-bloom rounded-pill w-100 d-lg-none dashboard-mobile-toggle mb-3 mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar">
+                    <i class="bi bi-list me-2"></i>Dashboard menu
+                </button>
+                <div class="offcanvas offcanvas-lg offcanvas-start dashboard-offcanvas" tabindex="-1" id="dashboardSidebar" aria-labelledby="dashboardSidebarLabel">
+                    <div class="offcanvas-header d-lg-none border-bottom">
+                        <h5 class="offcanvas-title fw-bold" id="dashboardSidebarLabel">Menu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#dashboardSidebar" aria-label="Close"></button>
+                    </div>
+                    <aside class="offcanvas-body p-3 p-lg-4 dashboard-sidebar">
                 <a class="bb-logo-link d-inline-flex mb-4" href="{{ route('home') }}" aria-label="Behna Bazar home">
                     <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="Behna Bazar" class="bb-logo bb-logo-sidebar">
                 </a>
@@ -107,8 +116,10 @@
                         @endif
                     @endauth
                 </nav>
-            </aside>
-            <section class="col-lg-10 p-4 p-lg-5">
+                    </aside>
+                </div>
+            </div>
+            <section class="col-lg-10 p-3 p-md-4 p-lg-5 dashboard-main">
                 @if ($u->role === 'vendor')
                     <div class="d-flex justify-content-end mb-3">
                         @include('partials.vendor-notifications')

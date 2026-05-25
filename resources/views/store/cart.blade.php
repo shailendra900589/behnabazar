@@ -2,8 +2,8 @@
 @extends('layouts.app')
 @section('title','Cart')
 @section('content')
-<section class="container py-5">
-    <h1 class="fw-bold mb-4">Shopping Cart</h1>
+<section class="container py-3 py-md-4 py-lg-5">
+    <h1 class="fw-bold mb-3 mb-md-4">Shopping Cart</h1>
     @include('partials.trust-strip')
     @if($items->isEmpty())
         <div class="bb-card p-5 text-center">
@@ -16,28 +16,33 @@
             <div class="col-lg-8">
                 <div class="vstack gap-3">
                     @foreach($items as $item)
-                        <div class="bb-card-lite p-3 d-flex gap-3 align-items-center">
-                            <img src="{{ $item->product->imageUrl() }}" class="rounded-4" style="width:92px;height:92px;object-fit:cover">
-                            <div class="flex-grow-1">
-                                <h5 class="fw-bold mb-1">{{ $item->product->title }}</h5>
-                                @if($item->variant)
-                                    <div class="small text-muted mb-1">{{ $item->variant->displayLabel() }}</div>
-                                @endif
-                                @include('partials.product-price', [
-                                    'product' => $item->product,
-                                    'variantSale' => $item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price,
-                                    'size' => 'sm',
-                                ])
+                        <div class="bb-card-lite p-3 cart-line-item">
+                            <div class="cart-line-main d-flex gap-3 align-items-start">
+                                <img src="{{ $item->product->imageUrl() }}" class="rounded-3 cart-line-img" alt="">
+                                <div class="flex-grow-1 min-w-0">
+                                    <h5 class="fw-bold mb-1 cart-line-title">{{ $item->product->title }}</h5>
+                                    @if($item->variant)
+                                        <div class="small text-muted mb-1">{{ $item->variant->displayLabel() }}</div>
+                                    @endif
+                                    @include('partials.product-price', [
+                                        'product' => $item->product,
+                                        'variantSale' => $item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price,
+                                        'size' => 'sm',
+                                    ])
+                                </div>
                             </div>
-                            <form data-ajax-form data-method="PATCH" data-reload="true" action="{{ route('cart.update',$item) }}" class="d-flex gap-2 align-items-center">
-                                @csrf
-                                <input class="form-control" style="width:86px" type="number" min="1" max="20" name="quantity" value="{{ $item->quantity }}">
-                                <button class="btn btn-soft btn-sm">Update</button>
-                            </form>
-                            <form method="post" action="{{ route('cart.remove',$item) }}">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-                            </form>
+                            <div class="cart-line-actions d-flex gap-2 align-items-center justify-content-between mt-3">
+                                <form data-ajax-form data-method="PATCH" data-reload="true" action="{{ route('cart.update',$item) }}" class="d-flex gap-2 align-items-center flex-grow-1">
+                                    @csrf
+                                    <label class="visually-hidden" for="qty{{ $item->id }}">Quantity</label>
+                                    <input id="qty{{ $item->id }}" class="form-control cart-qty-input" type="number" min="1" max="20" name="quantity" value="{{ $item->quantity }}">
+                                    <button type="submit" class="btn btn-soft btn-sm flex-shrink-0">Update</button>
+                                </form>
+                                <form method="post" action="{{ route('cart.remove',$item) }}">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="Remove item"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
                         </div>
                     @endforeach
                 </div>
