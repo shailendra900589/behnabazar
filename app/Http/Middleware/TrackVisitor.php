@@ -11,7 +11,11 @@ class TrackVisitor
     public function handle(Request $request, Closure $next)
     {
         if (!$request->ajax() && $request->isMethod('GET') && !str_starts_with($request->path(), 'api/')) {
-            DB::table('site_visits')->where('id', 1)->increment('total_count');
+            try {
+                DB::table('site_visits')->where('id', 1)->increment('total_count');
+            } catch (\Throwable $e) {
+                // Table may not exist yet
+            }
         }
 
         return $next($request);

@@ -3013,7 +3013,7 @@ html {
     }
 
     .bb-footer-bottom {
-        padding: 0.75rem 0;
+        padding: 0.75rem 0 calc(var(--bb-mobile-nav-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 0.75rem);
     }
 
     .bb-footer-bottom-inner {
