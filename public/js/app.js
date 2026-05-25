@@ -195,6 +195,7 @@
         }
     }
 
+    var _qtyDebounce = {};
     function initQuantityControls() {
         document.addEventListener('click', function (event) {
             const btn = event.target.closest('[data-qty-btn]');
@@ -218,8 +219,13 @@
             }
 
             const form = input.closest('form[data-ajax-form]');
-            if (form && form.dataset.autoSubmit !== undefined) {
-                form.requestSubmit();
+            if (form) {
+                var itemId = form.closest('[data-item-id]');
+                var key = itemId ? itemId.dataset.itemId : 'default';
+                clearTimeout(_qtyDebounce[key]);
+                _qtyDebounce[key] = setTimeout(function () {
+                    form.requestSubmit();
+                }, 500);
             }
         });
     }

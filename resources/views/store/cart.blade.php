@@ -36,14 +36,13 @@
                                 </div>
                             </div>
                             <div class="cart-line-actions d-flex gap-2 align-items-center justify-content-between mt-3">
-                                <form data-ajax-form data-method="PATCH" action="{{ route('cart.update',$item) }}" class="d-flex align-items-center gap-0 flex-grow-1">
+                                <form data-ajax-form data-method="PATCH" action="{{ route('cart.update',$item) }}" class="d-flex align-items-center gap-2">
                                     @csrf
                                     <div class="bb-qty-control d-flex align-items-center" data-qty-control>
                                         <button type="button" class="bb-qty-btn" data-qty-btn="minus" aria-label="Decrease quantity"><i class="bi bi-dash"></i></button>
                                         <input class="bb-qty-value" type="number" min="1" max="20" name="quantity" value="{{ $item->quantity }}" aria-label="Quantity">
                                         <button type="button" class="bb-qty-btn" data-qty-btn="plus" aria-label="Increase quantity"><i class="bi bi-plus"></i></button>
                                     </div>
-                                    <button type="submit" class="btn btn-soft btn-sm ms-2 flex-shrink-0">Update</button>
                                 </form>
                                 <form action="{{ route('cart.remove',$item) }}" method="post">
                                     @csrf @method('DELETE')
