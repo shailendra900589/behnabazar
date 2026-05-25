@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\CaptureReferral::class,
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\TrackVisitor::class,
         ]);
         $middleware->alias([
             'account.ready' => \App\Http\Middleware\EnsureAccountReady::class,

@@ -130,6 +130,11 @@
 
     <div class="bb-footer-bottom">
         <div class="container bb-footer-bottom-inner">
+            <div class="bb-visitor-counter">
+                <i class="bi bi-eye-fill"></i>
+                <span>Total Visitors:</span>
+                <strong id="liveVisitorCount">{{ number_format($visitorCount ?? 0) }}</strong>
+            </div>
             <p class="mb-0">&copy; {{ date('Y') }} {{ $brandName }}. All rights reserved.</p>
             <nav class="bb-footer-bottom-meta" aria-label="Legal and credits">
                 <a href="{{ route('returns-policy') }}">Returns</a>

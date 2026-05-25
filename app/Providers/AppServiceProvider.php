@@ -87,6 +87,8 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
+            $visitorCount = (int) (\Illuminate\Support\Facades\DB::table('site_visits')->where('id', 1)->value('total_count') ?? 0);
+
             $view->with(compact(
                 'cartCount',
                 'wishlistCount',
@@ -97,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
                 'referralEnabled',
                 'referralCode',
                 'userCoins',
+                'visitorCount',
             ));
         });
 

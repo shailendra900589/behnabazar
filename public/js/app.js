@@ -362,6 +362,19 @@
         });
     }
 
+    function initVisitorCounter() {
+        var el = document.getElementById('liveVisitorCount');
+        if (!el) return;
+        setInterval(function () {
+            fetch('/api/visitor-count')
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.count) el.textContent = data.count.toLocaleString('en-IN');
+                })
+                .catch(function () {});
+        }, 30000);
+    }
+
     function initSmoothScroll() {
         document.querySelectorAll('a[href^="#"]').forEach(function (link) {
             link.addEventListener('click', function (e) {
@@ -410,6 +423,7 @@
         initSiteVideo();
         initDashboardOffcanvas();
         initLiveSearch();
+        initVisitorCounter();
         initSmoothScroll();
         initImageLazyLoad();
         initPullToRefreshBlock();
