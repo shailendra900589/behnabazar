@@ -16,9 +16,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#dashboardSidebar" aria-label="Close"></button>
                     </div>
                     <aside class="offcanvas-body p-2 p-lg-3 dashboard-sidebar">
-                <a class="bb-logo-link d-inline-flex mb-3 px-2" href="{{ route('home') }}" aria-label="Behna Bazar home">
-                    <img src="{{ asset('images/brand/behna-bazar-wordmark.jpeg') }}" alt="Behna Bazar" class="bb-logo bb-logo-sidebar">
-                </a>
                 <nav class="nav flex-column gap-1">
                     @auth
                         @if ($u->role === 'admin')
