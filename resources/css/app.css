@@ -214,7 +214,8 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 .admin-stat-tile::after { content: ''; position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: radial-gradient(circle, rgba(79,70,229,0.04) 0%, transparent 70%); pointer-events: none; }
 .admin-stat-tile .text-muted { font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
 .admin-stat-tile .h3 { font-size: 1.5rem; margin-top: 0.25rem; margin-bottom: 0; }
-.admin-workspace { border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.admin-workspace { border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
+@media (max-width: 767px) { .admin-workspace { border-radius: 0.6rem; padding: 0.75rem !important; } .admin-workspace.p-3 { padding: 0.6rem !important; } }
 
 /* Dashboard page refinements */
 .dashboard-main h1 { font-size: 1.4rem; }
@@ -3211,10 +3212,77 @@ html {
         border-radius: 0.75rem;
     }
 
-    .dashboard-main .stat-card { padding: 0.9rem !important; }
-    .dashboard-main .stat-card .h2 { font-size: 1.25rem; }
-    .dashboard-main .bb-card { padding: 1rem !important; }
-    .dashboard-main .table-card .p-3 { padding: 0.75rem !important; }
-    .dashboard-main h1 { font-size: 1.15rem; }
+    /* Dashboard mobile */
+    .dashboard-shell { background: #f8fafc; }
+    .dashboard-main { padding: 0.75rem !important; }
+    .dashboard-main h1 { font-size: 1.1rem; }
+    .dashboard-main .h3, .dashboard-main h3 { font-size: 0.9rem; }
+    .dashboard-main h4 { font-size: 0.85rem; }
+    .dashboard-main .stat-card { padding: 0.75rem !important; border-radius: 0.6rem; }
+    .dashboard-main .stat-card .h2 { font-size: 1.1rem; }
+    .dashboard-main .stat-card .text-muted.small { font-size: 0.58rem; }
+    .dashboard-main .bb-card { padding: 0.85rem !important; border-radius: 0.6rem; }
+    .dashboard-main .bb-card h3 { font-size: 0.82rem; }
+    .dashboard-main .table-card { border-radius: 0.6rem; }
+    .dashboard-main .table-card .p-3 { padding: 0.6rem !important; }
+    .dashboard-main .table { font-size: 0.72rem; }
+    .dashboard-main .table th { font-size: 0.6rem; padding: 0.4rem 0.5rem; }
+    .dashboard-main .table td { padding: 0.4rem 0.5rem; font-size: 0.72rem; }
+    .dashboard-main .btn-sm { font-size: 0.65rem; padding: 0.25rem 0.5rem; }
+    .dashboard-main .btn-bloom { font-size: 0.72rem; padding: 0.35rem 0.7rem; }
+    .dashboard-main .form-control, .dashboard-main .form-select { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+    .dashboard-main .form-label { font-size: 0.65rem; }
+    .dashboard-main .badge { font-size: 0.58rem; }
+    .dashboard-main .display-6 { font-size: 1.5rem !important; }
+    .dashboard-main canvas { max-height: 150px !important; }
+
+    /* Admin stat tiles mobile */
+    .admin-stat-tile { padding: 0.75rem !important; }
+    .admin-stat-tile .h3 { font-size: 1.1rem; }
+    .admin-stat-tile .text-muted { font-size: 0.6rem !important; }
+
+    /* Table responsive mobile */
+    .table-responsive { -webkit-overflow-scrolling: touch; }
+    .table-card .table th, .table-card .table td { white-space: nowrap; }
+
+    /* Product page mobile */
+    .container.py-4 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+    .product-detail-section { padding: 0 !important; }
+
+    /* Review stars mobile */
+    .bb-star-rating .bb-star { font-size: 1.3rem; }
+
+    /* Cards general mobile */
+    .bb-card.p-4 { padding: 0.85rem !important; }
+    .bb-card.p-3 { padding: 0.65rem !important; }
+    .rounded-4 { border-radius: 0.75rem !important; }
+
+    /* Row gutters mobile */
+    .g-3 { --bs-gutter-y: 0.5rem; --bs-gutter-x: 0.5rem; }
+    .row.g-4 { --bs-gutter-y: 0.6rem; --bs-gutter-x: 0.6rem; }
+    .mb-4 { margin-bottom: 0.75rem !important; }
+    .mb-3 { margin-bottom: 0.6rem !important; }
+    .p-4 { padding: 0.85rem !important; }
+    .p-3 { padding: 0.65rem !important; }
+
+    /* Live snapshot card */
+    .admin-console .bb-card, .admin-console .table-card { margin-bottom: 0.5rem; }
+
+    /* Offcanvas mobile */
+    .dashboard-offcanvas.offcanvas-lg { width: 260px; }
+    .dashboard-offcanvas .offcanvas-body { padding: 0.75rem !important; }
+}
+
+/* Extra-small screens (max 400px) */
+@media (max-width: 400px) {
+    .dashboard-main .stat-card { padding: 0.6rem !important; }
+    .dashboard-main .stat-card .h2 { font-size: 1rem; }
+    .dashboard-main .stat-card .text-muted.small { font-size: 0.55rem; }
+    .bb-star-rating .bb-star { font-size: 1.1rem; }
+    .container { padding-left: 0.5rem; padding-right: 0.5rem; }
+    h1, .h1 { font-size: 1.1rem !important; }
+    h2, .h2 { font-size: 1rem !important; }
+    .btn { font-size: 0.75rem; }
+    .dashboard-main .table th, .dashboard-main .table td { font-size: 0.62rem; padding: 0.3rem 0.4rem; }
 }
 
