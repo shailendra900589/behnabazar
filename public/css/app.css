@@ -256,6 +256,17 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 /* Resell card */
 .resell-dashboard-card { border-left: 3px solid var(--bb-primary); }
 
+/* Resell catalog */
+.resell-hub-title { font-size: 1.35rem; }
+.resell-product-img { height: 200px; object-fit: cover; background: #f1f5f9; }
+.resell-mode-icon { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.resell-product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.resell-product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12); }
+.resell-product-card .badge { font-size: 0.65rem; max-width: calc(100% - 1rem); overflow: hidden; text-overflow: ellipsis; }
+.resell-filter-card .form-control-sm, .resell-filter-card .form-select-sm { min-height: 2.5rem; }
+.resell-pagination .pagination { flex-wrap: wrap; justify-content: center; gap: 0.25rem; margin-bottom: 0; }
+.resell-pagination .page-link { font-size: 0.8rem; padding: 0.35rem 0.65rem; }
+
 /* Vendor dashboard section titles */
 .dashboard-main .display-6 { font-size: 2rem !important; }
 
@@ -3271,6 +3282,17 @@ html {
     /* Offcanvas mobile */
     .dashboard-offcanvas.offcanvas-lg { width: 260px; }
     .dashboard-offcanvas .offcanvas-body { padding: 0.75rem !important; }
+
+    /* Resell catalog mobile */
+    .resell-hub-title { font-size: 1.1rem; }
+    .resell-hub-header .badge { font-size: 0.6rem; }
+    .resell-product-img { height: 160px; }
+    .resell-product-card:hover { transform: none; }
+    .resell-product-card .p-3 { padding: 0.75rem !important; }
+    .resell-product-card .h6 { font-size: 0.9rem; }
+    .resell-product-card .d-grid .btn { min-height: 2.5rem; }
+    .resell-filter-card { padding: 0.75rem !important; }
+    .resell-pagination { margin-bottom: calc(var(--bb-mobile-nav-h, 4.25rem) + 0.5rem); }
 }
 
 /* Extra-small screens (max 400px) */

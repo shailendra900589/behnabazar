@@ -122,8 +122,8 @@
                                     <i class="bi bi-megaphone"></i><span>Promotions</span>
                                 </a>
                                 @if (\App\Support\MarketplaceSettings::resellEnabled())
-                                    <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'resell' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'resell']) }}">
-                                        <i class="bi bi-arrow-left-right"></i><span>Resell</span>
+                                    <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('manage.resell.catalog') ? 'active fw-semibold' : '' }}" href="{{ route('manage.resell.catalog') }}">
+                                        <i class="bi bi-arrow-left-right"></i><span>Resell catalog</span>
                                     </a>
                                 @endif
                                 <a class="nav-link rounded-3 d-flex align-items-center gap-2 {{ request()->routeIs('dashboard') && $vSec === 'referrals' ? 'active fw-semibold' : '' }}" href="{{ route('dashboard', ['section' => 'referrals']) }}">

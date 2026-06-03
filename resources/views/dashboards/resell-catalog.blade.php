@@ -1,19 +1,19 @@
 @extends('layouts.dashboard')
 @section('title', 'Resell catalog')
 @section('dashboard')
-<div class="resell-hub-header mb-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-        <div>
+<div class="resell-hub-header mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div class="min-w-0 flex-grow-1">
             <span class="badge badge-soft rounded-pill mb-2">Vendor B2B catalog</span>
-            <h1 class="fw-bold mb-1">Products from other sellers</h1>
-            <p class="text-muted mb-0">List on your shop at your price. Source vendor ships to customers. Choose quick listing, branded listing, or bulk stock.</p>
+            <h1 class="fw-bold mb-1 resell-hub-title">Products from other sellers</h1>
+            <p class="text-muted small mb-0">List at your price — quick, branded, or bulk stock.</p>
         </div>
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary btn-sm rounded-pill"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+        <a href="{{ route('dashboard', ['section' => 'overview']) }}" class="btn btn-outline-secondary btn-sm rounded-pill flex-shrink-0"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
+<div class="row g-2 g-md-3 mb-3">
+    <div class="col-12 col-md-4">
         <div class="bb-card p-3 h-100 border-start border-4 border-primary">
             <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="resell-mode-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-lightning-charge"></i></span>
@@ -22,7 +22,7 @@
             <p class="small text-muted mb-0">Use source photos &amp; title. Set your selling price. No listing fee. Goes to QC.</p>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="bb-card p-3 h-100 border-start border-4 border-warning">
             <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="resell-mode-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-palette"></i></span>
@@ -31,7 +31,7 @@
             <p class="small text-muted mb-0">Your title, description &amp; photos. Fee <strong>₹{{ number_format($customizeFee, 0) }}</strong> from sales wallet.</p>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-12 col-md-4">
         <div class="bb-card p-3 h-100 border-start border-4 border-success">
             <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="resell-mode-icon bg-success bg-opacity-10 text-success"><i class="bi bi-boxes"></i></span>
@@ -42,24 +42,24 @@
     </div>
 </div>
 
-<div class="bb-card p-3 mb-4">
+<div class="bb-card p-3 mb-3 resell-filter-card">
     <form method="get" class="row g-2 align-items-end">
-        <div class="col-md-5">
+        <div class="col-12 col-md-5">
             <label class="form-label small text-muted mb-1">Search</label>
-            <input type="search" name="q" class="form-control" value="{{ request('q') }}" placeholder="Product or shop name…">
+            <input type="search" name="q" class="form-control form-control-sm" value="{{ request('q') }}" placeholder="Product or shop name…">
         </div>
-        <div class="col-md-4">
+        <div class="col-12 col-md-4">
             <label class="form-label small text-muted mb-1">Category</label>
-            <select name="category" class="form-select">
+            <select name="category" class="form-select form-select-sm">
                 <option value="">All categories</option>
                 @foreach($categories as $cat)
                     <option value="{{ $cat->id }}" @selected(request('category') == $cat->id)>{{ $cat->name }}</option>
                 @endforeach
             </select>
         </div>
-        <div class="col-md-3 d-flex gap-2">
-            <button type="submit" class="btn btn-bloom flex-grow-1">Filter</button>
-            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-outline-secondary">Reset</a>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-bloom btn-sm flex-grow-1">Filter</button>
+            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
         </div>
     </form>
     <p class="small text-muted mb-0 mt-2">
@@ -68,7 +68,7 @@
     </p>
 </div>
 
-<div class="row g-4">
+<div class="row g-3 g-md-4">
     @forelse($products as $source)
         @php
             $alreadyListed = in_array($source->id, $myListingIds, true);
@@ -76,7 +76,7 @@
             $dpBase = $source->effectiveResellerUnitCost();
             $bulkUnit = round($dpBase * (1 - $bulkDiscountPercent / 100), 2);
         @endphp
-        <div class="col-md-6 col-xl-4">
+        <div class="col-12 col-sm-6 col-xl-4">
             <article class="bb-card resell-product-card h-100 overflow-hidden">
                 <div class="position-relative">
                     <img src="{{ $source->imageUrl() }}" class="w-100 resell-product-img" alt="">
@@ -114,7 +114,7 @@
 
         @if(! $alreadyListed)
         <div class="modal fade" id="resellQuick{{ $source->id }}" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
                 <div class="modal-content">
                     <form method="post" action="{{ route('manage.resell.store') }}">
                         @csrf
@@ -138,7 +138,7 @@
         </div>
 
         <div class="modal fade" id="resellBrand{{ $source->id }}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">
                 <div class="modal-content">
                     <form method="post" action="{{ route('manage.resell.store') }}" enctype="multipart/form-data">
                         @csrf
@@ -183,7 +183,7 @@
         @endif
 
         <div class="modal fade" id="resellBulk{{ $source->id }}" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
                 <div class="modal-content">
                     <form method="post" action="{{ route('manage.resell.bulk') }}">
                         @csrf
@@ -228,12 +228,5 @@
         </div>
     @endforelse
 </div>
-<div class="mt-4">{{ $products->links() }}</div>
-
-<style>
-.resell-product-img { height: 200px; object-fit: cover; }
-.resell-mode-icon { width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; display: inline-flex; align-items: center; justify-content: center; }
-.resell-product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.resell-product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12); }
-</style>
+<div class="mt-3 resell-pagination">{{ $products->links() }}</div>
 @endsection

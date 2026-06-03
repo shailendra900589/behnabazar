@@ -129,49 +129,7 @@
 </div>
 @endif {{-- end overview --}}
 
-{{-- ═══════ SECTION: RESELL ═══════ --}}
-@if ($section === 'resell')
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <h1 class="fw-bold mb-0" style="font-size:1.3rem;"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Resell Catalog</h1>
-    <a href="{{ route('manage.resell.catalog') }}" class="btn btn-bloom btn-sm rounded-pill px-3">Browse catalog</a>
-</div>
-
-@if ($active && ($resellEnabled ?? false))
-<div class="bb-card mb-4 resell-dashboard-card">
-    <div class="row g-3 align-items-center">
-        <div class="col-lg-8">
-            <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:28px;height:28px;font-size:0.8rem;"><i class="bi bi-arrow-left-right"></i></span>
-                <h3 class="h6 fw-bold mb-0">Resell other vendors' products</h3>
-            </div>
-            <p class="text-muted small mb-2">Browse approved listings from other sellers:</p>
-            <div class="d-flex flex-wrap gap-2 small">
-                <span class="badge bg-light text-dark border px-2 py-1"><strong>Quick resell</strong> — free</span>
-                <span class="badge bg-light text-dark border px-2 py-1"><strong>Branded</strong> — ₹{{ number_format($resellCustomizeFee ?? 99, 0) }}</span>
-                <span class="badge bg-light text-dark border px-2 py-1"><strong>Bulk</strong> — {{ $resellBulkDiscountPercent ?? 5 }}% off</span>
-            </div>
-        </div>
-        <div class="col-lg-4 text-lg-end">
-            <div class="h3 fw-bold text-bloom mb-0">{{ $resellCatalogCount ?? 0 }}</div>
-            <p class="small text-muted mb-2">products available</p>
-            <a href="{{ route('manage.resell.catalog') }}" class="btn btn-bloom btn-sm rounded-pill px-3">Open catalog</a>
-        </div>
-    </div>
-</div>
-@else
-    <div class="alert alert-secondary rounded-3 text-center py-4">
-        <i class="bi bi-lock fs-4 d-block mb-2"></i>
-        <p class="mb-0 small">Resell is not enabled or your account is inactive.</p>
-    </div>
-@endif
-
-@if($active && isset($vendorNotificationUnread) && $vendorNotificationUnread > 0)
-<div class="alert alert-info border-0 rounded-4 mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-    <span><i class="bi bi-bell-fill me-2"></i>You have <strong>{{ $vendorNotificationUnread }}</strong> unread resell notification(s).</span>
-    <a href="{{ route('dashboard') }}" class="btn btn-sm btn-dark rounded-pill">View bell menu ↑</a>
-</div>
-@endif
-@endif {{-- end resell --}}
+{{-- Resell lives on manage.resell.catalog — sidebar links there directly --}}
 
 {{-- ═══════ SECTION: REFERRALS ═══════ --}}
 @if ($section === 'referrals')
