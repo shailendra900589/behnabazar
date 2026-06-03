@@ -45,6 +45,9 @@ class MarketplaceDeploy extends Command
         $this->newLine();
         $this->info('3) Marketplace defaults + settings...');
         $this->call('db:seed', ['--class' => 'Database\\Seeders\\MarketplaceDefaultsSeeder', '--force' => true]);
+        $this->info('   Demo login accounts (password reset to standard demo)...');
+        $this->call('db:seed', ['--class' => 'Database\\Seeders\\DemoAccountsSeeder', '--force' => true]);
+        $this->printDemoLogins();
         $this->callSilent('marketplace:fix-demo-images');
         $this->callSilent('marketplace:ensure-catalog');
 
@@ -235,6 +238,16 @@ class MarketplaceDeploy extends Command
             }
         } else {
             $this->warn('   '.($result['message'] ?? 'Skipped.'));
+        }
+    }
+
+    private function printDemoLogins(): void
+    {
+        $this->newLine();
+        $this->comment('--- Demo logins (use on local + live after deploy) ---');
+        $this->line('   Password for ALL accounts below: password');
+        foreach (\Database\Seeders\DemoAccountsSeeder::definitions() as $row) {
+            $this->line(sprintf('   • %-12s %s', ucfirst(str_replace('_', ' ', $row['role'])).':', $row['email']));
         }
     }
 

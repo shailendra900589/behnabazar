@@ -10,17 +10,15 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::create(['name' => 'Admin', 'email' => 'admin@behnabazar.test', 'password' => Hash::make('password'), 'role' => 'admin', 'account_status' => 'active', 'is_email_verified' => true, 'email_verified_at' => now()]);
-        $vendor = User::create(['name' => 'Demo Vendor', 'email' => 'vendor@behnabazar.test', 'password' => Hash::make('password'), 'role' => 'vendor', 'shop_name' => 'Bloom Local Studio', 'city' => 'Indore', 'account_status' => 'active', 'reg_fee_paid' => true, 'is_email_verified' => true, 'email_verified_at' => now()]);
-        User::create(['name' => 'QC Manager', 'email' => 'qc@behnabazar.test', 'password' => Hash::make('password'), 'role' => 'qc_manager', 'account_status' => 'active', 'is_email_verified' => true, 'email_verified_at' => now()]);
-        User::create(['name' => 'Customer', 'email' => 'user@behnabazar.test', 'password' => Hash::make('password'), 'role' => 'user', 'coins' => 120, 'phone' => '9999999999', 'address' => 'Demo Street, Local Market', 'city' => 'Indore', 'pincode' => '452001', 'account_status' => 'active', 'is_email_verified' => true, 'email_verified_at' => now()]);
+        $this->call(DemoAccountsSeeder::class);
+        $vendor = User::where('email', 'vendor@behnabazar.test')->first();
+        $admin = User::where('email', 'admin@behnabazar.test')->first();
 
         $categories = collect([
             ['Grocery & Essentials', 'bi-basket2'],
