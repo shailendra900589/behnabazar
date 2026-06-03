@@ -180,19 +180,10 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
     color: #fff;
     border-radius: 1rem;
     box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-    position: sticky;
-    top: 1rem;
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.15) transparent;
     min-width: 0;
 }
-.dashboard-sidebar::-webkit-scrollbar { width: 4px; }
-.dashboard-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
 .dashboard-sidebar .sidebar-section-label { color: rgba(255,255,255,0.4); font-size: 0.6rem; letter-spacing: 0.08em; margin-top: 0.25rem; margin-bottom: 0.35rem; padding-left: 0.5rem; }
-.dashboard-sidebar .nav-link { color: rgba(255,255,255,.65); border-radius: 0.5rem; margin-bottom: 0; transition: all 0.2s ease; padding: 0.4rem 0.6rem; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex !important; align-items: center; gap: 0.5rem; }
+.dashboard-sidebar .nav-link { color: rgba(255,255,255,.65); border-radius: 0.5rem; margin-bottom: 0; transition: all 0.2s ease; padding: 0.32rem 0.55rem; font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex !important; align-items: center; gap: 0.45rem; }
 .dashboard-sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,0.08); }
 .dashboard-sidebar .nav-link.active { color: #fff; background: linear-gradient(135deg, #4f46e5, #6366f1); font-weight: 600; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35); }
 .dashboard-sidebar .nav-link i { font-size: 0.85rem; min-width: 1rem; text-align: center; flex-shrink: 0; }
@@ -2436,8 +2427,8 @@ h5, .h5 { font-size: 0.95rem; }
 @media (max-width: 991.98px) {
     .dashboard-offcanvas .dashboard-sidebar {
         border-radius: 0;
-        min-height: 100%;
-        max-height: 100%;
+        min-height: auto;
+        max-height: none;
         position: static;
     }
 
@@ -2452,6 +2443,10 @@ h5, .h5 { font-size: 0.95rem; }
 }
 
 @media (min-width: 992px) {
+    .dashboard-shell .row > .col-lg-3 {
+        align-self: flex-start;
+    }
+
     .dashboard-offcanvas.offcanvas-lg {
         position: static !important;
         transform: none !important;
@@ -2464,6 +2459,22 @@ h5, .h5 { font-size: 0.95rem; }
     .dashboard-offcanvas .offcanvas-body {
         padding: 0.75rem !important;
         display: block !important;
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    .dashboard-sidebar {
+        position: sticky;
+        top: 1rem;
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .dashboard-offcanvas .offcanvas-body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
