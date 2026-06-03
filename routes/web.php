@@ -21,6 +21,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
+Route::get('/{indexnow_key}.txt', [SitemapController::class, 'indexNowKey'])
+    ->where('indexnow_key', '[a-f0-9]{32}')
+    ->name('indexnow.key');
 
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/api/search', [StorefrontController::class, 'liveSearch'])->name('api.search');

@@ -93,7 +93,7 @@ class MarketplaceDefaultsSeeder extends Seeder
         SiteBranding::flushCache();
         SiteSeoSettings::flushCache();
         \App\Support\NotificationSettings::flushCache();
-        Cache::forget('seo.sitemap.xml');
+        \App\Support\Seo\SitemapBuilder::flush();
         Cache::forget('storefront.price_bounds');
         Cache::forget('storefront.flash_deal');
 

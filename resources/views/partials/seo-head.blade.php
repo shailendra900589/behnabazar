@@ -1,7 +1,20 @@
 @php
     $seo = $seo ?? null;
     $seoCfg = \App\Support\Seo\SiteSeoSettings::config();
+    $googleVerify = \App\Support\Seo\SearchEngineIndexer::googleVerification();
+    $bingVerify = \App\Support\Seo\SearchEngineIndexer::bingVerification();
+    $indexNowKey = \App\Support\Seo\SearchEngineIndexer::indexNowKey();
 @endphp
+@if($googleVerify !== '')
+    <meta name="google-site-verification" content="{{ $googleVerify }}">
+@endif
+@if($bingVerify !== '')
+    <meta name="msvalidate.01" content="{{ $bingVerify }}">
+@endif
+@if($indexNowKey)
+    <meta name="indexnow" content="{{ $indexNowKey }}">
+@endif
+<link rel="sitemap" type="application/xml" title="Sitemap" href="{{ route('sitemap', [], true) }}">
 @if($seo instanceof \App\Support\Seo\SeoMeta)
     <title>{{ $seo->title }}</title>
     <meta name="description" content="{{ $seo->description }}">

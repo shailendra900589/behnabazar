@@ -70,6 +70,13 @@ class MarketplaceDeploy extends Command
 
         $this->verifyRoutes();
         $this->verifySettings();
+
+        if (config('seo.enabled', true)) {
+            $this->newLine();
+            $this->info('7) Auto SEO — sitemap + search engine ping...');
+            $this->call('marketplace:seo-index');
+        }
+
         $this->printHostingerNotes();
 
         $this->newLine();

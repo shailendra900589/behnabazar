@@ -3,6 +3,13 @@
 return [
     'enabled' => env('SEO_ENABLED', true),
 
+    /** Rebuild sitemap + ping Google/Bing/IndexNow when products change and on schedule */
+    'auto_index' => env('SEO_AUTO_INDEX', true),
+
+    'sitemap_cache_minutes' => 60,
+
+    'indexnow_max_urls' => 200,
+
     'default_locale' => 'en-IN',
     'default_country' => 'IN',
     'currency' => 'INR',

@@ -232,8 +232,25 @@
                     <label class="form-label">Support email (schema.org)</label>
                     <input class="form-control mb-2" type="email" name="seo_contact_email" value="{{ $settings['seo_contact_email'] ?? '' }}">
                     <label class="form-label">Support phone</label>
-                    <input class="form-control mb-3" type="text" name="seo_contact_phone" value="{{ $settings['seo_contact_phone'] ?? '' }}">
-                    <p class="small text-muted mb-2"><a href="{{ route('sitemap') }}" target="_blank" rel="noopener">sitemap.xml</a> · <a href="{{ route('robots') }}" target="_blank" rel="noopener">robots.txt</a></p>
+                    <input class="form-control mb-2" type="text" name="seo_contact_phone" value="{{ $settings['seo_contact_phone'] ?? '' }}">
+                    <label class="form-label">Google Search Console verification</label>
+                    <input class="form-control mb-2" type="text" name="seo_google_verification" value="{{ $settings['seo_google_verification'] ?? '' }}" placeholder="content code from meta tag" maxlength="120">
+                    <label class="form-label">Bing Webmaster verification</label>
+                    <input class="form-control mb-2" type="text" name="seo_bing_verification" value="{{ $settings['seo_bing_verification'] ?? '' }}" placeholder="msvalidate.01 code" maxlength="120">
+                    <p class="small text-muted mb-2">
+                        Auto indexing: products get SEO meta + sitemap updates; Google/Bing/IndexNow ping on approve.
+                        Run once on server: <code>php artisan marketplace:seo-index</code>
+                    </p>
+                    <p class="small text-muted mb-2">
+                        <a href="{{ route('sitemap') }}" target="_blank" rel="noopener">sitemap.xml</a> ·
+                        <a href="{{ route('robots') }}" target="_blank" rel="noopener">robots.txt</a>
+                        @if(\App\Support\Seo\SearchEngineIndexer::indexNowKeyLocation())
+                            · <a href="{{ \App\Support\Seo\SearchEngineIndexer::indexNowKeyLocation() }}" target="_blank" rel="noopener">IndexNow key</a>
+                        @endif
+                    </p>
+                    @if(!empty($settings['seo_last_indexed_at']))
+                        <p class="small text-success mb-2">Last auto-index: {{ $settings['seo_last_indexed_at'] }}</p>
+                    @endif
                     <button type="submit" class="btn btn-bloom btn-sm">Save SEO / GEO</button>
                 </form>
             </div>

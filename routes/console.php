@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('cart:abandoned-remind')->hourly();
 Schedule::command('stock:notify')->everyThirtyMinutes();
 Schedule::command('whatsapp:process-outbox')->everyMinute();
+Schedule::command('marketplace:seo-index')->dailyAt('03:30');

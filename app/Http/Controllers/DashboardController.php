@@ -850,6 +850,8 @@ class DashboardController extends Controller
             'seo_longitude' => ['nullable', 'numeric'],
             'seo_contact_email' => ['nullable', 'email', 'max:120'],
             'seo_contact_phone' => ['nullable', 'string', 'max:30'],
+            'seo_google_verification' => ['nullable', 'string', 'max:120'],
+            'seo_bing_verification' => ['nullable', 'string', 'max:120'],
             'cod_enabled' => ['nullable'],
             'free_shipping_threshold' => ['nullable', 'numeric', 'min:0'],
             'delivery_pincodes' => ['nullable', 'string', 'max:2000'],
@@ -937,7 +939,7 @@ class DashboardController extends Controller
             \App\Support\SiteBranding::flushCache();
         }
 
-        foreach (['seo_locality', 'seo_region', 'seo_latitude', 'seo_longitude', 'seo_contact_email', 'seo_contact_phone'] as $seoKey) {
+        foreach (['seo_locality', 'seo_region', 'seo_latitude', 'seo_longitude', 'seo_contact_email', 'seo_contact_phone', 'seo_google_verification', 'seo_bing_verification'] as $seoKey) {
             if ($request->has($seoKey)) {
                 Setting::updateOrCreate(['setting_key' => $seoKey], [
                     'setting_value' => trim((string) ($data[$seoKey] ?? '')),
@@ -1488,7 +1490,7 @@ class DashboardController extends Controller
     {
         Cache::forget('storefront.price_bounds');
         Cache::forget('storefront.flash_deal');
-        Cache::forget('seo.sitemap.xml');
+        \App\Support\Seo\SitemapBuilder::flush();
     }
 
     private function requireRole(string|array $roles): void
