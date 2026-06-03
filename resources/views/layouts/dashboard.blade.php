@@ -15,8 +15,9 @@
                         <h5 class="offcanvas-title fw-bold" id="dashboardSidebarLabel">Menu</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#dashboardSidebar" aria-label="Close"></button>
                     </div>
-                    <aside class="offcanvas-body p-2 p-lg-3 dashboard-sidebar">
-                <nav class="nav flex-column gap-1">
+                    <div class="offcanvas-body p-0 dashboard-sidebar-panel">
+                    <aside class="dashboard-sidebar p-2 p-lg-3">
+                <nav class="nav flex-column gap-1 pb-2">
                     @auth
                         @if ($u->role === 'admin')
                             @php
@@ -144,6 +145,7 @@
                     @endauth
                 </nav>
                     </aside>
+                    </div>
                 </div>
             </div>
             <section class="col-lg-9 p-3 p-md-4 dashboard-main">
