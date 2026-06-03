@@ -4,29 +4,19 @@ Verification codes (register, vendor signup, password reset) are sent with Larav
 
 ## Recommended: Hostinger mailbox (not Gmail)
 
-1. In **hPanel → Emails**, create e.g. `noreply@behnabazar.in` and note the password.
-2. SSH into the server and edit `~/behnabazar/.env`:
-
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.hostinger.com
-MAIL_PORT=465
-MAIL_SCHEME=smtps
-MAIL_USERNAME=noreply@behnabazar.in
-MAIL_PASSWORD=your-real-email-password
-MAIL_FROM_ADDRESS="noreply@behnabazar.in"
-MAIL_FROM_NAME="Behna Bazar"
-MAIL_REPLY_TO_ADDRESS="noreply@behnabazar.in"
-MAIL_SUPPORT_ADDRESS="noreply@behnabazar.in"
-```
-
-3. Clear config cache and test:
+1. In **hPanel → Emails**, use mailbox **`no-reply@behnabazar.in`** (same password as webmail).
+2. On the server, copy `deploy/hostinger-mail.env.example` → `deploy/hostinger-mail.env` and set `MAIL_PASSWORD` (quoted if it contains `@`).
 
 ```bash
 cd ~/behnabazar
+cp deploy/hostinger-mail.env.example deploy/hostinger-mail.env
+nano deploy/hostinger-mail.env   # set MAIL_PASSWORD="your-password"
+php artisan marketplace:apply-mail-env
 php artisan config:clear
 php artisan marketplace:mail-test your@gmail.com
 ```
+
+Or edit `~/behnabazar/.env` directly — use **`no-reply@behnabazar.in`** and quote the password if it contains special characters: `MAIL_PASSWORD="your-password"`.
 
 ## Gmail on shared hosting
 

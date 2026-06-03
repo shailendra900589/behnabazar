@@ -23,6 +23,7 @@ class MarketplaceDeploy extends Command
         $this->line('PHP: '.PHP_VERSION);
         $this->line('APP_URL: '.config('app.url'));
         $this->verifyLiveEnv();
+        $this->applyMailEnvIfPresent();
         $this->printGitHead();
 
         if (! $this->option('skip-composer') && ! $this->ensureComposerDeps()) {
@@ -119,6 +120,18 @@ class MarketplaceDeploy extends Command
         } else {
             $this->line('   Mail config OK (run marketplace:mail-test to confirm delivery).');
         }
+    }
+
+    private function applyMailEnvIfPresent(): void
+    {
+        $snippet = base_path('deploy/hostinger-mail.env');
+        if (! is_file($snippet)) {
+            return;
+        }
+
+        $this->line('Applying mail settings from deploy/hostinger-mail.env …');
+        $this->call('marketplace:apply-mail-env', ['--file' => 'deploy/hostinger-mail.env']);
+        $this->callSilent('config:clear');
     }
 
     private function printGitHead(): void
