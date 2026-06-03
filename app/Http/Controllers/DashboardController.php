@@ -213,7 +213,8 @@ class DashboardController extends Controller
         $query = Order::with(['product.vendor', 'user'])->latest();
         
         if ($role === 'vendor') {
-            $query->whereHas('product', function($q) {
+            abort_unless($this->vendorCanManageShop(), 403);
+            $query->whereHas('product', function ($q) {
                 $q->where('vendor_id', Auth::id());
             });
         }
@@ -316,7 +317,7 @@ class DashboardController extends Controller
 
     public function requestPayout(Request $request): RedirectResponse
     {
-        $this->requireRole('vendor');
+        $this->requireActiveVendor();
         $minPayout = MarketplaceSettings::payoutMinAmount();
 
         $data = $request->validate([
@@ -527,12 +528,15 @@ class DashboardController extends Controller
 
     public function leaveImpersonation(): RedirectResponse
     {
-        $adminId = session()->pull('impersonated_by');
-        if ($adminId) {
-            Auth::loginUsingId($adminId);
-            return redirect()->route('dashboard')->with('status', 'Returned to admin console.');
+        $adminId = session('impersonated_by');
+        if (! $adminId || Auth::user()?->role !== 'vendor') {
+            return redirect()->route('home');
         }
-        return redirect()->route('home');
+
+        session()->forget('impersonated_by');
+        Auth::loginUsingId((int) $adminId);
+
+        return redirect()->route('dashboard')->with('status', 'Returned to admin console.');
     }
 
     public function createQcUser(Request $request): RedirectResponse
@@ -568,6 +572,7 @@ class DashboardController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
+            $this->publishUploadedPath($data['image']);
         }
 
         if (! empty($data['compare_at_price']) && (float) $data['compare_at_price'] < (float) $data['price']) {
@@ -632,6 +637,7 @@ class DashboardController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
+            $this->publishUploadedPath($data['image']);
         }
 
         $update = [
@@ -1140,6 +1146,7 @@ class DashboardController extends Controller
                 Storage::disk('public')->delete($ad->image_path);
             }
             $ad->image_path = $request->file('image')->store('ads', 'public');
+            $this->publishUploadedPath($ad->image_path);
         }
 
         $ad->save();
@@ -1149,7 +1156,7 @@ class DashboardController extends Controller
 
     public function savePromotion(Request $request): RedirectResponse
     {
-        $this->requireRole('vendor');
+        $this->requireActiveVendor();
 
         $product = Product::where('vendor_id', Auth::id())
             ->where('qc_status', 'approved')
@@ -1194,6 +1201,10 @@ class DashboardController extends Controller
             ? $request->file('image')->store('ads', 'public')
             : $product->image;
 
+        if ($ad->image_path && str_starts_with((string) $ad->image_path, 'ads/')) {
+            $this->publishUploadedPath($ad->image_path);
+        }
+
         $ad->save();
 
         Auth::user()->decrement('ad_wallet_balance', $cost);
@@ -1211,7 +1222,7 @@ class DashboardController extends Controller
 
     public function createAdWalletOrder(Request $request): JsonResponse
     {
-        $this->requireRole('vendor');
+        $this->requireActiveVendor();
 
         $minTopup = (float) Setting::value('ad_wallet_min_topup', 50);
         $data = $request->validate(['amount' => ['required', 'numeric', 'min:'.$minTopup, 'max:100000']]);
@@ -1233,7 +1244,7 @@ class DashboardController extends Controller
 
     public function verifyAdWalletPayment(Request $request): RedirectResponse
     {
-        $this->requireRole('vendor');
+        $this->requireActiveVendor();
 
         $data = $request->validate([
             'razorpay_order_id' => ['required', 'string'],
@@ -1263,7 +1274,7 @@ class DashboardController extends Controller
 
     public function deletePromotion(Ad $ad): RedirectResponse
     {
-        $this->requireRole('vendor');
+        $this->requireActiveVendor();
         abort_unless($ad->vendor_id === Auth::id(), 403);
 
         if ($ad->image_path && str_starts_with($ad->image_path, 'ads/')) {
@@ -1331,6 +1342,7 @@ class DashboardController extends Controller
         $sort = (int) $product->images()->max('sort_order') + 1;
 
         if ($primaryPath) {
+            $this->publishUploadedPath($primaryPath);
             $exists = $product->images()->where('path', $primaryPath)->exists();
             if (! $exists) {
                 ProductImage::create([
@@ -1350,6 +1362,7 @@ class DashboardController extends Controller
                     break;
                 }
                 $path = $extraImage->store('products', 'public');
+                $this->publishUploadedPath($path);
                 ProductImage::create([
                     'product_id' => $product->id,
                     'path' => $path,
@@ -1481,5 +1494,18 @@ class DashboardController extends Controller
     private function requireRole(string|array $roles): void
     {
         abort_unless(Auth::user()?->isRole($roles), 403);
+    }
+
+    private function requireActiveVendor(): void
+    {
+        $this->requireRole('vendor');
+        abort_unless($this->vendorCanManageShop(), 403, 'Your shop must be approved before you can perform this action.');
+    }
+
+    private function publishUploadedPath(?string $path): void
+    {
+        if ($path && ! str_starts_with($path, 'http')) {
+            \App\Support\PublicStorage::publish($path);
+        }
     }
 }

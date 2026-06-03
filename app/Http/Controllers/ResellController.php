@@ -234,6 +234,7 @@ class ResellController extends Controller
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
+            \App\Support\PublicStorage::publish($path);
             $listing->update(['image' => $path]);
             ProductImage::create(['product_id' => $listing->id, 'path' => $path, 'sort_order' => $sort++]);
         }
@@ -241,6 +242,7 @@ class ResellController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $file) {
                 $path = $file->store('products', 'public');
+                \App\Support\PublicStorage::publish($path);
                 ProductImage::create(['product_id' => $listing->id, 'path' => $path, 'sort_order' => $sort++]);
             }
         }
