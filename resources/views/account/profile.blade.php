@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title','Profile')
 @section('content')
-<section class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="fw-bold mb-0">My Profile</h1>
+<section class="container py-3 py-md-5 bb-account-page">
+    <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
+        <h1 class="fw-bold mb-0 h4 h-md-auto">My Profile</h1>
         <a href="{{ route('addresses') }}" class="btn btn-soft btn-sm"><i class="bi bi-geo-alt me-1"></i> Address book</a>
     </div>
-    <div class="bb-card p-4 p-lg-5">
+    <div class="bb-card p-3 p-md-4 p-lg-5">
         <form method="post" action="{{ route('profile.update') }}">
             @csrf @method('PATCH')
             <div class="row g-3">

@@ -101,15 +101,15 @@
             </script>
         </div>
 
-        <div class="row g-4">
-            <div class="col-xl-7">
+        <div class="row g-3 g-md-4">
+            <div class="col-12 col-xl-7">
                 <div class="table-card">
                     <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">Recent orders</span>
+                        <span class="fw-bold small">Recent orders</span>
                         <span class="badge bg-light text-dark border">Live feed</span>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
+                        <table class="table table-sm align-middle mb-0 bb-mobile-stack-table">
                             <thead>
                                 <tr>
                                     <th>Order</th>
@@ -121,10 +121,10 @@
                             <tbody>
                                 @forelse ($recentOrders as $ro)
                                     <tr>
-                                        <td class="text-nowrap">#{{ $ro->id }} <span class="text-muted small">{{ \Illuminate\Support\Str::limit($ro->product_name, 22) }}</span></td>
-                                        <td>{{ \Illuminate\Support\Str::limit($ro->customer_name, 18) }}</td>
-                                        <td>₹{{ number_format($ro->total_price, 2) }}</td>
-                                        <td><span class="badge rounded-pill bg-light text-dark border">{{ $ro->status }}</span></td>
+                                        <td data-label="Order" class="text-nowrap">#{{ $ro->id }} <span class="text-muted small">{{ \Illuminate\Support\Str::limit($ro->product_name, 22) }}</span></td>
+                                        <td data-label="Customer">{{ \Illuminate\Support\Str::limit($ro->customer_name, 18) }}</td>
+                                        <td data-label="Total">₹{{ number_format($ro->total_price, 2) }}</td>
+                                        <td data-label="Status"><span class="badge rounded-pill bg-light text-dark border">{{ $ro->status }}</span></td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="4" class="text-center text-muted py-4">No orders yet.</td></tr>
@@ -134,8 +134,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-5">
-                <div class="bb-card p-4 h-100">
+            <div class="col-12 col-xl-5">
+                <div class="bb-card p-3 p-md-4 h-100">
                     <h3 class="h6 fw-bold mb-3">Top sellers</h3>
                     <div class="vstack gap-3">
                         @forelse ($topProducts as $tp)
@@ -232,7 +232,7 @@
         <div class="admin-section" id="tab-orders">
         <form method="get" action="{{ route('dashboard') }}" class="row g-2 align-items-end mb-3">
             <input type="hidden" name="section" value="orders">
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small">Status</label>
                 <select name="order_status" class="form-select form-select-sm">
                     <option value="">All</option>
@@ -241,19 +241,19 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small">From</label>
                 <input type="date" name="order_from" class="form-control form-control-sm" value="{{ $orderFilters['from'] ?? '' }}">
             </div>
-            <div class="col-md-2">
+            <div class="col-6 col-md-2">
                 <label class="form-label small">To</label>
                 <input type="date" name="order_to" class="form-control form-control-sm" value="{{ $orderFilters['to'] ?? '' }}">
             </div>
-            <div class="col-md-3">
+            <div class="col-12 col-md-3">
                 <label class="form-label small">Search</label>
                 <input type="text" name="order_q" class="form-control form-control-sm" placeholder="Name, phone, product, #" value="{{ $orderFilters['q'] ?? '' }}">
             </div>
-            <div class="col-md-3 d-flex gap-2">
+            <div class="col-12 col-md-3 d-flex gap-2 flex-wrap">
                 <button type="submit" class="btn btn-bloom btn-sm">Filter</button>
                 <a href="{{ route('dashboard', ['section' => 'orders']) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
                 <a href="{{ route('manage.orders.export') }}" class="btn btn-outline-dark btn-sm ms-auto"><i class="bi bi-download"></i></a>
@@ -261,7 +261,7 @@
         </form>
         <div class="table-card">
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 bb-mobile-stack-table admin-orders-table">
                     <thead>
                         <tr>
                             <th>Order</th>
@@ -273,11 +273,11 @@
                     <tbody>
                         @foreach ($orders as $order)
                             <tr>
-                                <td>#{{ $order->id }} {{ $order->product_name }}</td>
-                                <td>{{ $order->customer_name }}</td>
-                                <td>₹{{ number_format($order->total_price, 2) }}</td>
-                                <td>
-                                    <form data-ajax-form data-method="PATCH" action="{{ route('manage.orders.update', $order) }}" class="d-flex gap-2 flex-wrap">
+                                <td data-label="Order">#{{ $order->id }} {{ $order->product_name }}</td>
+                                <td data-label="Customer">{{ $order->customer_name }}</td>
+                                <td data-label="Total">₹{{ number_format($order->total_price, 2) }}</td>
+                                <td data-label="Status">
+                                    <form data-ajax-form data-method="PATCH" action="{{ route('manage.orders.update', $order) }}" class="d-flex gap-2 flex-wrap admin-order-actions">
                                         <select name="status" class="form-select form-select-sm" style="min-width: 140px">
                                             <option value="pending" @selected($order->status === 'pending')>pending</option>
                                             <option value="processing" @selected($order->status === 'processing')>processing</option>

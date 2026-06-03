@@ -1,21 +1,28 @@
 @extends('layouts.app')
 @section('title','Orders')
 @section('content')
-<section class="container py-5">
-    <h1 class="fw-bold mb-4">My Orders</h1>
-    <div class="vstack gap-3">
+<section class="container py-3 py-md-5 bb-orders-page">
+    <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
+        <h1 class="fw-bold mb-0 h4 h-md-auto">My Orders</h1>
+        <a href="{{ route('dashboard') }}" class="btn btn-soft btn-sm">← Account</a>
+    </div>
+    <div class="vstack gap-2 gap-md-3">
         @forelse($orders as $order)
-            <div class="bb-card-lite p-3 d-flex flex-wrap align-items-center gap-3">
-                <img src="{{ $order->product->imageUrl() }}" class="rounded-4" style="width:84px;height:84px;object-fit:cover">
-                <div class="flex-grow-1">
-                    <h5 class="fw-bold">{{ $order->product_name }}</h5>
-                    <span class="badge badge-soft">{{ str_replace('_',' ', $order->status) }}</span>
-                    @if($order->return_status)
-                        <span class="badge bg-warning text-dark ms-1">Return: {{ ucfirst($order->return_status) }}</span>
-                    @endif
-                    <span class="text-muted ms-2">₹{{ number_format($order->total_price,2) }}</span>
+            <div class="bb-card-lite bb-order-card p-3">
+                <div class="d-flex gap-2 gap-md-3 align-items-start">
+                <img src="{{ $order->product->imageUrl() }}" class="rounded-3 flex-shrink-0 bb-order-card-img" alt="">
+                <div class="flex-grow-1 min-w-0">
+                    <h5 class="fw-bold mb-1 h6">{{ $order->product_name }}</h5>
+                    <div class="d-flex flex-wrap gap-1 align-items-center mb-1">
+                        <span class="badge badge-soft">{{ str_replace('_',' ', $order->status) }}</span>
+                        @if($order->return_status)
+                            <span class="badge bg-warning text-dark">Return: {{ ucfirst($order->return_status) }}</span>
+                        @endif
+                        <span class="fw-semibold text-bloom">₹{{ number_format($order->total_price,2) }}</span>
+                    </div>
                 </div>
-                <div class="d-flex gap-2 flex-wrap">
+                </div>
+                <div class="d-flex gap-2 flex-wrap mt-2 pt-2 border-top">
                     <a class="btn btn-bloom" href="{{ route('orders.track',$order) }}">Track Order</a>
                     <a class="btn btn-outline-secondary" href="{{ route('orders.invoice', $order) }}" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf"></i> Invoice</a>
                     @if($order->product && $order->product->qc_status === 'approved')
@@ -35,7 +42,7 @@
                         <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#returnModal{{ $order->id }}">Return</button>
                         
                         <div class="modal fade" id="returnModal{{ $order->id }}" tabindex="-1">
-                            <div class="modal-dialog">
+                            <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
                                 <form method="post" action="{{ route('orders.return', $order) }}" class="modal-content">
                                     @csrf
                                     <div class="modal-header">

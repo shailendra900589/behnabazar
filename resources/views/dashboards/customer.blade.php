@@ -1,11 +1,11 @@
 @extends('layouts.dashboard')
 @section('title', 'My account')
 @section('dashboard')
-<div class="customer-dash-hero rounded-4 p-4 p-lg-5 mb-4 text-white position-relative overflow-hidden d-flex justify-content-between align-items-center">
-    <div class="position-relative z-1">
-        <p class="customer-dash-muted small text-uppercase fw-semibold mb-2 tracking-wide">Welcome back</p>
-        <h1 class="display-6 fw-bold mb-2">Hi, {{ auth()->user()->name }}</h1>
-        <p class="mb-0 customer-dash-muted lead" style="max-width: 500px">Track deliveries, spend coins at checkout, and curate your wishlist seamlessly.</p>
+<div class="customer-dash-hero rounded-4 p-3 p-md-4 p-lg-5 mb-3 mb-md-4 text-white position-relative overflow-hidden d-flex justify-content-between align-items-center">
+    <div class="position-relative z-1 min-w-0">
+        <p class="customer-dash-muted small text-uppercase fw-semibold mb-1 mb-md-2 tracking-wide">Welcome back</p>
+        <h1 class="customer-dash-title fw-bold mb-1 mb-md-2">Hi, {{ auth()->user()->name }}</h1>
+        <p class="mb-0 customer-dash-muted small">Track orders, use coins, and manage your wishlist.</p>
     </div>
     <div class="d-none d-lg-block z-1 text-white opacity-25">
         <i class="bi bi-person-bounding-box" style="font-size: 8rem;"></i>
@@ -15,25 +15,25 @@
 
 <div class="row g-3 g-lg-4 mb-4">
     <div class="col-6 col-md-3">
-        <div class="customer-stat-tile rounded-4 p-4 h-100">
+        <div class="customer-stat-tile rounded-4 p-3 p-md-4 h-100">
             <div class="small text-muted text-uppercase fw-semibold mb-1">Coins</div>
             <div class="h3 fw-bold text-bloom mb-0">{{ auth()->user()->coins }}</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="customer-stat-tile rounded-4 p-4 h-100">
+        <div class="customer-stat-tile rounded-4 p-3 p-md-4 h-100">
             <div class="small text-muted text-uppercase fw-semibold mb-1">Orders</div>
             <div class="h3 fw-bold mb-0">{{ $orderCount }}</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="customer-stat-tile rounded-4 p-4 h-100">
+        <div class="customer-stat-tile rounded-4 p-3 p-md-4 h-100">
             <div class="small text-muted text-uppercase fw-semibold mb-1">In progress</div>
             <div class="h3 fw-bold mb-0">{{ $pendingOrders }}</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="customer-stat-tile rounded-4 p-4 h-100">
+        <div class="customer-stat-tile rounded-4 p-3 p-md-4 h-100">
             <div class="small text-muted text-uppercase fw-semibold mb-1">Lifetime spend</div>
             <div class="h3 fw-bold mb-0">₹{{ number_format($lifetimeSpend, 0) }}</div>
         </div>
@@ -52,6 +52,9 @@
     <a href="{{ route('wishlist') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-heart me-1"></i>Wishlist ({{ $wishlistCount }})</a>
     <a href="{{ route('addresses') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-geo-alt me-1"></i>Addresses</a>
     <a href="{{ route('checkout') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-bag-check me-1"></i>Checkout</a>
+    @if($referralEnabled ?? true)
+        <a href="{{ route('referral') }}" class="btn btn-outline-dark btn-sm rounded-pill"><i class="bi bi-gift me-1"></i>Refer &amp; earn</a>
+    @endif
 </div>
 
 @if(isset($coinHistory) && $coinHistory->isNotEmpty())
@@ -74,15 +77,15 @@
 </div>
 @endif
 
-<div class="row g-4">
-    <div class="col-lg-7">
+<div class="row g-3 g-md-4">
+    <div class="col-12 col-lg-7">
         <div class="table-card">
-            <div class="p-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h2 class="h5 fw-bold mb-0">Recent orders</h2>
+            <div class="p-3 p-md-4 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="h6 h-md-5 fw-bold mb-0">Recent orders</h2>
                 <a href="{{ route('orders') }}" class="small fw-semibold text-bloom text-decoration-none">View all</a>
             </div>
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 bb-mobile-stack-table">
                     <thead>
                         <tr>
                             <th>Product</th>
@@ -94,13 +97,13 @@
                     <tbody>
                         @forelse ($orders as $order)
                             <tr>
-                                <td>
+                                <td data-label="Product">
                                     <div class="fw-semibold">{{ \Illuminate\Support\Str::limit($order->product_name, 36) }}</div>
                                     <div class="small text-muted">#{{ $order->id }}</div>
                                 </td>
-                                <td><span class="badge badge-soft">{{ str_replace('_', ' ', $order->status) }}</span></td>
-                                <td class="fw-semibold">₹{{ number_format($order->total_price, 2) }}</td>
-                                <td class="text-end">
+                                <td data-label="Status"><span class="badge badge-soft">{{ str_replace('_', ' ', $order->status) }}</span></td>
+                                <td data-label="Total" class="fw-semibold">₹{{ number_format($order->total_price, 2) }}</td>
+                                <td data-label="Actions" class="text-end text-md-end">
                                     <a href="{{ route('orders.track', $order) }}" class="btn btn-soft btn-sm rounded-pill">Track</a>
                                     <a href="{{ route('orders.invoice', $order) }}" class="btn btn-outline-secondary btn-sm rounded-pill" target="_blank"><i class="bi bi-file-pdf"></i></a>
                                 </td>
@@ -118,8 +121,8 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-5">
-        <div class="bb-card p-4 h-100">
+    <div class="col-12 col-lg-5">
+        <div class="bb-card p-3 p-md-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2 class="h5 fw-bold mb-0">Wishlist</h2>
                 <span class="badge rounded-pill bg-light text-dark border">{{ $wishlistCount }}</span>

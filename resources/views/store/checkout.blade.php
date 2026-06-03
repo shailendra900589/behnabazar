@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Checkout')
 @section('content')
-<section class="container py-3 py-md-4 py-lg-5">
+<section class="container py-2 py-md-4 py-lg-5 bb-checkout-page">
     @include('partials.trust-strip')
-    <h1 class="fw-bold mb-3 mb-md-4">Checkout</h1>
+    <h1 class="fw-bold mb-2 mb-md-4 h4 h-md-auto">Checkout</h1>
     <div class="row g-3 g-md-4">
-        <div class="col-lg-8">
-            <div class="bb-card p-4 mb-4 shadow-sm rounded-4 border-0">
+        <div class="col-lg-8 order-2 order-lg-1">
+            <div class="bb-card p-3 p-md-4 mb-3 mb-md-4 shadow-sm rounded-4 border-0">
                 <form method="get">
                     <label class="form-label fw-semibold">Coupon Code</label>
                     <div class="input-group mb-3">
@@ -20,7 +20,7 @@
                 </form>
             </div>
 
-            <form method="post" action="{{ route('checkout.place') }}" class="bb-card p-4 shadow-sm rounded-4 border-0" id="checkoutForm">
+            <form method="post" action="{{ route('checkout.place') }}" class="bb-card p-3 p-md-4 shadow-sm rounded-4 border-0" id="checkoutForm">
                 @csrf
                 <input type="hidden" name="coupon_code" value="{{ request('coupon_code') }}">
                 <input type="hidden" name="razorpay_order_id" id="checkoutRazorpayOrderId">
@@ -35,8 +35,8 @@
                 @if($addresses->isNotEmpty())
                     <div class="row g-3 mb-4">
                         @foreach($addresses as $addr)
-                        <div class="col-md-6">
-                            <label class="border rounded-4 p-3 d-block h-100 cursor-pointer position-relative" style="cursor:pointer;" onclick="document.getElementById('addr_{{ $addr->id }}').checked = true; document.getElementById('new_address_block').classList.add('d-none'); document.getElementById('addressTextarea').required = false; document.getElementById('phoneInput').required = false;">
+                        <div class="col-12 col-md-6">
+                            <label class="border rounded-4 p-3 d-block h-100 cursor-pointer position-relative bb-checkout-address" style="cursor:pointer;" onclick="document.getElementById('addr_{{ $addr->id }}').checked = true; document.getElementById('new_address_block').classList.add('d-none'); document.getElementById('addressTextarea').required = false; document.getElementById('phoneInput').required = false;">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="address_id" id="addr_{{ $addr->id }}" value="{{ $addr->id }}" {{ ($addr->is_default || ($loop->first && !$addresses->contains('is_default', true))) ? 'checked' : '' }}>
                                     <label class="form-check-label fw-bold d-block" for="addr_{{ $addr->id }}">
@@ -52,8 +52,8 @@
                             </label>
                         </div>
                         @endforeach
-                        <div class="col-md-6">
-                            <label class="border rounded-4 p-3 d-flex align-items-center justify-content-center h-100 text-primary fw-semibold" style="cursor:pointer; border-style: dashed !important;" onclick="document.getElementById('addr_new').checked = true; document.getElementById('new_address_block').classList.remove('d-none'); document.getElementById('addressTextarea').required = true; document.getElementById('phoneInput').required = true;">
+                        <div class="col-12 col-md-6">
+                            <label class="border rounded-4 p-3 d-flex align-items-center justify-content-center h-100 text-primary fw-semibold bb-checkout-address" style="cursor:pointer; border-style: dashed !important;" onclick="document.getElementById('addr_new').checked = true; document.getElementById('new_address_block').classList.remove('d-none'); document.getElementById('addressTextarea').required = true; document.getElementById('phoneInput').required = true;">
                                 <div class="form-check m-0 d-flex align-items-center gap-2">
                                     <input class="form-check-input m-0" type="radio" name="address_id" id="addr_new" value="">
                                     <span>Add New Address</span>
@@ -209,9 +209,9 @@
                 });
             </script>
         </div>
-        <div class="col-lg-4">
-            <div class="bb-card p-4 shadow-sm rounded-4 border-0 sticky-top" style="top: 100px;">
-                <h4 class="fw-bold mb-4">Order Summary</h4>
+        <div class="col-lg-4 order-1 order-lg-2">
+            <div class="bb-card bb-checkout-summary p-3 p-md-4 shadow-sm rounded-4 border-0 sticky-lg-top" style="top: 100px;">
+                <h4 class="fw-bold mb-3 mb-md-4 h6 h-md-auto">Order Summary</h4>
                 @include('partials.free-shipping-bar', ['cartTotal' => $subtotal, 'freeShippingThreshold' => $freeShippingThreshold ?? 0])
                 
                 <form method="GET" action="{{ route('checkout') }}" class="mb-4">

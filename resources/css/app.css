@@ -3293,6 +3293,60 @@ html {
     .resell-product-card .d-grid .btn { min-height: 2.5rem; }
     .resell-filter-card { padding: 0.75rem !important; }
     .resell-pagination { margin-bottom: calc(var(--bb-mobile-nav-h, 4.25rem) + 0.5rem); }
+
+    /* Mobile stack tables (admin / customer orders) */
+    .bb-mobile-stack-table thead { display: none; }
+    .bb-mobile-stack-table tbody tr {
+        display: block;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.6rem;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0.65rem;
+        background: #fff;
+    }
+    .bb-mobile-stack-table tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+        border: none;
+        padding: 0.35rem 0;
+        white-space: normal;
+    }
+    .bb-mobile-stack-table tbody td::before {
+        content: attr(data-label);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        flex-shrink: 0;
+        min-width: 4.5rem;
+    }
+    .bb-mobile-stack-table tbody td:last-child { border-top: 1px solid #f1f5f9; padding-top: 0.5rem; margin-top: 0.25rem; }
+    .bb-mobile-stack-table tbody td:last-child::before { display: none; }
+    .admin-order-actions { flex-direction: column !important; align-items: stretch !important; }
+    .admin-order-actions .form-select,
+    .admin-order-actions .form-control { min-width: 0 !important; width: 100%; }
+
+    /* Checkout mobile */
+    .bb-checkout-page .bb-checkout-summary { position: static !important; }
+    .bb-checkout-page .form-control-lg { font-size: 0.875rem; padding: 0.5rem 0.75rem; }
+    .bb-checkout-page .payment-option { padding: 0.75rem !important; }
+    .bb-checkout-page #placeOrderBtn { font-size: 0.9rem; padding: 0.65rem 1rem !important; }
+    .bb-checkout-address { min-height: auto; }
+
+    /* Customer dashboard mobile */
+    .customer-dash-title { font-size: 1.25rem; }
+    .customer-stat-tile .h3 { font-size: 1.1rem; }
+    .customer-stat-tile { padding: 0.75rem !important; }
+
+    /* Account pages */
+    .bb-account-page { padding-bottom: calc(var(--bb-mobile-nav-h, 4.25rem) + 0.75rem) !important; }
+    .bb-order-card-img { width: 64px; height: 64px; object-fit: cover; }
+    .bb-order-card .btn { font-size: 0.72rem; padding: 0.35rem 0.65rem; }
+
+    /* Wishlist mobile */
+    .bb-wishlist-title { font-size: 1.35rem; }
 }
 
 /* Extra-small screens (max 400px) */
@@ -3306,5 +3360,6 @@ html {
     h2, .h2 { font-size: 1rem !important; }
     .btn { font-size: 0.75rem; }
     .dashboard-main .table th, .dashboard-main .table td { font-size: 0.62rem; padding: 0.3rem 0.4rem; }
+    .bb-mobile-stack-table tbody td::before { min-width: 3.5rem; font-size: 0.58rem; }
 }
 

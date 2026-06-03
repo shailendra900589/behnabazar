@@ -1,10 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Refer & Earn')
 @section('content')
-<section class="container py-4 py-lg-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<section class="container py-3 py-md-4 py-lg-5 bb-account-page">
+    <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
         <div>
-            <h1 class="fw-bold mb-1" style="font-size:1.5rem;">Refer & Earn</h1>
+            <h1 class="fw-bold mb-1 h4 h-md-auto">Refer & Earn</h1>
             <p class="text-muted small mb-0">Share with friends and earn rewards!</p>
         </div>
         <a href="{{ route('dashboard') }}" class="btn btn-soft btn-sm">← Dashboard</a>

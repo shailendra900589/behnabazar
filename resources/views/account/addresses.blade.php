@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Saved addresses')
 @section('content')
-<section class="container py-4 py-lg-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="fw-bold mb-0">Saved addresses</h1>
+<section class="container py-3 py-md-4 py-lg-5 bb-account-page">
+    <div class="d-flex justify-content-between align-items-center mb-3 mb-md-4">
+        <h1 class="fw-bold mb-0 h4 h-md-auto">Saved addresses</h1>
         <a href="{{ route('profile') }}" class="btn btn-soft btn-sm">← Profile</a>
     </div>
     <div class="row g-4">
