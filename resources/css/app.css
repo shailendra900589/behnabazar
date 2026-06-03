@@ -1125,18 +1125,24 @@ h5, .h5 { font-size: 0.95rem; }
 .bb-nav-links .dropdown-menu { font-size: 0.8125rem; }
 .bb-navbar-compact .navbar-brand { margin-right: 0.75rem !important; }
 
-/* —— Fixed news-style marquee —— */
-.bb-marquee-bar {
+/* —— Site header: marquee + navbar stick together —— */
+.bb-site-header-sticky {
     position: sticky;
     top: 0;
     z-index: 1040;
+    width: 100%;
+}
+
+/* —— Scrolling news-style marquee (admin: Header marquee) —— */
+.bb-marquee-bar {
+    position: relative;
     width: 100%;
     max-width: 100%;
     background: linear-gradient(90deg, #b91c1c 0%, #dc2626 45%, #991b1b 100%);
     color: #fff;
     overflow: hidden;
     border-bottom: 1px solid rgba(0,0,0,0.08);
-    min-height: 28px;
+    min-height: 32px;
     display: flex;
     align-items: center;
 }
@@ -1162,8 +1168,21 @@ h5, .h5 { font-size: 0.95rem; }
 }
 .bb-marquee-bar:hover .bb-marquee-track { animation-play-state: paused; }
 
-/* Navbar below marquee */
-.bb-marquee-bar + .bb-navbar-compact { top: 0; z-index: 1030; }
+.bb-site-header-sticky .bb-navbar-compact {
+    position: relative;
+    top: auto;
+    z-index: 1;
+}
+
+@media (max-width: 767px) {
+    .bb-marquee-track {
+        font-size: 0.7rem;
+        animation-duration: 36s;
+    }
+    .bb-marquee-bar {
+        min-height: 30px;
+    }
+}
 
 /* —— Fixed autoplay video widget —— */
 .bb-site-video {
