@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\ReferralProgramService;
+use App\Support\MailConfigurator;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
@@ -26,7 +27,7 @@ class VendorRegistrationController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:150'],
             'password' => ['required', 'confirmed', 'min:8'],
             'shop_name' => ['required', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:30'],
@@ -39,6 +40,17 @@ class VendorRegistrationController extends Controller
             'referral_code' => ['nullable', 'string', 'max:16'],
         ]);
 
+        $email = strtolower(trim($data['email']));
+        $existing = User::where('email', $email)->first();
+
+        if ($existing && ($existing->is_email_verified || $existing->role !== 'vendor')) {
+            return back()->withInput()->withErrors([
+                'email' => $existing->role !== 'vendor'
+                    ? 'This email is registered as a customer. Use another email for selling.'
+                    : 'This email is already registered. Sign in to continue vendor onboarding.',
+            ]);
+        }
+
         if (! empty($data['referral_code'] ?? null)) {
             app(ReferralProgramService::class)->captureReferralFromRequest($data['referral_code']);
         }
@@ -47,11 +59,9 @@ class VendorRegistrationController extends Controller
 
         $path = $request->file('document_file')?->store('vendor_documents', 'public');
 
-        $user = User::create([
+        $vendorFields = [
             'name' => $data['name'],
-            'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'vendor',
             'shop_name' => $data['shop_name'],
             'phone' => $data['phone'] ?? null,
             'address' => $data['address'] ?? null,
@@ -65,15 +75,28 @@ class VendorRegistrationController extends Controller
             'is_email_verified' => false,
             'otp_code' => $otp,
             'otp_expiry' => now()->addMinutes(10),
-        ]);
+        ];
 
-        app(ReferralProgramService::class)->applyReferrerOnRegister($user);
-
-        if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
-            return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);
+        if ($existing) {
+            if ($path) {
+                $vendorFields['document_file'] = $path;
+            }
+            $existing->update($vendorFields);
+            $user = $existing->fresh();
+        } else {
+            $user = User::create(array_merge($vendorFields, [
+                'email' => $email,
+                'role' => 'vendor',
+            ]));
+            app(ReferralProgramService::class)->applyReferrerOnRegister($user);
         }
 
         $request->session()->put('vendor_register_id', $user->id);
+
+        if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
+            return redirect()->route('vendor.verify.show')
+                ->with('warning', MailConfigurator::userFacingMailError());
+        }
 
         return redirect()->route('vendor.verify.show')
             ->with('status', 'We sent a 6-digit code to your email. Enter it below to verify your shop.');
@@ -99,7 +122,9 @@ class VendorRegistrationController extends Controller
         $otp = (string) random_int(100000, 999999);
         $user->update(['otp_code' => $otp, 'otp_expiry' => now()->addMinutes(10)]);
         if (! $this->sendOtpMail($user->email, $otp, 'vendor')) {
-            return back()->withErrors(['otp' => 'Could not resend email. Try again shortly.']);
+            return back()
+                ->with('warning', MailConfigurator::userFacingMailError())
+                ->withErrors(['otp' => 'Email could not be sent. Fix mail settings on the server, then tap Resend again.']);
         }
 
         return back()->with('status', 'A new verification code was sent.');

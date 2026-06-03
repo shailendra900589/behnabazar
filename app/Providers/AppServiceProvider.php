@@ -10,6 +10,7 @@ use App\Support\Seo\SeoResolver;
 use App\Services\ReferralProgramService;
 use App\Services\VendorNotificationService;
 use App\Support\ReferralSettings;
+use App\Support\MailConfigurator;
 use App\Support\SiteBranding;
 use App\Support\SiteMedia;
 use Illuminate\Pagination\Paginator;
@@ -33,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        MailConfigurator::applyTransportDefaults();
+
         if (! $this->app->runningInConsole()) {
             $request = $this->app->make('request');
             if ($request) {

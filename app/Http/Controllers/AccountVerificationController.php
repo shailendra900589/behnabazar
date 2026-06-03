@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\MailConfigurator;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
@@ -77,7 +78,9 @@ class AccountVerificationController extends Controller
         $otp = (string) random_int(100000, 999999);
         $user->update(['otp_code' => $otp, 'otp_expiry' => now()->addMinutes(10)]);
         if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
-            return back()->withErrors(['otp' => 'Could not resend email. Try again shortly.']);
+            return back()
+                ->with('warning', MailConfigurator::userFacingMailError())
+                ->withErrors(['otp' => 'Email could not be sent. Fix mail settings on the server, then tap Resend again.']);
         }
 
         return back()->with('status', 'A new code was sent to your email.');

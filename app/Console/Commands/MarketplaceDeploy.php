@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Support\HostingerPublicSync;
+use App\Support\MailConfigurator;
 use App\Support\StoragePublicLink;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -107,6 +108,16 @@ class MarketplaceDeploy extends Command
 
         if (config('filesystems.default') !== 'public') {
             $this->warn('   FILESYSTEM_DISK should be "public" on live (product images). Current: '.config('filesystems.default'));
+        }
+
+        if (! MailConfigurator::isConfigured()) {
+            $this->warn('   MAIL is NOT configured — OTP / order emails will fail.');
+            foreach (MailConfigurator::diagnose() as $issue) {
+                $this->line('      • '.$issue);
+            }
+            $this->line('      Fix .env then: php artisan marketplace:mail-test you@email.com');
+        } else {
+            $this->line('   Mail config OK (run marketplace:mail-test to confirm delivery).');
         }
     }
 
@@ -260,6 +271,7 @@ class MarketplaceDeploy extends Command
         $this->line('• Split setup: CSS/JS in domains/.../public_html, Laravel in ~/behnabazar — deploy step 5 syncs both');
         $this->line('• Ideal: document root = '.public_path().' OR symlink public_html → behnabazar/public');
         $this->line('• .env APP_URL=https://behnabazar.in (HTTPS, not http://localhost)');
+        $this->line('• .env MAIL_* — Hostinger email (docs/MAIL_HOSTINGER.md), then: php artisan marketplace:mail-test you@email.com');
         $this->line('• Verify CSS: view-source → css/app.css?v= should load (not old behnabazar.min.css only)');
         $this->line('• Admin: Dashboard → ?section=whatsapp | notifications | program');
     }

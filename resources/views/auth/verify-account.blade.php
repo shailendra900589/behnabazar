@@ -10,6 +10,9 @@
                 </div>
                 <h1 class="h4 fw-bold mb-2">Verify your email</h1>
                 <p class="text-muted small mb-4">Enter the 6-digit code we sent. Then you can checkout, track orders, and use your wallet.</p>
+                @if ($errors->has('otp'))
+                    <p class="alert alert-warning small py-2 mb-3">Did not get the email? Check spam, wait a minute, then tap <strong>Resend code</strong> below.</p>
+                @endif
                 <form method="post" action="{{ route('account.verify.submit') }}" class="vstack gap-3">
                     @csrf
                     <input class="form-control form-control-lg text-center" name="otp" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="••••••" required autocomplete="one-time-code">

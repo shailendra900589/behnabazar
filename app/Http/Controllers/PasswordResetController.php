@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\MailConfigurator;
 use App\Support\SendsOtpMail;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,8 @@ class PasswordResetController extends Controller
     {
         $request->validate(['email' => ['required', 'email']]);
 
+        $request->session()->put('password_reset_email', $request->email);
+
         $user = User::where('email', $request->email)->first();
 
         if ($user) {
@@ -30,13 +33,10 @@ class PasswordResetController extends Controller
             $user->update(['otp_code' => $otp, 'otp_expiry' => now()->addMinutes(10)]);
 
             if (! $this->sendOtpMail($user->email, $otp, 'password_reset')) {
-                return back()
-                    ->withInput()
-                    ->withErrors(['email' => 'Could not send email right now. Check mail settings and try again.']);
+                return redirect()->route('password.verify.show')
+                    ->with('warning', MailConfigurator::userFacingMailError());
             }
         }
-
-        $request->session()->put('password_reset_email', $request->email);
 
         return redirect()->route('password.verify.show')
             ->with('status', 'If that email is registered, we sent a 6-digit code. Enter it below with your new password.');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\ReferralProgramService;
+use App\Support\MailConfigurator;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
 use Illuminate\Http\RedirectResponse;
@@ -60,37 +61,55 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'email', 'max:150', 'unique:users,email'],
+            'email' => ['required', 'email', 'max:150'],
             'password' => ['required', 'confirmed', 'min:8'],
             'city' => ['nullable', 'string', 'max:100'],
             'referral_code' => ['nullable', 'string', 'max:16'],
         ]);
+
+        $email = strtolower(trim($data['email']));
+        $existing = User::where('email', $email)->first();
+
+        if ($existing && ($existing->is_email_verified || $existing->role !== 'user')) {
+            return back()->withInput()->withErrors([
+                'email' => $existing->role !== 'user'
+                    ? 'This email is used for a seller account. Sign in or use another email.'
+                    : 'This email is already registered. Please sign in.',
+            ]);
+        }
 
         if (! empty($data['referral_code'])) {
             app(ReferralProgramService::class)->captureReferralFromRequest($data['referral_code']);
         }
 
         $otp = (string) random_int(100000, 999999);
-
-        $user = User::create([
+        $userFields = [
             'name' => $data['name'],
-            'email' => $data['email'],
             'password' => Hash::make($data['password']),
-            'role' => 'user',
             'city' => $data['city'] ?? null,
             'account_status' => 'active',
             'is_email_verified' => false,
             'otp_code' => $otp,
             'otp_expiry' => now()->addMinutes(10),
-        ]);
+        ];
 
-        if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
-            return back()->withInput()->withErrors(['email' => 'Could not send verification email. Check mail settings and try again.']);
+        if ($existing) {
+            $existing->update($userFields);
+            $user = $existing->fresh();
+        } else {
+            $user = User::create(array_merge($userFields, [
+                'email' => $email,
+                'role' => 'user',
+            ]));
+            app(ReferralProgramService::class)->applyReferrerOnRegister($user);
         }
 
-        app(ReferralProgramService::class)->applyReferrerOnRegister($user);
-
         $request->session()->put('customer_register_id', $user->id);
+
+        if (! $this->sendOtpMail($user->email, $otp, 'customer')) {
+            return redirect()->route('account.verify.show')
+                ->with('warning', MailConfigurator::userFacingMailError());
+        }
 
         return redirect()->route('account.verify.show')
             ->with('status', 'We emailed you a 6-digit code. Enter it below to activate your customer account.');
