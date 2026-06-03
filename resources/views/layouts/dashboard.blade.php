@@ -5,8 +5,8 @@
 @endphp
 <div class="dashboard-shell">
     <div class="container-fluid px-3 px-md-4 py-3">
-        <div class="row g-0 g-lg-4">
-            <div class="col-lg-3">
+        <div class="row g-0 g-lg-4 dashboard-layout-row align-items-start">
+            <div class="col-lg-3 dashboard-sidebar-col">
                 <button class="btn btn-bloom rounded-pill w-100 d-lg-none dashboard-mobile-toggle mb-3 mt-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#dashboardSidebar" aria-controls="dashboardSidebar">
                     <i class="bi bi-list me-2"></i>Dashboard menu
                 </button>
