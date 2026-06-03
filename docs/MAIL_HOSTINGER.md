@@ -25,6 +25,18 @@ Gmail (`smtp.gmail.com`) often fails on Hostinger (blocked ports or invalid app 
 - Use a [Google App Password](https://myaccount.google.com/apppasswords), not your normal password.
 - Set `MAIL_PASSWORD` to that 16-character app password (no spaces).
 
+## Pull latest code first
+
+If `marketplace:apply-mail-env` or `marketplace:mail-test` is **not defined**, the server code is old:
+
+```bash
+cd ~/behnabazar
+git pull
+git log -1 --oneline    # should include apply-mail-env / mail-test commits
+php artisan optimize:clear
+php artisan list marketplace
+```
+
 ## After changing `.env`
 
 ```bash
