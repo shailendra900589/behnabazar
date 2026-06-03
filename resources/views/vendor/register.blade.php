@@ -141,7 +141,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Upload document</label>
                             <input class="form-control" type="file" name="document_file" required accept="image/*,.pdf">
-                            <div class="form-text">Accepted formats: JPG, PNG, or PDF up to 2 MB.</div>
+                            @include('partials.upload-size-hint', ['type' => 'vendor_document'])
                         </div>
 
                         <div class="col-12 pt-2">

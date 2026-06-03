@@ -204,6 +204,23 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 .form-control, .form-select { border-radius: 1rem; border-color: #cbd5e1; padding: 0.8rem 1rem; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.02) inset; }
 .form-control:focus, .form-select:focus { border-color: var(--bb-primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
 
+.bb-upload-size-hint {
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    line-height: 1.45;
+}
+.bb-upload-guide-card {
+    background: linear-gradient(135deg, #fafbff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+}
+.bb-upload-guide-table th,
+.bb-upload-guide-table td {
+    padding: 0.35rem 0.5rem;
+    vertical-align: top;
+}
 .hero-carousel-img { height: 420px; object-fit: cover; filter: brightness(0.9); transition: transform 0.8s ease; }
 .carousel-item.active .hero-carousel-img { transform: scale(1.02); }
 @media (max-width: 767px) { .hero-carousel-img { height: 280px; } }

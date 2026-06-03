@@ -519,6 +519,7 @@
         @if (($adminSection ?? '') === 'storefront')
         <div class="admin-section" id="tab-storefront">
         @include('dashboards.partials.site-display-admin')
+        @include('partials.upload-size-guide-card')
         <div class="row g-4">
             <div class="col-lg-6">
                 <div class="bb-card p-4">
@@ -528,6 +529,7 @@
                         <div class="col-12">
                             <label class="form-label">Image</label>
                             <input type="file" name="image" class="form-control" required accept="image/*">
+                            @include('partials.upload-size-hint', ['type' => 'hero_banner'])
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Link URL</label>
@@ -611,6 +613,7 @@
                         <div class="col-12">
                             <label class="form-label">Image file</label>
                             <input type="file" name="image" class="form-control" accept="image/*">
+                            @include('partials.upload-size-hint', ['type' => 'site_ad'])
                         </div>
                         <div class="col-12">
                             <label class="form-label">Embed code (code ads)</label>
@@ -825,10 +828,12 @@
                 <div class="col-md-6">
                     <label class="form-label">Primary Image</label>
                     <input type="file" name="image" class="form-control" accept="image/*">
+                    @include('partials.upload-size-hint', ['type' => 'product_primary'])
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Additional Images (max 3)</label>
+                    <label class="form-label">Additional Images (max {{ config('product.max_gallery_images', 5) }})</label>
                     <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
+                    @include('partials.upload-size-hint', ['type' => 'product_gallery'])
                 </div>
                 <div class="col-12"><textarea name="description" class="form-control" placeholder="Description" required></textarea></div>
             </div>

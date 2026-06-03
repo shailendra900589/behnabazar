@@ -260,7 +260,7 @@
         </div>
         <span class="badge bg-primary bg-opacity-10 text-primary">{{ $promotions->count() }} promotion(s)</span>
     </div>
-    <p class="text-muted small mb-3">Feature an approved listing on storefront ad placements. Ad space auto-adjusts when no ad is available.</p>
+    <p class="text-muted small mb-3">Feature an approved listing on storefront ad placements. Ad space auto-adjusts when no ad is available. <span class="d-block mt-1">{{ \App\Support\UploadImageGuide::hint('vendor_promotion_ad') }}</span></p>
 
     <form method="post" action="{{ route('manage.promotions.save') }}" enctype="multipart/form-data" class="row g-2 align-items-end bg-light rounded-3 p-3 mb-3 border">
         @csrf
@@ -296,6 +296,7 @@
         <div class="col-md-3 col-6">
             <label class="form-label">Ad image</label>
             <input class="form-control form-control-sm" type="file" name="image" accept="image/*">
+            @include('partials.upload-size-hint', ['type' => 'vendor_promotion_ad'])
         </div>
         <div class="col-md-3 col-6">
             <label class="form-label">Starts</label>
@@ -656,11 +657,13 @@
                     <div class="col-md-6">
                         <label class="form-label">Primary Image</label>
                         <input type="file" name="image" class="form-control" accept="image/*">
+                        @include('partials.upload-size-hint', ['type' => 'product_primary'])
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Gallery images (max {{ config('product.max_gallery_images', 5) }})</label>
                         <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
-                        <small class="text-muted">Up to {{ config('product.max_gallery_images', 5) }} photos total (including primary). Cards auto-rotate when multiple.</small>
+                        @include('partials.upload-size-hint', ['type' => 'product_gallery'])
+                        <small class="text-muted d-block mt-1">Up to {{ config('product.max_gallery_images', 5) }} photos total (including primary). Cards auto-rotate when multiple.</small>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Description</label>

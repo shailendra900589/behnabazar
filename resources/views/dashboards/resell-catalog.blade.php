@@ -167,10 +167,12 @@
                             <div class="col-md-6">
                                 <label class="form-label">Cover image</label>
                                 <input type="file" name="image" class="form-control" accept="image/*">
+                                @include('partials.upload-size-hint', ['type' => 'product_primary'])
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Gallery images</label>
                                 <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
+                                @include('partials.upload-size-hint', ['type' => 'product_gallery'])
                             </div>
                         </div>
                         <div class="modal-footer">

@@ -41,10 +41,12 @@
                 <div class="col-md-6">
                     <label class="form-label">Replace cover image</label>
                     <input type="file" name="image" class="form-control" accept="image/*">
+                    @include('partials.upload-size-hint', ['type' => 'product_primary'])
                 </div>
                 <div class="col-12">
                     <label class="form-label">Add gallery images (max {{ config('product.max_gallery_images', 5) }} total)</label>
                     <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
+                    @include('partials.upload-size-hint', ['type' => 'product_gallery'])
                 </div>
                 <div class="col-12" id="editProductCurrentImages"></div>
                 <div class="col-12">
