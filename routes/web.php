@@ -25,6 +25,7 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 Route::get('/', [StorefrontController::class, 'home'])->name('home');
 Route::get('/api/search', [StorefrontController::class, 'liveSearch'])->name('api.search');
 Route::get('/api/delivery-check', [DeliveryController::class, 'checkPincode'])->name('api.delivery-check');
+Route::get('/api/cart-preview', [CartController::class, 'preview'])->name('api.cart-preview');
 Route::get('/api/visitor-count', function () {
     try {
         $count = \Illuminate\Support\Facades\DB::table('site_visits')->where('id', 1)->value('total_count') ?? 0;

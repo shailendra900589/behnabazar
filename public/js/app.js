@@ -94,6 +94,26 @@
         }
     }
 
+    function refreshCartUI(data) {
+        if (!data) return;
+        if (typeof window.bbApplyCartPayload === 'function') {
+            window.bbApplyCartPayload(data);
+        } else {
+            updateCartBadges(data.cart_count, data.cart_total);
+            if (data.cart_dropdown_html != null) {
+                var menu = document.getElementById('bbCartDropdownMenu');
+                if (menu) menu.innerHTML = data.cart_dropdown_html;
+            }
+        }
+        if (data.cart_count !== undefined) {
+            updateCartPageTotals(data);
+        }
+    }
+
+    function initCartDropdownRefresh() {
+        /* Handled in partials/cart-dropdown-script (always synced with Blade deploy). */
+    }
+
     function initAjaxForms() {
         document.addEventListener('submit', async function (event) {
             const form = event.target.closest('[data-ajax-form]');
@@ -117,10 +137,8 @@
                     form.reset();
                 }
 
-                updateCartBadges(data.cart_count, data.cart_total);
-
-                if (data.cart_count !== undefined && form.matches('[action*="cart"]')) {
-                    updateCartPageTotals(data);
+                if (data.cart_count !== undefined || data.cart_dropdown_html != null) {
+                    refreshCartUI(data);
                 }
 
                 if (data.operation === 'removed') {
@@ -168,7 +186,7 @@
                 payload.append('_method', 'DELETE');
                 const data = await window.bbRequest(form.action, { method: 'POST', body: payload });
                 window.bbToast(data.message || 'Item removed');
-                updateCartBadges(data.cart_count, data.cart_total);
+                refreshCartUI(data);
 
                 const row = form.closest('.bb-cart-item') || form.closest('.cart-line-item');
                 if (row) {
@@ -180,7 +198,6 @@
                         if (!document.querySelector('.bb-cart-item') && !document.querySelector('.cart-line-item')) {
                             window.location.reload();
                         }
-                        updateCartPageTotals(data);
                     }, 320);
                 }
             } catch (error) {
@@ -433,6 +450,7 @@
 
     function onReady() {
         initAjaxForms();
+        initCartDropdownRefresh();
         initCartRemoveAjax();
         initQuantityControls();
         initWishlistToggles();

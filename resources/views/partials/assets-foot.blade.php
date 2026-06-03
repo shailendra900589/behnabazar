@@ -10,5 +10,6 @@
 <script src="{{ $bbBootstrapJs }}"></script>
 <script src="{{ $bbNprogress }}"></script>
 <script src="{{ $bbThemeJs }}"></script>
+@include('partials.cart-dropdown-script')
 <script src="{{ $bbShareJs }}" defer></script>
 <script src="{{ $bbGalleryJs }}" defer></script>

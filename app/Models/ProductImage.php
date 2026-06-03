@@ -16,8 +16,6 @@ class ProductImage extends Model
 
     public function url(): string
     {
-        return str_starts_with($this->path, 'http')
-            ? $this->path
-            : asset('storage/'.$this->path);
+        return \App\Support\PublicStorage::url($this->path);
     }
 }

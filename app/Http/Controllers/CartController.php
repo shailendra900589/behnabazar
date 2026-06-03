@@ -74,18 +74,10 @@ class CartController extends Controller
         $this->authorizeCartItem($item);
         $item->delete();
 
-        $items = $this->items();
-        $count = $items->sum('quantity');
-        $total = $items->sum(fn ($i) => $i->quantity * ($i->variant ? ($i->variant->price ?? $i->product->price) : $i->product->price));
-
         if ($request->expectsJson()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Item removed.',
+            return response()->json(array_merge($this->cartJsonPayload('Item removed.'), [
                 'operation' => 'removed',
-                'cart_count' => $count,
-                'cart_total' => number_format($total, 2),
-            ]);
+            ]));
         }
 
         return back()->with('status', 'Item removed.');
@@ -99,7 +91,7 @@ class CartController extends Controller
 
     public function items()
     {
-        return CartItem::with(['product', 'variant'])
+        return CartItem::with(['product.images', 'variant'])
             ->when(Auth::check(), fn ($q) => $q->where('user_id', Auth::id()), fn ($q) => $q->where('session_id', session()->getId()))
             ->latest()
             ->get();
@@ -110,16 +102,53 @@ class CartController extends Controller
         abort_unless((Auth::check() && $item->user_id === Auth::id()) || (! Auth::check() && $item->session_id === session()->getId()), 403);
     }
 
+    public function preview(Request $request): JsonResponse
+    {
+        return response()->json($this->cartJsonPayload(''));
+    }
+
     private function response(Request $request, string $message): JsonResponse|RedirectResponse
+    {
+        if ($request->expectsJson()) {
+            return response()->json($this->cartJsonPayload($message));
+        }
+
+        return back()->with('status', $message);
+    }
+
+    private function cartJsonPayload(string $message): array
     {
         $items = $this->items();
         $count = $items->sum('quantity');
         $total = $items->sum(fn ($item) => $item->quantity * ($item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price));
 
-        if ($request->expectsJson()) {
-            return response()->json(['status' => 'success', 'message' => $message, 'cart_count' => $count, 'cart_total' => number_format($total, 2)]);
+        $preview = $items->take(3);
+
+        $payload = [
+            'status' => 'success',
+            'cart_count' => $count,
+            'cart_total' => number_format($total, 2),
+            'cart_more' => max(0, $count - 3),
+            'cart_items' => $preview->map(function ($item) {
+                $unit = $item->variant ? ($item->variant->price ?? $item->product->price) : $item->product->price;
+
+                return [
+                    'title' => $item->product->title,
+                    'image' => $item->product->imageUrl(),
+                    'quantity' => $item->quantity,
+                    'unit_price' => number_format((float) $unit, 2),
+                ];
+            })->values()->all(),
+            'cart_dropdown_html' => view('partials.cart-dropdown-menu', [
+                'cartItemsPreview' => $preview,
+                'cartCount' => $count,
+            ])->render(),
+        ];
+
+        if ($message !== '') {
+            $payload['message'] = $message;
         }
 
-        return back()->with('status', $message);
+        return $payload;
     }
 }

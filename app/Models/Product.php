@@ -196,10 +196,10 @@ class Product extends Model
         }
 
         if ($this->image) {
-            return str_starts_with($this->image, 'http') ? $this->image : asset('storage/'.$this->image);
+            return \App\Support\PublicStorage::url($this->image);
         }
 
-        return 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=900&auto=format&fit=crop';
+        return \App\Support\PublicStorage::placeholder();
     }
 
     public function emailSafeImageUrl(): ?string
