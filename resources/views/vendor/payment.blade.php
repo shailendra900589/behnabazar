@@ -31,7 +31,23 @@
                     <input type="hidden" name="razorpay_signature" id="vendorRazorpaySignature">
                     <button type="button" class="btn btn-bloom btn-lg py-3" id="vendorFeePayBtn">Pay securely with Razorpay</button>
                 </form>
-                <p class="text-center text-muted small mt-3 mb-0">Your shop moves to admin approval only after payment verification.</p>
+                <div class="position-relative my-4">
+                    <hr>
+                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-muted">OR</span>
+                </div>
+                <form method="post" action="{{ route('vendor.payment.coupon') }}" class="vstack gap-3">
+                    @csrf
+                    <div>
+                        <label class="form-label fw-semibold">Have a registration coupon?</label>
+                        <input type="text" name="registration_coupon_code" class="form-control form-control-lg @error('registration_coupon_code') is-invalid @enderror" value="{{ old('registration_coupon_code') }}" placeholder="Enter one-time coupon code" maxlength="32" required autocomplete="off">
+                        @error('registration_coupon_code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <div class="form-text">Admin-issued coupons waive the registration fee. Each code works only once.</div>
+                    </div>
+                    <button type="submit" class="btn btn-outline-secondary btn-lg">Apply coupon &amp; complete registration</button>
+                </form>
+                <p class="text-center text-muted small mt-3 mb-0">Your shop moves to admin approval after payment or a valid coupon.</p>
             </div>
         </div>
     </div>

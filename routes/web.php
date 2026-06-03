@@ -62,6 +62,7 @@ Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear')
 Route::get('/sell/payment', [VendorRegistrationController::class, 'paymentShow'])->name('vendor.payment.show');
 Route::post('/sell/payment/order', [VendorRegistrationController::class, 'paymentOrder'])->name('vendor.payment.order');
 Route::post('/sell/payment', [VendorRegistrationController::class, 'paymentComplete'])->name('vendor.payment.complete');
+Route::post('/sell/payment/coupon', [VendorRegistrationController::class, 'redeemRegistrationCoupon'])->name('vendor.payment.coupon');
 
 Route::get('/account/verify', [AccountVerificationController::class, 'show'])->name('account.verify.show');
 Route::post('/account/verify', [AccountVerificationController::class, 'verify'])->name('account.verify.submit');
@@ -122,6 +123,8 @@ Route::middleware(['auth', 'account.ready'])->group(function () {
         Route::post('/coupons', [DashboardController::class, 'saveCoupon'])->name('coupons.save');
         Route::patch('/coupons/{coupon}/toggle', [DashboardController::class, 'toggleCoupon'])->name('coupons.toggle');
         Route::delete('/coupons/{coupon}', [DashboardController::class, 'deleteCoupon'])->name('coupons.delete');
+        Route::post('/registration-coupons', [DashboardController::class, 'saveRegistrationCoupon'])->name('registration-coupons.save');
+        Route::patch('/registration-coupons/{registrationCoupon}/revoke', [DashboardController::class, 'revokeRegistrationCoupon'])->name('registration-coupons.revoke');
         Route::post('/settings', [DashboardController::class, 'saveSettings'])->name('settings.save');
         Route::post('/referral-settings', [DashboardController::class, 'saveReferralSettings'])->name('referral-settings.save');
         Route::post('/program-settings', [DashboardController::class, 'saveProgramSettings'])->name('program-settings.save');

@@ -11,6 +11,8 @@ use App\Models\ReferralReward;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Coupon;
+use App\Models\RegistrationCoupon;
+use App\Models\RegistrationCouponHistory;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
@@ -18,6 +20,7 @@ use App\Models\User;
 use App\Models\VendorWalletTransaction;
 use App\Services\OrderNotificationService;
 use App\Services\ReferralProgramService;
+use App\Services\RegistrationCouponService;
 use App\Services\VendorNotificationService;
 use App\Services\VendorWalletService;
 use App\Support\NotificationSettings;
@@ -92,6 +95,8 @@ class DashboardController extends Controller
             'vendors' => User::where('role', 'vendor')->latest()->get(),
             'qcUsers' => User::whereIn('role', ['qc_manager', 'qc_staff'])->latest()->get(),
             'coupons' => Coupon::latest()->get(),
+            'registrationCoupons' => RegistrationCoupon::with(['createdBy', 'usedBy'])->latest()->get(),
+            'registrationCouponHistory' => RegistrationCouponHistory::with(['coupon', 'performedBy'])->latest()->limit(100)->get(),
             'settings' => Setting::pluck('setting_value', 'setting_key'),
             'ads' => Ad::with(['vendor', 'product'])->orderBy('location')->orderBy('sort_order')->latest()->get(),
             'banners' => Banner::orderBy('sort_order')->latest()->get(),
@@ -443,6 +448,34 @@ class DashboardController extends Controller
         $data = $request->validate(['code' => 'required|max:50', 'discount_type' => 'required|in:flat,percent', 'discount_value' => 'required|numeric|min:0', 'min_cart_value' => 'required|numeric|min:0']);
         Coupon::updateOrCreate(['code' => strtoupper($data['code'])], $data + ['code' => strtoupper($data['code']), 'status' => true]);
         return back()->with('status', 'Coupon saved.');
+    }
+
+    public function saveRegistrationCoupon(Request $request): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        $data = $request->validate([
+            'code' => ['nullable', 'string', 'max:32', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'issued_to_name' => ['required', 'string', 'max:120'],
+            'issued_to_email' => ['nullable', 'email', 'max:150'],
+            'issued_to_phone' => ['nullable', 'string', 'max:30'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $coupon = app(RegistrationCouponService::class)->create($request->user(), $data);
+
+        return redirect()
+            ->route('dashboard', ['section' => 'marketing'])
+            ->with('status', 'Registration coupon '.$coupon->code.' created for '.$coupon->issued_to_name.'.');
+    }
+
+    public function revokeRegistrationCoupon(Request $request, RegistrationCoupon $registrationCoupon): RedirectResponse
+    {
+        $this->requireRole('admin');
+
+        app(RegistrationCouponService::class)->revoke($request->user(), $registrationCoupon);
+
+        return back()->with('status', 'Registration coupon '.$registrationCoupon->code.' revoked.');
     }
 
     public function saveSettings(Request $request): RedirectResponse

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\ReferralProgramService;
+use App\Services\RegistrationCouponService;
 use App\Support\MailConfigurator;
 use App\Support\MergeGuestCart;
 use App\Support\SendsOtpMail;
@@ -238,6 +239,40 @@ class VendorRegistrationController extends Controller
 
         return redirect()->route('dashboard')
             ->with('status', 'Registration fee recorded. Your shop is pending admin approval.');
+    }
+
+    public function redeemRegistrationCoupon(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'registration_coupon_code' => ['required', 'string', 'max:32'],
+        ]);
+
+        $id = $request->session()->get('vendor_payment_id');
+
+        if (Auth::check() && Auth::user()->role === 'vendor' && Auth::user()->account_status === 'pending_payment') {
+            $id = Auth::id();
+        }
+
+        abort_unless($id, 404);
+
+        $vendor = User::where('id', $id)->where('role', 'vendor')->firstOrFail();
+
+        app(RegistrationCouponService::class)->redeem($data['registration_coupon_code'], $vendor);
+
+        $vendor->update([
+            'reg_fee_paid' => true,
+            'account_status' => 'pending_approval',
+        ]);
+
+        $request->session()->forget(['vendor_payment_id', 'vendor_fee_razorpay_order_id', 'vendor_fee_amount']);
+
+        $guestSessionId = $request->session()->getId();
+        Auth::login($vendor);
+        MergeGuestCart::intoUser($guestSessionId, $vendor);
+        $request->session()->regenerate();
+
+        return redirect()->route('dashboard')
+            ->with('status', 'Registration coupon accepted. Your shop is pending admin approval.');
     }
 
     private function createRazorpayOrder(float $amount, string $receipt): array

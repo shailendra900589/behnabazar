@@ -668,6 +668,7 @@
         @if (($adminSection ?? '') === 'marketing')
         <div class="admin-section" id="tab-marketing">
         @include('dashboards.partials.promotion-email-form')
+        @include('dashboards.partials.admin-registration-coupons')
         <div class="bb-card p-4 mb-4">
             <h4 class="fw-bold mb-2">Newsletter subscribers <span class="badge bg-light text-dark">{{ $newsletterCount ?? 0 }}</span></h4>
             <div class="table-responsive" style="max-height:280px">
