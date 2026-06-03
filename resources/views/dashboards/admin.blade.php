@@ -545,7 +545,7 @@
                     <div class="vstack gap-2">
                         @foreach ($banners as $banner)
                             <div class="d-flex align-items-center gap-3 border rounded-3 p-2">
-                                <img src="{{ str_starts_with($banner->image, 'http') ? $banner->image : asset('storage/'.$banner->image) }}" alt="" class="rounded-3" style="width:72px;height:48px;object-fit:cover">
+                                <img src="{{ $banner->imageUrl() }}" alt="" class="rounded-3" style="width:72px;height:48px;object-fit:cover" loading="lazy">
                                 <div class="flex-grow-1 small text-muted">Order {{ $banner->sort_order }}</div>
                                 <form method="post" action="{{ route('manage.banners.delete', $banner) }}" onsubmit="return confirm('Remove banner?');">
                                     @csrf

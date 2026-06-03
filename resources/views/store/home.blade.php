@@ -46,7 +46,7 @@
             <div class="carousel-inner">
                 @foreach ($banners as $i => $banner)
                     @php
-                        $bannerSrc = str_starts_with($banner->image, 'http') ? $banner->image : asset('storage/'.$banner->image);
+                        $bannerSrc = $banner->imageUrl();
                     @endphp
                     <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
                         <a href="{{ $banner->link ?: '#' }}" class="d-block position-relative">

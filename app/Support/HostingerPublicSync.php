@@ -138,30 +138,6 @@ PHP;
     private static function syncStorageLink(string $dest, string $source): void
     {
         StoragePublicLink::ensure();
-
-        $storageSource = $source.DIRECTORY_SEPARATOR.'storage';
-        $storageDest = $dest.DIRECTORY_SEPARATOR.'storage';
-
-        if (! is_dir($storageSource) && ! is_link($storageSource)) {
-            return;
-        }
-
-        if (is_link($storageDest) || is_dir($storageDest)) {
-            @unlink($storageDest);
-            @rmdir($storageDest);
-        }
-
-        $target = realpath($storageSource);
-        if ($target === false) {
-            return;
-        }
-
-        if (function_exists('symlink')) {
-            @symlink($target, $storageDest);
-        }
-
-        if (! is_link($storageDest) && ! is_dir($storageDest)) {
-            File::copyDirectory($target, $storageDest);
-        }
+        PublicStorage::republishAll();
     }
 }

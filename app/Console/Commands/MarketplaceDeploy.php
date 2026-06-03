@@ -52,8 +52,10 @@ class MarketplaceDeploy extends Command
         $this->callSilent('marketplace:ensure-catalog');
 
         $this->newLine();
-        $this->info('4) Storage public link...');
-        StoragePublicLink::ensure() ? $this->line('   OK') : $this->warn('   '.StoragePublicLink::helpMessage());
+        $this->info('4) Storage public link + publish uploads...');
+        StoragePublicLink::ensure() ? $this->line('   Link OK') : $this->warn('   '.StoragePublicLink::helpMessage());
+        \App\Support\PublicStorage::republishAll();
+        $this->line('   Published storage/app/public → public/storage (+ public_html if split)');
 
         $this->newLine();
         $this->info('5) Hostinger public_html sync (CSS/JS + Laravel bootstrap)...');

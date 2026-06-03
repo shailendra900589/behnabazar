@@ -1077,10 +1077,12 @@ class DashboardController extends Controller
             'image' => ['required', 'image', 'max:4096'],
         ]);
         $data['image'] = $request->file('image')->store('banners', 'public');
+        \App\Support\PublicStorage::publish($data['image']);
         $data['status'] = true;
         $data['sort_order'] = $data['sort_order'] ?? 0;
         $data['link'] = $data['link'] ?? '#';
         Banner::create($data);
+        $this->clearStorefrontCaches();
 
         return back()->with('status', 'Banner added.');
     }
@@ -1090,8 +1092,10 @@ class DashboardController extends Controller
         $this->requireRole('admin');
         if ($banner->image) {
             Storage::disk('public')->delete($banner->image);
+            \App\Support\PublicStorage::unpublish($banner->image);
         }
         $banner->delete();
+        $this->clearStorefrontCaches();
 
         return back()->with('status', 'Banner removed.');
     }
