@@ -15,13 +15,12 @@
     <div class="row g-3 g-lg-5 align-items-start">
         <div class="col-lg-6">
             <div class="product-hero-card bb-card p-0 p-lg-4 rounded-4 shadow-sm mb-2 mb-lg-3">
-                <div class="bb-product-gallery-stage position-relative overflow-hidden rounded-4 zoom-container" data-product-gallery data-interval="5000" style="cursor: crosshair;">
+                <div class="bb-product-gallery-stage position-relative overflow-hidden rounded-4" data-product-gallery data-interval="5000">
                     @foreach ($galleryImages ?? [$product->imageUrl()] as $idx => $imgUrl)
                         <img src="{{ $imgUrl }}"
                              @if($idx === 0) id="mainProductImage" @endif
-                             class="w-100 product-detail-img zoom-image bb-gallery-slide {{ $idx === 0 ? 'is-active' : '' }}"
-                             alt="{{ $product->title }} — {{ $idx + 1 }}"
-                             style="transition: transform 0.1s ease, opacity 0.35s ease; transform-origin: center center;">
+                             class="w-100 product-detail-img bb-gallery-slide {{ $idx === 0 ? 'is-active' : '' }}"
+                             alt="{{ $product->title }} — {{ $idx + 1 }}">
                     @endforeach
                     @if(count($galleryImages ?? []) > 1)
                         <div class="bb-gallery-dots position-absolute bottom-0 start-50 translate-middle-x mb-3"></div>
@@ -35,30 +34,6 @@
                     </div>
                 </div>
             </div>
-            
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const container = document.querySelector('.zoom-container');
-                    if (!container || window.matchMedia('(hover: none)').matches) {
-                        return;
-                    }
-                    const img = container.querySelector('.bb-gallery-slide.is-active') || container.querySelector('.zoom-image');
-                    
-                    container.addEventListener('mousemove', (e) => {
-                        const rect = container.getBoundingClientRect();
-                        const x = ((e.clientX - rect.left) / rect.width) * 100;
-                        const y = ((e.clientY - rect.top) / rect.height) * 100;
-                        
-                        img.style.transformOrigin = `${x}% ${y}%`;
-                        img.style.transform = 'scale(2)';
-                    });
-                    
-                    container.addEventListener('mouseleave', () => {
-                        img.style.transform = 'scale(1)';
-                        setTimeout(() => { img.style.transformOrigin = 'center center'; }, 100);
-                    });
-                });
-            </script>
             
             @if(isset($ads))
                 @include('partials.ad-slot', ['slot' => 'product_top', 'ads' => $ads, 'class' => 'mb-3'])
