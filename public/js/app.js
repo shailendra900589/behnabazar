@@ -448,6 +448,41 @@
         }, { passive: true });
     }
 
+    function initPasswordToggles() {
+        document.querySelectorAll('input[type="password"]:not([data-bb-pw-enhanced])').forEach(function (input) {
+            if (input.closest('.bb-password-field')) {
+                input.dataset.bbPwEnhanced = '1';
+                return;
+            }
+
+            input.dataset.bbPwEnhanced = '1';
+
+            var wrap = document.createElement('div');
+            wrap.className = 'bb-password-field';
+            input.parentNode.insertBefore(wrap, input);
+            wrap.appendChild(input);
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'bb-password-toggle';
+            btn.setAttribute('aria-label', 'Show password');
+            btn.setAttribute('aria-pressed', 'false');
+            btn.innerHTML = '<i class="bi bi-eye" aria-hidden="true"></i>';
+            wrap.appendChild(btn);
+
+            btn.addEventListener('click', function () {
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+                var icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                }
+            });
+        });
+    }
+
     function onReady() {
         initAjaxForms();
         initCartDropdownRefresh();
@@ -463,6 +498,7 @@
         initImageLazyLoad();
         initImageFallback();
         initPullToRefreshBlock();
+        initPasswordToggles();
 
         document.querySelectorAll('.product-card, .bb-card, .stat-card, .table-card, .trust-badge').forEach(function (el, i) {
             el.classList.add('reveal');

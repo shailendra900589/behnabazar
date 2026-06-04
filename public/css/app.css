@@ -204,6 +204,26 @@ a { color: inherit; text-decoration: none; transition: color 0.2s ease; }
 
 .form-control, .form-select { border-radius: 1rem; border-color: #cbd5e1; padding: 0.8rem 1rem; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.02) inset; }
 .form-control:focus, .form-select:focus { border-color: var(--bb-primary); box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+.bb-password-field { position: relative; }
+.bb-password-field > .form-control { padding-right: 2.85rem; }
+.bb-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.55rem;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    padding: 0.35rem 0.45rem;
+    line-height: 1;
+    border-radius: 0.5rem;
+    z-index: 2;
+}
+.bb-password-toggle:hover { color: var(--bb-primary-dark, #4f46e5); }
+.bb-password-toggle:focus-visible {
+    outline: 2px solid var(--bb-primary-dark, #4f46e5);
+    outline-offset: 2px;
+}
 
 .bb-upload-size-hint {
     margin-top: 0.35rem;
