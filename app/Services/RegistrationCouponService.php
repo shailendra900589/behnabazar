@@ -21,20 +21,14 @@ class RegistrationCouponService
             ]);
         }
 
-        return DB::transaction(function () use ($admin, $data, $code) {
+        return DB::transaction(function () use ($admin, $code) {
             $coupon = RegistrationCoupon::create([
                 'code' => $code,
-                'issued_to_name' => trim($data['issued_to_name']),
-                'issued_to_email' => $this->nullableEmail($data['issued_to_email'] ?? null),
-                'issued_to_phone' => $this->nullableString($data['issued_to_phone'] ?? null, 30),
-                'notes' => $this->nullableString($data['notes'] ?? null, 500),
                 'created_by' => $admin->id,
             ]);
 
             $this->log($coupon, 'created', $admin, [
-                'subject_name' => $coupon->issued_to_name,
-                'subject_email' => $coupon->issued_to_email,
-                'notes' => 'Issued to '.$coupon->issued_to_name,
+                'notes' => 'Coupon code created',
             ]);
 
             return $coupon;
@@ -73,13 +67,13 @@ class RegistrationCouponService
                 ]);
             }
 
-            if ($coupon->issued_to_email && strcasecmp($coupon->issued_to_email, $vendor->email) !== 0) {
-                throw ValidationException::withMessages([
-                    'registration_coupon_code' => 'This coupon was issued for '.$coupon->issued_to_email.'. Use the same email to register.',
-                ]);
-            }
+            $userDetails = $this->userDetailsNote($vendor);
 
             $coupon->update([
+                'issued_to_name' => $vendor->name,
+                'issued_to_email' => $vendor->email,
+                'issued_to_phone' => $vendor->phone,
+                'notes' => $userDetails,
                 'used_by_user_id' => $vendor->id,
                 'used_at' => now(),
             ]);
@@ -87,7 +81,7 @@ class RegistrationCouponService
             $this->log($coupon, 'used', $vendor, [
                 'subject_name' => $vendor->name,
                 'subject_email' => $vendor->email,
-                'notes' => 'Registration completed for '.$vendor->shop_name.' ('.$vendor->email.')',
+                'notes' => $userDetails,
             ]);
 
             return $coupon->fresh(['usedBy']);
@@ -110,11 +104,21 @@ class RegistrationCouponService
             $coupon->update(['revoked_at' => now()]);
 
             $this->log($coupon, 'revoked', $admin, [
-                'subject_name' => $coupon->issued_to_name,
-                'subject_email' => $coupon->issued_to_email,
                 'notes' => 'Revoked by admin',
             ]);
         });
+    }
+
+    private function userDetailsNote(User $vendor): string
+    {
+        $parts = array_filter([
+            $vendor->shop_name ? 'Shop: '.$vendor->shop_name : null,
+            $vendor->city ? 'City: '.$vendor->city : null,
+            $vendor->phone ? 'Phone: '.$vendor->phone : null,
+            $vendor->email ? 'Email: '.$vendor->email : null,
+        ]);
+
+        return implode(' | ', $parts);
     }
 
     private function log(
@@ -145,19 +149,5 @@ class RegistrationCouponService
     private function normalizeCode(?string $code): string
     {
         return strtoupper(trim((string) $code));
-    }
-
-    private function nullableEmail(?string $value): ?string
-    {
-        $value = strtolower(trim((string) $value));
-
-        return $value !== '' ? $value : null;
-    }
-
-    private function nullableString(?string $value, int $max): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value !== '' ? Str::limit($value, $max, '') : null;
     }
 }

@@ -1,33 +1,15 @@
 <div class="bb-card p-4 mb-4">
     <h4 class="fw-bold mb-2">Vendor registration coupons</h4>
-    <p class="text-muted small mb-3">One-time codes waive the vendor registration fee. Each code is unique and can be used only once. Issue in the recipient&apos;s name and share the code with them.</p>
-    <form method="post" action="{{ route('manage.registration-coupons.save') }}" class="row g-2 mb-4">
+    <p class="text-muted small mb-3">Create a one-time code — no user details needed here. Name, email, shop and other info are saved automatically when someone uses the coupon during vendor registration.</p>
+    <form method="post" action="{{ route('manage.registration-coupons.save') }}" class="row g-2 mb-4 align-items-end">
         @csrf
-        <div class="col-md-4">
+        <div class="col-md-8">
             <label class="form-label small">Coupon code <span class="text-muted">(leave blank to auto-generate)</span></label>
             <input class="form-control @error('code') is-invalid @enderror" name="code" value="{{ old('code') }}" maxlength="32" placeholder="REGSELLER01" pattern="[A-Za-z0-9_-]+">
             @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="col-md-4">
-            <label class="form-label small">Issued to (name) <span class="text-danger">*</span></label>
-            <input class="form-control @error('issued_to_name') is-invalid @enderror" name="issued_to_name" value="{{ old('issued_to_name') }}" required maxlength="120" placeholder="Rahul Sharma">
-            @error('issued_to_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
-        <div class="col-md-4">
-            <label class="form-label small">Issued to email <span class="text-muted">(optional lock)</span></label>
-            <input class="form-control" type="email" name="issued_to_email" value="{{ old('issued_to_email') }}" maxlength="150" placeholder="seller@example.com">
-            <div class="form-text">If set, only this email can redeem the coupon.</div>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label small">Phone</label>
-            <input class="form-control" name="issued_to_phone" value="{{ old('issued_to_phone') }}" maxlength="30">
-        </div>
-        <div class="col-md-8">
-            <label class="form-label small">Notes</label>
-            <input class="form-control" name="notes" value="{{ old('notes') }}" maxlength="500" placeholder="Campaign / referral source">
-        </div>
-        <div class="col-12">
-            <button type="submit" class="btn btn-bloom">Create registration coupon</button>
+            <button type="submit" class="btn btn-bloom w-100">Create coupon</button>
         </div>
     </form>
 
@@ -36,9 +18,8 @@
             <thead>
                 <tr>
                     <th>Code</th>
-                    <th>Issued to</th>
                     <th>Status</th>
-                    <th>Used by</th>
+                    <th>Used by (from registration)</th>
                     <th>Created</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -47,12 +28,6 @@
                 @forelse ($registrationCoupons ?? [] as $regCoupon)
                     <tr>
                         <td class="fw-semibold font-monospace">{{ $regCoupon->code }}</td>
-                        <td>
-                            <div>{{ $regCoupon->issued_to_name }}</div>
-                            @if($regCoupon->issued_to_email)
-                                <div class="small text-muted">{{ $regCoupon->issued_to_email }}</div>
-                            @endif
-                        </td>
                         <td>
                             @if($regCoupon->used_at)
                                 <span class="badge text-bg-secondary">Used</span>
@@ -63,12 +38,20 @@
                             @endif
                         </td>
                         <td>
-                            @if($regCoupon->usedBy)
-                                <div>{{ $regCoupon->usedBy->name }}</div>
-                                <div class="small text-muted">{{ $regCoupon->usedBy->email }}</div>
+                            @if($regCoupon->used_at)
+                                <div class="fw-semibold">{{ $regCoupon->issued_to_name ?? $regCoupon->usedBy?->name }}</div>
+                                @if($regCoupon->issued_to_email ?? $regCoupon->usedBy?->email)
+                                    <div class="small text-muted">{{ $regCoupon->issued_to_email ?? $regCoupon->usedBy?->email }}</div>
+                                @endif
+                                @if($regCoupon->issued_to_phone)
+                                    <div class="small text-muted">{{ $regCoupon->issued_to_phone }}</div>
+                                @endif
+                                @if($regCoupon->notes)
+                                    <div class="small text-muted">{{ $regCoupon->notes }}</div>
+                                @endif
                                 <div class="small text-muted">{{ $regCoupon->used_at?->format('d M Y, H:i') }}</div>
                             @else
-                                <span class="text-muted">—</span>
+                                <span class="text-muted">Not used yet</span>
                             @endif
                         </td>
                         <td class="small text-muted">
@@ -90,7 +73,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-muted">No registration coupons yet.</td></tr>
+                    <tr><td colspan="5" class="text-muted">No registration coupons yet.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -104,9 +87,9 @@
                     <th>When</th>
                     <th>Code</th>
                     <th>Action</th>
-                    <th>Person</th>
+                    <th>User</th>
                     <th>By</th>
-                    <th>Notes</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>

@@ -456,17 +456,13 @@ class DashboardController extends Controller
 
         $data = $request->validate([
             'code' => ['nullable', 'string', 'max:32', 'regex:/^[A-Za-z0-9_-]+$/'],
-            'issued_to_name' => ['required', 'string', 'max:120'],
-            'issued_to_email' => ['nullable', 'email', 'max:150'],
-            'issued_to_phone' => ['nullable', 'string', 'max:30'],
-            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $coupon = app(RegistrationCouponService::class)->create($request->user(), $data);
 
         return redirect()
             ->route('dashboard', ['section' => 'marketing'])
-            ->with('status', 'Registration coupon '.$coupon->code.' created for '.$coupon->issued_to_name.'.');
+            ->with('status', 'Registration coupon '.$coupon->code.' created. Share this code — user details will be recorded when they register.');
     }
 
     public function revokeRegistrationCoupon(Request $request, RegistrationCoupon $registrationCoupon): RedirectResponse

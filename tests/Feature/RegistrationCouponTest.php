@@ -13,7 +13,7 @@ class RegistrationCouponTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_can_create_registration_coupon_with_history(): void
+    public function test_admin_can_create_registration_coupon_without_user_details(): void
     {
         $this->seed();
         $admin = User::where('role', 'admin')->firstOrFail();
@@ -21,24 +21,21 @@ class RegistrationCouponTest extends TestCase
         $this->actingAs($admin)
             ->post(route('manage.registration-coupons.save'), [
                 'code' => 'SELLER100',
-                'issued_to_name' => 'Priya Verma',
-                'issued_to_email' => 'priya@example.test',
-                'notes' => 'Partner onboarding',
             ])
             ->assertRedirect(route('dashboard', ['section' => 'marketing']));
 
         $coupon = RegistrationCoupon::where('code', 'SELLER100')->firstOrFail();
-        $this->assertSame('Priya Verma', $coupon->issued_to_name);
+        $this->assertNull($coupon->issued_to_name);
+        $this->assertNull($coupon->issued_to_email);
         $this->assertSame($admin->id, $coupon->created_by);
 
         $this->assertDatabaseHas('registration_coupon_histories', [
             'registration_coupon_id' => $coupon->id,
             'action' => 'created',
-            'subject_name' => 'Priya Verma',
         ]);
     }
 
-    public function test_vendor_can_complete_registration_with_one_time_coupon(): void
+    public function test_vendor_registration_details_are_saved_when_coupon_is_used(): void
     {
         Mail::fake();
         $this->seed();
@@ -47,7 +44,6 @@ class RegistrationCouponTest extends TestCase
         $this->actingAs($admin)
             ->post(route('manage.registration-coupons.save'), [
                 'code' => 'FREESELL01',
-                'issued_to_name' => 'Seller One',
             ]);
 
         auth()->logout();
@@ -59,6 +55,7 @@ class RegistrationCouponTest extends TestCase
             'password' => 'password1',
             'password_confirmation' => 'password1',
             'shop_name' => 'Coupon Shop',
+            'phone' => '9876543210',
             'city' => 'Indore',
         ])->assertRedirect(route('vendor.verify.show'));
 
@@ -72,17 +69,17 @@ class RegistrationCouponTest extends TestCase
             'registration_coupon_code' => 'FREESELL01',
         ])->assertRedirect(route('dashboard'));
 
-        $vendor->refresh();
-        $this->assertTrue($vendor->reg_fee_paid);
-        $this->assertSame('pending_approval', $vendor->account_status);
-
         $coupon = RegistrationCoupon::where('code', 'FREESELL01')->firstOrFail();
-        $this->assertSame($vendor->id, $coupon->used_by_user_id);
-        $this->assertNotNull($coupon->used_at);
+        $this->assertSame('Seller One', $coupon->issued_to_name);
+        $this->assertSame('seller-coupon@example.test', $coupon->issued_to_email);
+        $this->assertSame('9876543210', $coupon->issued_to_phone);
+        $this->assertStringContainsString('Coupon Shop', $coupon->notes);
+        $this->assertStringContainsString('Indore', $coupon->notes);
 
         $this->assertDatabaseHas('registration_coupon_histories', [
             'registration_coupon_id' => $coupon->id,
             'action' => 'used',
+            'subject_name' => 'Seller One',
             'subject_email' => 'seller-coupon@example.test',
         ]);
     }
