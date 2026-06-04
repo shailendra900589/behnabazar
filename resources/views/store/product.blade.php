@@ -44,7 +44,7 @@
                     @foreach ($galleryImages as $idx => $imgUrl)
                         <img src="{{ $imgUrl }}" data-gallery-thumb data-src="{{ $imgUrl }}"
                              class="rounded-3 border cursor-pointer product-thumb {{ $idx === 0 ? 'border-bloom border-2' : '' }}"
-                             style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: all 0.2s ease; opacity: {{ $idx === 0 ? '1' : '0.75' }};"
+                             style="width: 80px; height: 80px; cursor: pointer; transition: all 0.2s ease; opacity: {{ $idx === 0 ? '1' : '0.75' }};"
                              alt="View {{ $idx + 1 }}">
                     @endforeach
                 </div>
@@ -439,7 +439,7 @@
 <div class="sticky-product-bar" id="stickyProductBar">
     <div class="container d-flex justify-content-between align-items-center gap-2 gap-md-3">
         <div class="d-flex align-items-center gap-2 gap-md-3 min-w-0 flex-grow-1">
-            <img src="{{ $product->imageUrl() }}" alt="" class="rounded-3 sticky-bar-thumb" style="width:44px;height:44px;object-fit:cover;">
+            <img src="{{ $product->imageUrl() }}" alt="" class="rounded-3 sticky-bar-thumb">
             <div class="min-w-0">
                 <div class="fw-bold text-truncate sticky-bar-title">{{ $product->title }}</div>
                 @include('partials.product-price', ['product' => $product, 'size' => 'sm'])
