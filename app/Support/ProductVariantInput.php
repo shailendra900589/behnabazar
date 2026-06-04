@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\ProductVariant;
+
 class ProductVariantInput
 {
     /** @return list<array{color: ?string, size: ?string, attributes: ?array, price: mixed, compare_at_price: mixed, stock: int}> */
@@ -74,7 +76,13 @@ class ProductVariantInput
             $attributes['Size'] = trim((string) $row['size']);
         }
 
-        return $attributes;
+        return self::cleanAttributes($attributes);
+    }
+
+    /** @param array<string, string> $attributes */
+    private static function cleanAttributes(array $attributes): array
+    {
+        return ProductVariant::cleanAttributesArray($attributes);
     }
 
     public static function fieldName(string $type): string
